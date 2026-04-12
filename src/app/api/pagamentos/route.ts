@@ -35,11 +35,13 @@ export async function GET(request: Request) {
   const pagamentosMap = new Map(pagamentos?.map(p => [p.jogador_id, p]) ?? [])
 
   // Merge: for each mensalista, attach payment status
-  const result = (mensalistas ?? []).map((m: { jogador_id: string; jogador: { id: string; nome: string } | null }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = (mensalistas ?? []).map((m: any) => {
     const pagamento = pagamentosMap.get(m.jogador_id)
+    const jogador = Array.isArray(m.jogador) ? (m.jogador[0] ?? null) : m.jogador
     return {
       jogador_id: m.jogador_id,
-      jogador: m.jogador,
+      jogador,
       pagamento_id: pagamento?.id ?? null,
       pago: pagamento?.pago ?? false,
       data_pagamento: pagamento?.data_pagamento ?? null,
