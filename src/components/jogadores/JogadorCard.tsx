@@ -1,0 +1,73 @@
+'use client'
+
+import type { Jogador } from '@/lib/supabase'
+import { PositionBadge } from '@/components/ui/Badge'
+
+interface JogadorCardProps {
+  jogador: Jogador
+  onEdit: () => void
+  onDelete: () => void
+}
+
+export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardProps) {
+  return (
+    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 hover:border-[#3a3a3a] transition-colors">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-white font-semibold truncate">{jogador.nome}</h3>
+            {jogador.mensalista && (
+              <span className="bg-lime-500/20 text-lime-400 text-xs px-2 py-0.5 rounded font-medium">
+                Mensalista
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <PositionBadge posicao={jogador.posicao_principal} />
+            {jogador.posicao_secundaria_1 && (
+              <span className="text-gray-500 text-xs">{jogador.posicao_secundaria_1}</span>
+            )}
+            {jogador.posicao_secundaria_2 && (
+              <span className="text-gray-500 text-xs">/ {jogador.posicao_secundaria_2}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 mt-2">
+            {[1, 2, 3, 4, 5].map(n => (
+              <div
+                key={n}
+                className={`w-3 h-3 rounded-sm ${n <= jogador.nivel ? 'bg-lime-500' : 'bg-[#333]'}`}
+              />
+            ))}
+            <span className="text-gray-500 text-xs ml-1">Nível {jogador.nivel}</span>
+          </div>
+          {jogador.telefone && (
+            <p className="text-gray-500 text-xs mt-1">{jogador.telefone}</p>
+          )}
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <button
+            onClick={onEdit}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            title="Editar"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+            title="Remover"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      {jogador.observacoes && (
+        <p className="text-gray-500 text-xs mt-3 border-t border-[#222] pt-3">{jogador.observacoes}</p>
+      )}
+    </div>
+  )
+}
