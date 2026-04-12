@@ -13,6 +13,7 @@ export default function JogadoresPage() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Jogador | null>(null)
+  const [busca, setBusca] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch('/api/jogadores')
@@ -21,6 +22,10 @@ export default function JogadoresPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const jogadoresFiltrados = jogadores.filter(j =>
+    j.nome.toLowerCase().includes(busca.toLowerCase())
+  )
 
   // Birthday alert: players with birthday in next 7 days
   const today = new Date()
@@ -88,6 +93,30 @@ export default function JogadoresPage() {
         </button>
       </div>
 
+      {/* Search */}
+      <div className="relative mb-4">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+        </svg>
+        <input
+          type="text"
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          placeholder="Pesquisar jogador..."
+          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-lime-500 transition-colors"
+        />
+        {busca && (
+          <button
+            onClick={() => setBusca('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
       {/* Birthday alert */}
       {aniversariantes.length > 0 && (
         <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
@@ -115,9 +144,13 @@ export default function JogadoresPage() {
             Adicionar primeiro jogador
           </button>
         </div>
+      ) : jogadoresFiltrados.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-gray-500">Nenhum jogador encontrado para "{busca}".</p>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {jogadores.map(j => (
+          {jogadoresFiltrados.map(j => (
             <JogadorCard
               key={j.id}
               jogador={j}
