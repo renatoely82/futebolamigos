@@ -4,6 +4,7 @@ import { useState } from 'react'
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
   DragStartEvent,
   DragOverlay,
   PointerSensor,
@@ -149,7 +150,7 @@ export default function TeamEditor({
     if (data) setActivePlayer(data.jogador as Jogador)
   }
 
-  function handleDragOver(event: { over: { id: string } | null }) {
+  function handleDragOver(event: DragOverEvent) {
     setOverZone(event.over ? (event.over.id as ZoneId) : null)
   }
 
