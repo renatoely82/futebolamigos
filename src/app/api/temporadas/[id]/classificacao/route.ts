@@ -24,7 +24,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       .in('partida_id', partidaIds),
     supabase
       .from('gols')
-      .select('partida_id, jogador_id, quantidade')
+      .select('partida_id, jogador_id, quantidade, gol_contra')
       .in('partida_id', partidaIds),
     supabase
       .from('jogadores')
@@ -41,6 +41,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const golsMap = new Map<string, number>()
   for (const g of gols) {
+    if (g.gol_contra) continue  // gols contra não contam na artilharia
     const key = `${g.jogador_id}:${g.partida_id}`
     golsMap.set(key, (golsMap.get(key) ?? 0) + g.quantidade)
   }

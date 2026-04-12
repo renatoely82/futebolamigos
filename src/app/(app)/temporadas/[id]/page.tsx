@@ -15,6 +15,21 @@ interface MensalistaEntry {
   id: string
   jogador_id: string
   jogador: Jogador
+  meses: number[] | null
+}
+
+const MESES_NOMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
+function getMesesTemporada(dataInicio: string, dataFim: string): number[] {
+  const inicio = new Date(dataInicio + 'T00:00:00')
+  const fim = new Date(dataFim + 'T00:00:00')
+  const meses: number[] = []
+  const cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1)
+  while (cur <= fim) {
+    meses.push(cur.getMonth() + 1)
+    cur.setMonth(cur.getMonth() + 1)
+  }
+  return meses
 }
 
 export default function TemporadaDetailPage() {
@@ -26,7 +41,9 @@ export default function TemporadaDetailPage() {
   const [todosJogadores, setTodosJogadores] = useState<Jogador[]>([])
   const [addMensalistaOpen, setAddMensalistaOpen] = useState(false)
   const [selectedJogadorId, setSelectedJogadorId] = useState('')
+  const [selectedMeses, setSelectedMeses] = useState<number[] | null>(null) // null = todos
   const [savingMensalista, setSavingMensalista] = useState(false)
+  const [updatingMeses, setUpdatingMeses] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -52,11 +69,30 @@ export default function TemporadaDetailPage() {
     await fetch(`/api/temporadas/${id}/mensalistas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jogador_id: selectedJogadorId }),
+      body: JSON.stringify({ jogador_id: selectedJogadorId, meses: selectedMeses }),
     })
     setSavingMensalista(false)
     setAddMensalistaOpen(false)
     setSelectedJogadorId('')
+    setSelectedMeses(null)
+    load()
+  }
+
+  async function handleToggleMes(jogadorId: string, mes: number, mesesAtuais: number[] | null, todosOsMeses: number[]) {
+    setUpdatingMeses(jogadorId)
+    // null means all months active; when toggling, expand to explicit array first
+    const base = mesesAtuais ?? todosOsMeses
+    const novosMeses = base.includes(mes)
+      ? base.filter(m => m !== mes)
+      : [...base, mes].sort((a, b) => a - b)
+    // if all months of the season are selected, store null (means all)
+    const payload = novosMeses.length === todosOsMeses.length ? null : novosMeses
+    await fetch(`/api/temporadas/${id}/mensalistas`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jogador_id: jogadorId, meses: payload }),
+    })
+    setUpdatingMeses(null)
     load()
   }
 
@@ -174,49 +210,78 @@ export default function TemporadaDetailPage() {
           </div>
 
           {/* Mensalistas */}
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#2a2a2a] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.52M9 20H4v-2a4 4 0 015.916-3.52M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zm-18 0a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <h2 className="text-white font-semibold">Mensalistas</h2>
-                <span className="text-gray-500 text-sm">({mensalistas.length})</span>
-              </div>
-              <button
-                onClick={() => { setSelectedJogadorId(''); setAddMensalistaOpen(true) }}
-                className="bg-lime-500 hover:bg-lime-400 text-black text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeWidth={2} strokeLinecap="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Adicionar
-              </button>
-            </div>
-
-            {mensalistasOrdenados.length === 0 ? (
-              <div className="py-10 text-center text-gray-500 text-sm">
-                Nenhum mensalista nesta temporada.
-              </div>
-            ) : (
-              <div className="divide-y divide-[#1e1e1e]">
-                {mensalistasOrdenados.map(m => (
-                  <div key={m.id} className="flex items-center justify-between px-5 py-3">
-                    <span className="text-white text-sm">{m.jogador.nome}</span>
-                    <button
-                      onClick={() => handleRemoveMensalista(m.jogador_id)}
-                      className="text-gray-500 hover:text-red-400 transition-colors p-1 rounded"
-                      title="Remover"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+          {(() => {
+            const mesesTemporada = getMesesTemporada(temporada.data_inicio, temporada.data_fim)
+            return (
+              <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-[#2a2a2a] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.52M9 20H4v-2a4 4 0 015.916-3.52M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zm-18 0a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <h2 className="text-white font-semibold">Mensalistas</h2>
+                    <span className="text-gray-500 text-sm">({mensalistas.length})</span>
                   </div>
-                ))}
+                  <button
+                    onClick={() => { setSelectedJogadorId(''); setSelectedMeses(null); setAddMensalistaOpen(true) }}
+                    className="bg-lime-500 hover:bg-lime-400 text-black text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeWidth={2} strokeLinecap="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Adicionar
+                  </button>
+                </div>
+
+                {mensalistasOrdenados.length === 0 ? (
+                  <div className="py-10 text-center text-gray-500 text-sm">
+                    Nenhum mensalista nesta temporada.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-[#1e1e1e]">
+                    {mensalistasOrdenados.map(m => {
+                      const mesesAtivos = m.meses ?? mesesTemporada
+                      const isUpdating = updatingMeses === m.jogador_id
+                      return (
+                        <div key={m.id} className="px-4 py-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-white text-sm font-medium">{m.jogador.nome}</span>
+                            <button
+                              onClick={() => handleRemoveMensalista(m.jogador_id)}
+                              className="text-gray-500 hover:text-red-400 transition-colors p-1 rounded"
+                              title="Remover"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className={`flex flex-wrap gap-1 ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
+                            {mesesTemporada.map(mes => {
+                              const ativo = mesesAtivos.includes(mes)
+                              return (
+                                <button
+                                  key={mes}
+                                  onClick={() => handleToggleMes(m.jogador_id, mes, m.meses, mesesTemporada)}
+                                  className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-colors ${
+                                    ativo
+                                      ? 'bg-lime-500/20 text-lime-400 border-lime-500/40 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/40'
+                                      : 'bg-transparent text-gray-600 border-gray-700 hover:bg-lime-500/10 hover:text-lime-500 hover:border-lime-500/30'
+                                  }`}
+                                >
+                                  {MESES_NOMES[mes - 1]}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            )
+          })()}
         </div>
 
         {/* Column 2: Artilheiros + Matches */}
@@ -283,7 +348,7 @@ export default function TemporadaDetailPage() {
       {/* Modal Adicionar Mensalista */}
       <Modal
         open={addMensalistaOpen}
-        onClose={() => setAddMensalistaOpen(false)}
+        onClose={() => { setAddMensalistaOpen(false); setSelectedMeses(null) }}
         title="Adicionar Mensalista"
       >
         <div className="space-y-4">
@@ -293,6 +358,8 @@ export default function TemporadaDetailPage() {
             if (disponiveis.length === 0) {
               return <p className="text-gray-400 text-sm">Todos os jogadores ativos já são mensalistas desta temporada.</p>
             }
+            const mesesTemporada = getMesesTemporada(temporada.data_inicio, temporada.data_fim)
+            const mesesSelecionados = selectedMeses ?? mesesTemporada
             return (
               <>
                 <select
@@ -305,6 +372,34 @@ export default function TemporadaDetailPage() {
                     <option key={j.id} value={j.id}>{j.nome}</option>
                   ))}
                 </select>
+
+                <div>
+                  <p className="text-xs text-gray-400 mb-2">Meses ativos na temporada</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {mesesTemporada.map(mes => {
+                      const ativo = mesesSelecionados.includes(mes)
+                      return (
+                        <button
+                          key={mes}
+                          type="button"
+                          onClick={() => {
+                            const base = mesesSelecionados
+                            const novo = ativo ? base.filter(m => m !== mes) : [...base, mes].sort((a, b) => a - b)
+                            setSelectedMeses(novo.length === mesesTemporada.length ? null : novo)
+                          }}
+                          className={`text-sm px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                            ativo
+                              ? 'bg-lime-500/20 text-lime-400 border-lime-500/40'
+                              : 'bg-transparent text-gray-600 border-gray-700'
+                          }`}
+                        >
+                          {MESES_NOMES[mes - 1]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-1">
                   <button
                     onClick={handleAddMensalista}
@@ -314,7 +409,7 @@ export default function TemporadaDetailPage() {
                     {savingMensalista ? 'Salvando...' : 'Adicionar'}
                   </button>
                   <button
-                    onClick={() => setAddMensalistaOpen(false)}
+                    onClick={() => { setAddMensalistaOpen(false); setSelectedMeses(null) }}
                     className="flex-1 bg-[#222] hover:bg-[#333] text-white font-semibold py-2.5 rounded-lg transition-colors"
                   >
                     Cancelar

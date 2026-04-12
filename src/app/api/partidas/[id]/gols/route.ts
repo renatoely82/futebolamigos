@@ -17,7 +17,7 @@ export async function GET(
   return Response.json(data)
 }
 
-// Body: { gols: [{ jogador_id: string, quantidade: number }] }
+// Body: { gols: [{ jogador_id: string, quantidade: number, gol_contra: boolean }] }
 // Replaces all goals for this match atomically
 export async function PUT(
   request: Request,
@@ -25,7 +25,7 @@ export async function PUT(
 ) {
   const { id } = await params
   const supabase = await createClient()
-  const { gols } = await request.json() as { gols: { jogador_id: string; quantidade: number }[] }
+  const { gols } = await request.json() as { gols: { jogador_id: string; quantidade: number; gol_contra: boolean }[] }
 
   // Delete existing then insert new (upsert on unique constraint)
   const { error: delError } = await supabase
@@ -39,7 +39,7 @@ export async function PUT(
 
   const rows = gols
     .filter(g => g.quantidade > 0)
-    .map(g => ({ partida_id: id, jogador_id: g.jogador_id, quantidade: g.quantidade }))
+    .map(g => ({ partida_id: id, jogador_id: g.jogador_id, quantidade: g.quantidade, gol_contra: g.gol_contra }))
 
   const { data, error } = await supabase
     .from('gols')

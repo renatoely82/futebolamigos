@@ -14,13 +14,18 @@ export async function GET(request: Request) {
   }
 
   // Get all mensalistas for this season
-  const { data: mensalistas, error: mError } = await supabase
+  const { data: mensalistasRaw, error: mError } = await supabase
     .from('temporada_mensalistas')
-    .select('jogador_id, jogador:jogadores(id, nome)')
+    .select('jogador_id, meses, jogador:jogadores(id, nome)')
     .eq('temporada_id', temporada_id)
     .order('criado_em', { ascending: true })
 
   if (mError) return Response.json({ error: mError.message }, { status: 500 })
+
+  // Filter only mensalistas active in this month
+  const mesNum = Number(mes)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mensalistas = (mensalistasRaw ?? []).filter((m: any) => m.meses === null || m.meses.includes(mesNum))
 
   // Get existing payment records for this season/month/year
   const { data: pagamentos, error: pError } = await supabase

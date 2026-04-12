@@ -56,22 +56,27 @@ export async function POST(request: Request) {
 
   if (partidaError) return Response.json({ error: partidaError.message }, { status: 500 })
 
-  // Auto-include mensalistas da temporada
-  if (temporadaId) {
+  // Auto-include mensalistas da temporada válidos para o mês da partida
+  const incluirMensalistas = body.incluir_mensalistas !== false
+  if (temporadaId && incluirMensalistas) {
     const { data: mensalistas } = await supabase
       .from('temporada_mensalistas')
-      .select('jogador_id')
+      .select('jogador_id, meses')
       .eq('temporada_id', temporadaId)
 
     if (mensalistas && mensalistas.length > 0) {
-      await supabase.from('partida_jogadores').insert(
-        mensalistas.map(m => ({
-          partida_id: partida.id,
-          jogador_id: m.jogador_id,
-          confirmado: true,
-          adicionado_manualmente: false,
-        }))
-      )
+      const mesPartida = new Date(body.data).getUTCMonth() + 1 // 1-12
+      const ativos = mensalistas.filter(m => m.meses === null || m.meses.includes(mesPartida))
+      if (ativos.length > 0) {
+        await supabase.from('partida_jogadores').insert(
+          ativos.map(m => ({
+            partida_id: partida.id,
+            jogador_id: m.jogador_id,
+            confirmado: true,
+            adicionado_manualmente: false,
+          }))
+        )
+      }
     }
   }
 

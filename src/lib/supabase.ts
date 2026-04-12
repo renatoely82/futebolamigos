@@ -41,6 +41,7 @@ export interface TemporadaMensalista {
   id: string
   temporada_id: string
   jogador_id: string
+  meses: number[] | null
   criado_em: string
 }
 
@@ -106,6 +107,7 @@ export interface Gol {
   partida_id: string
   jogador_id: string
   quantidade: number
+  gol_contra: boolean
   criado_em: string
 }
 

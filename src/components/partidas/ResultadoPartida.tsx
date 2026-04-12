@@ -17,7 +17,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   // edit state
   const [placarA, setPlacarA] = useState<string>('')
   const [placarB, setPlacarB] = useState<string>('')
-  const [golsEdit, setGolsEdit] = useState<Record<string, number>>({})
+  const [golsEdit, setGolsEdit] = useState<Record<string, { normal: number; contra: number }>>({})
 
   useEffect(() => {
     fetch(`/api/partidas/${partida.id}/gols`)
@@ -28,17 +28,21 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   function startEdit() {
     setPlacarA(partida.placar_time_a != null ? String(partida.placar_time_a) : '')
     setPlacarB(partida.placar_time_b != null ? String(partida.placar_time_b) : '')
-    const map: Record<string, number> = {}
-    gols.forEach(g => { map[g.jogador_id] = g.quantidade })
+    const map: Record<string, { normal: number; contra: number }> = {}
+    gols.forEach(g => {
+      if (!map[g.jogador_id]) map[g.jogador_id] = { normal: 0, contra: 0 }
+      if (g.gol_contra) map[g.jogador_id].contra += g.quantidade
+      else map[g.jogador_id].normal += g.quantidade
+    })
     setGolsEdit(map)
     setEditing(true)
   }
 
-  function setPlayerGoals(jogadorId: string, value: number) {
+  function setPlayerGoals(jogadorId: string, tipo: 'normal' | 'contra', value: number) {
     setGolsEdit(prev => {
-      const next = { ...prev }
-      if (value <= 0) delete next[jogadorId]
-      else next[jogadorId] = value
+      const entry = prev[jogadorId] ?? { normal: 0, contra: 0 }
+      const next = { ...prev, [jogadorId]: { ...entry, [tipo]: Math.max(0, value) } }
+      if (next[jogadorId].normal === 0 && next[jogadorId].contra === 0) delete next[jogadorId]
       return next
     })
   }
@@ -46,10 +50,12 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   async function handleSave() {
     setSaving(true)
 
-    const goalsPayload = Object.entries(golsEdit).map(([jogador_id, quantidade]) => ({
-      jogador_id,
-      quantidade,
-    }))
+    const goalsPayload = Object.entries(golsEdit).flatMap(([jogador_id, { normal, contra }]) => {
+      const rows = []
+      if (normal > 0) rows.push({ jogador_id, quantidade: normal, gol_contra: false })
+      if (contra > 0) rows.push({ jogador_id, quantidade: contra, gol_contra: true })
+      return rows
+    })
 
     await Promise.all([
       fetch(`/api/partidas/${partida.id}`, {
@@ -98,23 +104,45 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   const hasTeams = partida.times_escolhidos != null
 
   function renderGoalRow(pj: typeof availablePlayers[number]) {
-    const qty = golsEdit[pj.jogador_id] ?? 0
+    const entry = golsEdit[pj.jogador_id] ?? { normal: 0, contra: 0 }
     return (
       <div key={pj.jogador_id} className="flex items-center gap-2">
-        <span className="text-white text-sm flex-1 truncate">{pj.jogador.nome}</span>
-        <div className="flex items-center gap-1.5">
+        <span className="text-white text-sm flex-1 truncate min-w-0">{pj.jogador.nome}</span>
+        {/* Gols normais */}
+        <div className="flex items-center gap-1">
+          <span className="text-gray-500 text-xs w-4 text-right">G</span>
           <button
-            onClick={() => setPlayerGoals(pj.jogador_id, qty - 1)}
-            disabled={qty === 0}
+            onClick={() => setPlayerGoals(pj.jogador_id, 'normal', entry.normal - 1)}
+            disabled={entry.normal === 0}
             className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white disabled:opacity-30 flex items-center justify-center text-base leading-none"
           >
             −
           </button>
-          <span className={`w-5 text-center text-sm font-bold ${qty > 0 ? 'text-lime-400' : 'text-gray-600'}`}>
-            {qty}
+          <span className={`w-5 text-center text-sm font-bold ${entry.normal > 0 ? 'text-lime-400' : 'text-gray-600'}`}>
+            {entry.normal}
           </span>
           <button
-            onClick={() => setPlayerGoals(pj.jogador_id, qty + 1)}
+            onClick={() => setPlayerGoals(pj.jogador_id, 'normal', entry.normal + 1)}
+            className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white flex items-center justify-center text-base leading-none"
+          >
+            +
+          </button>
+        </div>
+        {/* Gols contra */}
+        <div className="flex items-center gap-1">
+          <span className="text-orange-400 text-xs w-6 text-right font-medium">GC</span>
+          <button
+            onClick={() => setPlayerGoals(pj.jogador_id, 'contra', entry.contra - 1)}
+            disabled={entry.contra === 0}
+            className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white disabled:opacity-30 flex items-center justify-center text-base leading-none"
+          >
+            −
+          </button>
+          <span className={`w-5 text-center text-sm font-bold ${entry.contra > 0 ? 'text-orange-400' : 'text-gray-600'}`}>
+            {entry.contra}
+          </span>
+          <button
+            onClick={() => setPlayerGoals(pj.jogador_id, 'contra', entry.contra + 1)}
             className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white flex items-center justify-center text-base leading-none"
           >
             +
@@ -248,21 +276,32 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                     <p className="text-lime-400 text-xs font-semibold uppercase tracking-wide mb-2">{partida.nome_time_a}</p>
                     <div className="space-y-1.5">
                       {playersA.map(pj => {
-                        const golsJogador = gols.find(g => g.jogador_id === pj.jogador_id)
+                        const golsJogador = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra)
+                        const golsContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra)
+                        const totalNormal = golsJogador.reduce((s, g) => s + g.quantidade, 0)
+                        const totalContra = golsContra.reduce((s, g) => s + g.quantidade, 0)
+                        const hasAny = totalNormal > 0 || totalContra > 0
                         return (
                           <div key={pj.jogador_id} className="flex items-center gap-2">
-                            {golsJogador && (
+                            {hasAny && (
                               <svg className="w-3 h-3 text-lime-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10"/>
                                 <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
                               </svg>
                             )}
                             <span className="text-white text-sm">{pj.jogador.nome}</span>
-                            {golsJogador && (
-                              <span className="text-lime-400 text-xs ml-auto font-semibold">
-                                {golsJogador.quantidade} {golsJogador.quantidade === 1 ? 'gol' : 'gols'}
-                              </span>
-                            )}
+                            <div className="ml-auto flex items-center gap-1.5">
+                              {totalNormal > 0 && (
+                                <span className="text-lime-400 text-xs font-semibold">
+                                  {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
+                                </span>
+                              )}
+                              {totalContra > 0 && (
+                                <span className="text-orange-400 text-xs font-semibold">
+                                  {totalContra} GC
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )
                       })}
@@ -272,21 +311,32 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                     <p className="text-blue-400 text-xs font-semibold uppercase tracking-wide mb-2">{partida.nome_time_b}</p>
                     <div className="space-y-1.5">
                       {playersB.map(pj => {
-                        const golsJogador = gols.find(g => g.jogador_id === pj.jogador_id)
+                        const golsJogador = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra)
+                        const golsContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra)
+                        const totalNormal = golsJogador.reduce((s, g) => s + g.quantidade, 0)
+                        const totalContra = golsContra.reduce((s, g) => s + g.quantidade, 0)
+                        const hasAny = totalNormal > 0 || totalContra > 0
                         return (
                           <div key={pj.jogador_id} className="flex items-center gap-2">
-                            {golsJogador && (
+                            {hasAny && (
                               <svg className="w-3 h-3 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10"/>
                                 <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
                               </svg>
                             )}
                             <span className="text-white text-sm">{pj.jogador.nome}</span>
-                            {golsJogador && (
-                              <span className="text-blue-400 text-xs ml-auto font-semibold">
-                                {golsJogador.quantidade} {golsJogador.quantidade === 1 ? 'gol' : 'gols'}
-                              </span>
-                            )}
+                            <div className="ml-auto flex items-center gap-1.5">
+                              {totalNormal > 0 && (
+                                <span className="text-blue-400 text-xs font-semibold">
+                                  {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
+                                </span>
+                              )}
+                              {totalContra > 0 && (
+                                <span className="text-orange-400 text-xs font-semibold">
+                                  {totalContra} GC
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )
                       })}
@@ -296,21 +346,30 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
               ) : (
                 <div className="space-y-1.5">
                   {availablePlayers.sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')).map(pj => {
-                    const golsJogador = gols.find(g => g.jogador_id === pj.jogador_id)
+                    const totalNormal = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
+                    const totalContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
+                    const hasAny = totalNormal > 0 || totalContra > 0
                     return (
                       <div key={pj.jogador_id} className="flex items-center gap-2">
-                        {golsJogador && (
+                        {hasAny && (
                           <svg className="w-3 h-3 text-lime-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"/>
                             <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
                           </svg>
                         )}
                         <span className="text-white text-sm">{pj.jogador.nome}</span>
-                        {golsJogador && (
-                          <span className="text-lime-400 text-xs ml-auto font-semibold">
-                            {golsJogador.quantidade} {golsJogador.quantidade === 1 ? 'gol' : 'gols'}
-                          </span>
-                        )}
+                        <div className="ml-auto flex items-center gap-1.5">
+                          {totalNormal > 0 && (
+                            <span className="text-lime-400 text-xs font-semibold">
+                              {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
+                            </span>
+                          )}
+                          {totalContra > 0 && (
+                            <span className="text-orange-400 text-xs font-semibold">
+                              {totalContra} GC
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )
                   })}

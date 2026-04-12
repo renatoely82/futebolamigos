@@ -8,6 +8,7 @@ import JogadoresPartida from '@/components/partidas/JogadoresPartida'
 import ResultadoPartida from '@/components/partidas/ResultadoPartida'
 import Modal from '@/components/ui/Modal'
 import { StatusBadge, PositionBadge } from '@/components/ui/Badge'
+import { sortByPosition } from '@/lib/team-balancer'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -222,31 +223,31 @@ export default function PartidaDetailPage() {
             <div>
               <h3 className="text-lime-400 font-semibold text-sm mb-2">{partida.nome_time_a}</h3>
               <div className="space-y-1.5">
-                {partida.times_escolhidos.time_a.map(playerId => {
-                  const pj = players.find(p => p.jogador_id === playerId)
-                  if (!pj) return null
-                  return (
-                    <div key={playerId} className="flex items-center gap-2">
-                      <PositionBadge posicao={pj.jogador.posicao_principal} />
-                      <span className="text-white text-sm">{pj.jogador.nome}</span>
-                    </div>
-                  )
-                })}
+                {sortByPosition(
+                  partida.times_escolhidos.time_a
+                    .map(id => players.find(p => p.jogador_id === id)?.jogador)
+                    .filter(Boolean) as import('@/lib/supabase').Jogador[]
+                ).map(jogador => (
+                  <div key={jogador.id} className="flex items-center gap-2">
+                    <PositionBadge posicao={jogador.posicao_principal} />
+                    <span className="text-white text-sm">{jogador.nome}</span>
+                  </div>
+                ))}
               </div>
             </div>
             <div>
               <h3 className="text-blue-400 font-semibold text-sm mb-2">{partida.nome_time_b}</h3>
               <div className="space-y-1.5">
-                {partida.times_escolhidos.time_b.map(playerId => {
-                  const pj = players.find(p => p.jogador_id === playerId)
-                  if (!pj) return null
-                  return (
-                    <div key={playerId} className="flex items-center gap-2">
-                      <PositionBadge posicao={pj.jogador.posicao_principal} />
-                      <span className="text-white text-sm">{pj.jogador.nome}</span>
-                    </div>
-                  )
-                })}
+                {sortByPosition(
+                  partida.times_escolhidos.time_b
+                    .map(id => players.find(p => p.jogador_id === id)?.jogador)
+                    .filter(Boolean) as import('@/lib/supabase').Jogador[]
+                ).map(jogador => (
+                  <div key={jogador.id} className="flex items-center gap-2">
+                    <PositionBadge posicao={jogador.posicao_principal} />
+                    <span className="text-white text-sm">{jogador.nome}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

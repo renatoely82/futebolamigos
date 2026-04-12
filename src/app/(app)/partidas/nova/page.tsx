@@ -5,11 +5,79 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Temporada } from '@/lib/supabase'
 
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+
+function CalendarioInline({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const today = new Date()
+  const selected = value ? new Date(value + 'T12:00:00') : null
+  const [viewYear, setViewYear] = useState(selected?.getFullYear() ?? today.getFullYear())
+  const [viewMonth, setViewMonth] = useState(selected?.getMonth() ?? today.getMonth())
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay()
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
+    else setViewMonth(m => m - 1)
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
+    else setViewMonth(m => m + 1)
+  }
+  function selectDay(day: number) {
+    const d = new Date(viewYear, viewMonth, day)
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    onChange(iso)
+  }
+
+  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({length: daysInMonth}, (_, i) => i + 1)]
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  return (
+    <div className="bg-[#111] border border-[#333] rounded-xl p-4 select-none">
+      <div className="flex items-center justify-between mb-3">
+        <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-[#222] text-gray-400 hover:text-white transition-colors">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span className="text-white font-semibold text-sm">{MESES[viewMonth]} {viewYear}</span>
+        <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-[#222] text-gray-400 hover:text-white transition-colors">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div className="grid grid-cols-7 mb-1">
+        {DIAS_SEMANA.map(d => (
+          <div key={d} className="text-center text-xs text-gray-500 font-medium py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-0.5">
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />
+          const isSelected = selected && selected.getFullYear() === viewYear && selected.getMonth() === viewMonth && selected.getDate() === day
+          const isToday = today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === day
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => selectDay(day)}
+              className={`text-sm rounded-lg py-2 w-full transition-colors font-medium
+                ${isSelected ? 'bg-lime-500 text-black' : isToday ? 'bg-[#222] text-lime-400' : 'text-gray-300 hover:bg-[#222] hover:text-white'}`}
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function NovaPartidaPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [temporadas, setTemporadas] = useState<Temporada[]>([])
+  const [showCalendar, setShowCalendar] = useState(false)
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
     local: '',
@@ -18,6 +86,7 @@ export default function NovaPartidaPage() {
     nome_time_b: 'Azul',
     observacoes: '',
     temporada_id: '',
+    incluir_mensalistas: true,
   })
 
   useEffect(() => {
@@ -45,6 +114,7 @@ export default function NovaPartidaPage() {
           nome_time_a: form.nome_time_a || 'Amarelo',
           nome_time_b: form.nome_time_b || 'Azul',
           temporada_id: form.temporada_id || null,
+          incluir_mensalistas: form.incluir_mensalistas,
         }),
       })
       const data = await res.json()
@@ -70,13 +140,28 @@ export default function NovaPartidaPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Data *</label>
-            <input
-              type="date"
-              required
-              value={form.data}
-              onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-lime-500"
-            />
+            <button
+              type="button"
+              onClick={() => setShowCalendar(v => !v)}
+              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-left text-white focus:outline-none focus:border-lime-500 flex items-center justify-between"
+            >
+              <span>
+                {form.data
+                  ? new Date(form.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                  : 'Selecionar data'}
+              </span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${showCalendar ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </button>
+            {showCalendar && (
+              <div className="mt-2">
+                <CalendarioInline
+                  value={form.data}
+                  onChange={v => { setForm(f => ({ ...f, data: v })); setShowCalendar(false) }}
+                />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Local</label>
@@ -161,11 +246,27 @@ export default function NovaPartidaPage() {
             )}
           </div>
 
-          <div className="bg-lime-500/10 border border-lime-500/20 rounded-lg px-4 py-3">
-            <p className="text-lime-400 text-sm">
-              Os mensalistas da temporada serão incluídos automaticamente ao criar a partida.
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setForm(f => ({ ...f, incluir_mensalistas: !f.incluir_mensalistas }))}
+            className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors ${
+              form.incluir_mensalistas
+                ? 'bg-lime-500/10 border-lime-500/30'
+                : 'bg-[#111] border-[#333]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <svg className={`w-5 h-5 flex-shrink-0 ${form.incluir_mensalistas ? 'text-lime-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span className={`text-sm font-medium ${form.incluir_mensalistas ? 'text-lime-400' : 'text-gray-400'}`}>
+                Incluir mensalistas automaticamente
+              </span>
+            </div>
+            <div className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${form.incluir_mensalistas ? 'bg-lime-500' : 'bg-[#444]'}`}>
+              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${form.incluir_mensalistas ? 'left-5' : 'left-1'}`} />
+            </div>
+          </button>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 

@@ -2,9 +2,11 @@ import type { Jogador, TeamSplit, PropostaTimeComJogadores } from './supabase'
 import { POSICAO_GRUPO, POSICOES } from './supabase'
 
 export function sortByPosition(players: Jogador[]): Jogador[] {
-  return [...players].sort(
-    (a, b) => POSICOES.indexOf(a.posicao_principal) - POSICOES.indexOf(b.posicao_principal)
-  )
+  return [...players].sort((a, b) => {
+    const posDiff = POSICOES.indexOf(a.posicao_principal) - POSICOES.indexOf(b.posicao_principal)
+    if (posDiff !== 0) return posDiff
+    return a.nome.localeCompare(b.nome, 'pt-BR')
+  })
 }
 
 function shuffle<T>(arr: T[]): T[] {
