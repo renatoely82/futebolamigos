@@ -15,7 +15,6 @@ export interface JogadorFormData {
   posicao_principal: Posicao
   posicao_secundaria_1: Posicao | null
   posicao_secundaria_2: Posicao | null
-  mensalista: boolean
   nivel: Nivel
   telefone: string
   aniversario: string
@@ -30,7 +29,6 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
     posicao_principal: initial?.posicao_principal ?? 'Atacante',
     posicao_secundaria_1: initial?.posicao_secundaria_1 ?? null,
     posicao_secundaria_2: initial?.posicao_secundaria_2 ?? null,
-    mensalista: initial?.mensalista ?? false,
     nivel: initial?.nivel ?? 3,
     telefone: initial?.telefone ?? '',
     aniversario: initial?.aniversario ?? '',
@@ -129,7 +127,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
         </div>
       </div>
 
-      {/* Mensalista + Telefone */}
+      {/* Telefone + Aniversário */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">Telefone</label>
@@ -150,20 +148,6 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
             className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-lime-500"
           />
         </div>
-      </div>
-
-      {/* Mensalista toggle */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => set('mensalista', !form.mensalista)}
-          className={`relative w-11 h-6 rounded-full transition-colors ${form.mensalista ? 'bg-lime-500' : 'bg-[#333]'}`}
-        >
-          <span
-            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${form.mensalista ? 'translate-x-5' : 'translate-x-0'}`}
-          />
-        </button>
-        <span className="text-sm text-gray-300">Mensalista (incluso automaticamente nas partidas)</span>
       </div>
 
       {/* Observações */}

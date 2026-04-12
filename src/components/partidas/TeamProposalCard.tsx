@@ -1,61 +1,212 @@
 'use client'
 
+import { useState } from 'react'
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+} from '@dnd-kit/core'
 import type { Jogador, PropostaTimeComJogadores } from '@/lib/supabase'
 import { PositionBadge } from '@/components/ui/Badge'
+import { sortByPosition } from '@/lib/team-balancer'
 
 interface TeamProposalCardProps {
   proposta: PropostaTimeComJogadores
   onSelect: () => void
   selected: boolean
   loading: boolean
+  nomeTimeA: string
+  nomeTimeB: string
+  onTeamsChange?: (timeA: Jogador[], timeB: Jogador[]) => void
 }
 
-function PlayerRow({ jogador }: { jogador: Jogador }) {
+function PlayerContent({ jogador }: { jogador: Jogador }) {
   return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-[#222] last:border-0">
-      <PositionBadge posicao={jogador.posicao_principal} />
-      <span className="text-white text-sm flex-1 truncate">{jogador.nome}</span>
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map(n => (
-          <div key={n} className={`w-2 h-2 rounded-sm ${n <= jogador.nivel ? 'bg-lime-500' : 'bg-[#333]'}`} />
-        ))}
+    <>
+      <div className="flex items-center gap-1.5">
+        <PositionBadge posicao={jogador.posicao_principal} />
+        <div className="flex gap-0.5 ml-auto">
+          {[1, 2, 3, 4, 5].map(n => (
+            <div key={n} className={`w-2 h-2 rounded-sm ${n <= jogador.nivel ? 'bg-lime-500' : 'bg-[#333]'}`} />
+          ))}
+        </div>
       </div>
+      <span className="text-white text-xs mt-0.5 block leading-snug">{jogador.nome}</span>
+    </>
+  )
+}
+
+function DraggablePlayer({ jogador, propNum, sourceTeam }: {
+  jogador: Jogador
+  propNum: number
+  sourceTeam: 'time-a' | 'time-b'
+}) {
+  const dragId = `p${propNum}-${sourceTeam}-${jogador.id}`
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: dragId,
+    data: { jogador, sourceTeam },
+  })
+
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
+    : undefined
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`py-1.5 border-b border-[#222] last:border-0 cursor-grab active:cursor-grabbing select-none transition-opacity ${isDragging ? 'opacity-30' : ''}`}
+      {...listeners}
+      {...attributes}
+    >
+      <PlayerContent jogador={jogador} />
     </div>
   )
 }
 
-export default function TeamProposalCard({ proposta, onSelect, selected, loading }: TeamProposalCardProps) {
+function DroppableTeam({ id, label, score, players, propNum, isDropTarget }: {
+  id: 'time-a' | 'time-b'
+  label: string
+  score: number
+  players: Jogador[]
+  propNum: number
+  isDropTarget: boolean
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id })
+  const color = id === 'time-a' ? 'text-lime-400' : 'text-blue-400'
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`p-4 transition-colors ${isOver && isDropTarget ? 'bg-white/5 rounded-lg' : ''}`}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className={`${color} font-semibold text-sm`}>{label}</span>
+        <span className="text-gray-500 text-xs">Força: {score}</span>
+      </div>
+      {sortByPosition(players).map(j => (
+        <DraggablePlayer key={j.id} jogador={j} propNum={propNum} sourceTeam={id} />
+      ))}
+      {players.length === 0 && (
+        <div className="text-gray-600 text-xs text-center py-4 border border-dashed border-[#333] rounded-lg">
+          Arraste um jogador aqui
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function TeamProposalCard({
+  proposta,
+  onSelect,
+  selected,
+  loading,
+  nomeTimeA,
+  nomeTimeB,
+  onTeamsChange,
+}: TeamProposalCardProps) {
+  const [draggingSourceTeam, setDraggingSourceTeam] = useState<'time-a' | 'time-b' | null>(null)
+  const [activePlayer, setActivePlayer] = useState<Jogador | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  )
+
   const scoreA = proposta.time_a.reduce((s, j) => s + j.nivel, 0)
   const scoreB = proposta.time_b.reduce((s, j) => s + j.nivel, 0)
+
+  function handleDragStart(event: DragStartEvent) {
+    const data = event.active.data.current
+    if (data) {
+      setActivePlayer(data.jogador as Jogador)
+      setDraggingSourceTeam(data.sourceTeam as 'time-a' | 'time-b')
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActivePlayer(null)
+    setDraggingSourceTeam(null)
+
+    const { active, over } = event
+    if (!over || !onTeamsChange) return
+
+    const sourceTeam = active.data.current?.sourceTeam as 'time-a' | 'time-b'
+    const targetTeam = over.id as 'time-a' | 'time-b'
+    if (sourceTeam === targetTeam) return
+
+    const jogador = active.data.current?.jogador as Jogador
+    if (!jogador) return
+
+    let newTimeA = [...proposta.time_a]
+    let newTimeB = [...proposta.time_b]
+
+    if (sourceTeam === 'time-a') {
+      newTimeA = newTimeA.filter(j => j.id !== jogador.id)
+      newTimeB = [...newTimeB, jogador]
+    } else {
+      newTimeB = newTimeB.filter(j => j.id !== jogador.id)
+      newTimeA = [...newTimeA, jogador]
+    }
+
+    onTeamsChange(sortByPosition(newTimeA), sortByPosition(newTimeB))
+  }
 
   return (
     <div className={`bg-[#1a1a1a] border rounded-xl overflow-hidden transition-all ${
       selected ? 'border-lime-500 ring-1 ring-lime-500/50' : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
     }`}>
       <div className="p-4 border-b border-[#222] flex items-center justify-between">
-        <span className="text-white font-semibold">Proposta {proposta.proposta_numero}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-white font-semibold">Proposta {proposta.proposta_numero}</span>
+          {onTeamsChange && (
+            <span className="text-gray-600 text-xs">• arraste para trocar</span>
+          )}
+        </div>
         {selected && (
           <span className="bg-lime-500 text-black text-xs font-bold px-2 py-0.5 rounded">Selecionada</span>
         )}
       </div>
-      <div className="grid grid-cols-2 divide-x divide-[#222]">
-        {/* Time A */}
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-lime-400 font-semibold text-sm">Time A</span>
-            <span className="text-gray-500 text-xs">Força: {scoreA}</span>
-          </div>
-          {proposta.time_a.map(j => <PlayerRow key={j.id} jogador={j} />)}
+
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-2 divide-x divide-[#222]">
+          <DroppableTeam
+            id="time-a"
+            label={nomeTimeA}
+            score={scoreA}
+            players={proposta.time_a}
+            propNum={proposta.proposta_numero}
+            isDropTarget={draggingSourceTeam === 'time-b'}
+          />
+          <DroppableTeam
+            id="time-b"
+            label={nomeTimeB}
+            score={scoreB}
+            players={proposta.time_b}
+            propNum={proposta.proposta_numero}
+            isDropTarget={draggingSourceTeam === 'time-a'}
+          />
         </div>
-        {/* Time B */}
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-blue-400 font-semibold text-sm">Time B</span>
-            <span className="text-gray-500 text-xs">Força: {scoreB}</span>
-          </div>
-          {proposta.time_b.map(j => <PlayerRow key={j.id} jogador={j} />)}
-        </div>
-      </div>
+        <DragOverlay>
+          {activePlayer && (
+            <div className="bg-[#2a2a2a] border border-lime-500/60 rounded-lg p-2.5 shadow-2xl cursor-grabbing min-w-[140px]">
+              <PlayerContent jogador={activePlayer} />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+
       <div className="p-4 border-t border-[#222]">
         <button
           onClick={onSelect}

@@ -19,6 +19,17 @@ const navItems = [
     ),
   },
   {
+    href: '/temporadas',
+    label: 'Temporadas',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M8 21V13a4 4 0 0 1 8 0v8" />
+        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M3 21h18" />
+        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M12 3l1.5 3 3.5.5-2.5 2.4.6 3.5L12 11l-3.1 1.4.6-3.5L7 6.5l3.5-.5z" />
+      </svg>
+    ),
+  },
+  {
     href: '/jogadores',
     label: 'Jogadores',
     icon: (
@@ -27,6 +38,17 @@ const navItems = [
         <circle cx="9" cy="7" r="4" strokeWidth={1.5} />
         <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87" />
         <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+  {
+    href: '/pagamentos',
+    label: 'Pagamentos',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <rect x="2" y="5" width="20" height="14" rx="2" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M2 10h20" />
+        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M6 15h2m4 0h2" />
       </svg>
     ),
   },

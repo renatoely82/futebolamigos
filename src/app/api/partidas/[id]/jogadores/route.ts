@@ -20,12 +20,22 @@ export async function GET(
   return Response.json(data)
 }
 
+async function checkPartidaRealizada(supabase: Awaited<ReturnType<typeof createClient>>, id: string) {
+  const { data } = await supabase.from('partidas').select('status').eq('id', id).single()
+  return data?.status === 'realizada'
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
   const supabase = await createClient()
+
+  if (await checkPartidaRealizada(supabase, id)) {
+    return Response.json({ error: 'Partida já realizada. Convocados não podem ser modificados.' }, { status: 403 })
+  }
+
   const { jogador_id } = await request.json()
 
   const { data, error } = await supabase
@@ -49,6 +59,11 @@ export async function DELETE(
 ) {
   const { id } = await params
   const supabase = await createClient()
+
+  if (await checkPartidaRealizada(supabase, id)) {
+    return Response.json({ error: 'Partida já realizada. Convocados não podem ser modificados.' }, { status: 403 })
+  }
+
   const { jogador_id } = await request.json()
 
   const { error } = await supabase

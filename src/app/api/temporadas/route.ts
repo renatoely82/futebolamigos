@@ -2,11 +2,11 @@ import { createClient } from '@/lib/supabase-server'
 
 export async function GET() {
   const supabase = await createClient()
+
   const { data, error } = await supabase
-    .from('jogadores')
+    .from('temporadas')
     .select('*')
-    .eq('ativo', true)
-    .order('nome')
+    .order('data_inicio', { ascending: false })
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json(data)
@@ -16,18 +16,17 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const body = await request.json()
 
+  if (body.ativa) {
+    await supabase.from('temporadas').update({ ativa: false }).eq('ativa', true)
+  }
+
   const { data, error } = await supabase
-    .from('jogadores')
+    .from('temporadas')
     .insert({
       nome: body.nome,
-      posicao_principal: body.posicao_principal,
-      posicao_secundaria_1: body.posicao_secundaria_1 || null,
-      posicao_secundaria_2: body.posicao_secundaria_2 || null,
-      nivel: body.nivel ?? 3,
-      telefone: body.telefone || null,
-      aniversario: body.aniversario || null,
-      observacoes: body.observacoes || null,
-      ativo: true,
+      data_inicio: body.data_inicio,
+      data_fim: body.data_fim,
+      ativa: body.ativa ?? false,
     })
     .select()
     .single()

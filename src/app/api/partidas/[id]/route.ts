@@ -33,6 +33,12 @@ export async function PUT(
       ...(body.status !== undefined && { status: body.status }),
       ...(body.observacoes !== undefined && { observacoes: body.observacoes || null }),
       ...(body.times_escolhidos !== undefined && { times_escolhidos: body.times_escolhidos }),
+      ...(body.numero_jogadores !== undefined && { numero_jogadores: body.numero_jogadores ?? null }),
+      ...(body.nome_time_a !== undefined && { nome_time_a: body.nome_time_a || 'Amarelo' }),
+      ...(body.nome_time_b !== undefined && { nome_time_b: body.nome_time_b || 'Azul' }),
+      ...(body.placar_time_a !== undefined && { placar_time_a: body.placar_time_a ?? null }),
+      ...(body.placar_time_b !== undefined && { placar_time_b: body.placar_time_b ?? null }),
+      ...(body.temporada_id !== undefined && { temporada_id: body.temporada_id || null }),
     })
     .eq('id', id)
     .select()

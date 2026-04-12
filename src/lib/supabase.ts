@@ -28,7 +28,6 @@ export interface Jogador {
   posicao_principal: Posicao
   posicao_secundaria_1: Posicao | null
   posicao_secundaria_2: Posicao | null
-  mensalista: boolean
   nivel: Nivel
   telefone: string | null
   aniversario: string | null
@@ -38,6 +37,53 @@ export interface Jogador {
   atualizado_em: string
 }
 
+export interface TemporadaMensalista {
+  id: string
+  temporada_id: string
+  jogador_id: string
+  criado_em: string
+}
+
+export interface PagamentoMensalista {
+  id: string
+  temporada_id: string
+  jogador_id: string
+  mes: number
+  ano: number
+  pago: boolean
+  data_pagamento: string | null
+  observacoes: string | null
+  criado_em: string
+  atualizado_em: string
+}
+
+export interface PagamentoMensalistaComJogador extends PagamentoMensalista {
+  jogador: Jogador
+}
+
+export interface Temporada {
+  id: string
+  nome: string
+  data_inicio: string
+  data_fim: string
+  ativa: boolean
+  criado_em: string
+  atualizado_em: string
+}
+
+export interface ClassificacaoEntry {
+  jogador_id: string
+  nome: string
+  posicao_principal: Posicao
+  jogos: number
+  vitorias: number
+  empates: number
+  derrotas: number
+  pontos: number
+  gols: number
+  aproveitamento: number
+}
+
 export interface Partida {
   id: string
   data: string
@@ -45,8 +91,26 @@ export interface Partida {
   status: StatusPartida
   times_escolhidos: TeamSplit | null
   observacoes: string | null
+  numero_jogadores: number | null
+  nome_time_a: string
+  nome_time_b: string
+  placar_time_a: number | null
+  placar_time_b: number | null
+  temporada_id: string | null
   criado_em: string
   atualizado_em: string
+}
+
+export interface Gol {
+  id: string
+  partida_id: string
+  jogador_id: string
+  quantidade: number
+  criado_em: string
+}
+
+export interface GolComDetalhes extends Gol {
+  jogador: Jogador
 }
 
 export interface PartidaJogador {
@@ -93,6 +157,11 @@ export type Database = {
         Insert: Omit<Jogador, 'id' | 'criado_em' | 'atualizado_em'>
         Update: Partial<Omit<Jogador, 'id' | 'criado_em' | 'atualizado_em'>>
       }
+      temporadas: {
+        Row: Temporada
+        Insert: Omit<Temporada, 'id' | 'criado_em' | 'atualizado_em'>
+        Update: Partial<Omit<Temporada, 'id' | 'criado_em' | 'atualizado_em'>>
+      }
       partidas: {
         Row: Partida
         Insert: Omit<Partida, 'id' | 'criado_em' | 'atualizado_em'>
@@ -107,6 +176,21 @@ export type Database = {
         Row: PropostaTime
         Insert: Omit<PropostaTime, 'id' | 'criado_em'>
         Update: Partial<Omit<PropostaTime, 'id' | 'criado_em'>>
+      }
+      gols: {
+        Row: Gol
+        Insert: Omit<Gol, 'id' | 'criado_em'>
+        Update: Partial<Omit<Gol, 'id' | 'criado_em'>>
+      }
+      temporada_mensalistas: {
+        Row: TemporadaMensalista
+        Insert: Omit<TemporadaMensalista, 'id' | 'criado_em'>
+        Update: Partial<Omit<TemporadaMensalista, 'id' | 'criado_em'>>
+      }
+      pagamentos_mensalistas: {
+        Row: PagamentoMensalista
+        Insert: Omit<PagamentoMensalista, 'id' | 'criado_em' | 'atualizado_em'>
+        Update: Partial<Omit<PagamentoMensalista, 'id' | 'criado_em' | 'atualizado_em'>>
       }
     }
   }

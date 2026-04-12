@@ -1,5 +1,11 @@
 import type { Jogador, TeamSplit, PropostaTimeComJogadores } from './supabase'
-import { POSICAO_GRUPO } from './supabase'
+import { POSICAO_GRUPO, POSICOES } from './supabase'
+
+export function sortByPosition(players: Jogador[]): Jogador[] {
+  return [...players].sort(
+    (a, b) => POSICOES.indexOf(a.posicao_principal) - POSICOES.indexOf(b.posicao_principal)
+  )
+}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -103,7 +109,7 @@ function generateOneSplit(players: Jogador[]): { split: TeamSplit; jogadores: { 
       time_a: teamA.map(p => p.id),
       time_b: teamB.map(p => p.id),
     },
-    jogadores: { time_a: teamA, time_b: teamB },
+    jogadores: { time_a: sortByPosition(teamA), time_b: sortByPosition(teamB) },
   }
 }
 

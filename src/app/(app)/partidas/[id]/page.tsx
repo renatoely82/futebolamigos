@@ -1,33 +1,43 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { Partida, Jogador, PartidaJogadorComDetalhes } from '@/lib/supabase'
+import type { Partida, Jogador, PartidaJogadorComDetalhes, Temporada } from '@/lib/supabase'
 import JogadoresPartida from '@/components/partidas/JogadoresPartida'
-import { StatusBadge } from '@/components/ui/Badge'
+import ResultadoPartida from '@/components/partidas/ResultadoPartida'
+import Modal from '@/components/ui/Modal'
+import { StatusBadge, PositionBadge } from '@/components/ui/Badge'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export default function PartidaDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = params.id as string
 
   const [partida, setPartida] = useState<Partida | null>(null)
   const [players, setPlayers] = useState<PartidaJogadorComDetalhes[]>([])
   const [allPlayers, setAllPlayers] = useState<Jogador[]>([])
+  const [temporadas, setTemporadas] = useState<Temporada[]>([])
   const [loading, setLoading] = useState(true)
   const [statusSaving, setStatusSaving] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [editingTemporada, setEditingTemporada] = useState(false)
+  const [temporadaSaving, setTemporadaSaving] = useState(false)
 
   const loadPartida = useCallback(async () => {
-    const [pRes, pjRes, apRes] = await Promise.all([
+    const [pRes, pjRes, apRes, tRes] = await Promise.all([
       fetch(`/api/partidas/${id}`),
       fetch(`/api/partidas/${id}/jogadores`),
       fetch('/api/jogadores'),
+      fetch('/api/temporadas'),
     ])
     if (pRes.ok) setPartida(await pRes.json())
     if (pjRes.ok) setPlayers(await pjRes.json())
     if (apRes.ok) setAllPlayers(await apRes.json())
+    if (tRes.ok) setTemporadas(await tRes.json())
     setLoading(false)
   }, [id])
 
@@ -42,6 +52,29 @@ export default function PartidaDetailPage() {
     })
     setPartida(p => p ? { ...p, status: newStatus as Partida['status'] } : p)
     setStatusSaving(false)
+  }
+
+  async function handleTemporadaChange(temporadaId: string) {
+    setTemporadaSaving(true)
+    await fetch(`/api/partidas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ temporada_id: temporadaId || null }),
+    })
+    setPartida(p => p ? { ...p, temporada_id: temporadaId || null } : p)
+    setTemporadaSaving(false)
+    setEditingTemporada(false)
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    const res = await fetch(`/api/partidas/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      router.push('/partidas')
+    } else {
+      setDeleting(false)
+      setShowDeleteModal(false)
+    }
   }
 
   // WhatsApp share
@@ -75,6 +108,17 @@ export default function PartidaDetailPage() {
           {partida.local && <p className="text-gray-500 text-sm mt-1">{partida.local}</p>}
         </div>
         <div className="flex gap-2 shrink-0">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            title="Excluir partida"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Excluir
+          </button>
           <button
             onClick={handleShare}
             className="flex items-center gap-2 bg-[#25D366]/20 hover:bg-[#25D366]/30 text-[#25D366] px-3 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -115,6 +159,109 @@ export default function PartidaDetailPage() {
         </div>
       </div>
 
+      {/* Temporada */}
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-gray-400 text-sm shrink-0">Temporada:</span>
+          {editingTemporada ? (
+            <div className="flex items-center gap-2 flex-1">
+              <select
+                autoFocus
+                disabled={temporadaSaving}
+                defaultValue={partida.temporada_id ?? ''}
+                onChange={e => handleTemporadaChange(e.target.value)}
+                className="flex-1 bg-[#222] border border-[#333] text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-lime-500 disabled:opacity-50"
+              >
+                <option value="">Sem temporada</option>
+                {temporadas.map(t => (
+                  <option key={t.id} value={t.id}>{t.nome}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setEditingTemporada(false)}
+                className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <>
+              {partida.temporada_id ? (
+                <span className="text-white text-sm font-medium">
+                  {temporadas.find(t => t.id === partida.temporada_id)?.nome ?? '—'}
+                </span>
+              ) : (
+                <span className="text-gray-600 text-sm italic">Não vinculada</span>
+              )}
+              <button
+                onClick={() => setEditingTemporada(true)}
+                className="ml-auto text-gray-500 hover:text-lime-400 text-sm transition-colors"
+              >
+                {partida.temporada_id ? 'Alterar' : 'Vincular'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Times definidos */}
+      {partida.times_escolhidos && (
+        <div className="bg-[#1a1a1a] border border-lime-500/30 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white font-semibold">Times Definidos</h2>
+            {partida.status !== 'realizada' && (
+              <Link
+                href={`/partidas/${id}/times`}
+                className="text-lime-400 text-sm hover:text-lime-300 transition-colors"
+              >
+                Alterar →
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lime-400 font-semibold text-sm mb-2">{partida.nome_time_a}</h3>
+              <div className="space-y-1.5">
+                {partida.times_escolhidos.time_a.map(playerId => {
+                  const pj = players.find(p => p.jogador_id === playerId)
+                  if (!pj) return null
+                  return (
+                    <div key={playerId} className="flex items-center gap-2">
+                      <PositionBadge posicao={pj.jogador.posicao_principal} />
+                      <span className="text-white text-sm">{pj.jogador.nome}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-blue-400 font-semibold text-sm mb-2">{partida.nome_time_b}</h3>
+              <div className="space-y-1.5">
+                {partida.times_escolhidos.time_b.map(playerId => {
+                  const pj = players.find(p => p.jogador_id === playerId)
+                  if (!pj) return null
+                  return (
+                    <div key={playerId} className="flex items-center gap-2">
+                      <PositionBadge posicao={pj.jogador.posicao_principal} />
+                      <span className="text-white text-sm">{pj.jogador.nome}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resultado */}
+      {partida.status === 'realizada' && (
+        <ResultadoPartida
+          partida={partida}
+          players={players}
+          onUpdate={loadPartida}
+        />
+      )}
+
       {/* Players management */}
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
         <JogadoresPartida
@@ -122,8 +269,39 @@ export default function PartidaDetailPage() {
           confirmedPlayers={players}
           allPlayers={allPlayers}
           onUpdate={loadPartida}
+          readonly={partida.status === 'realizada'}
         />
       </div>
+
+      <Modal
+        open={showDeleteModal}
+        onClose={() => { if (!deleting) setShowDeleteModal(false) }}
+        title="Excluir Partida"
+      >
+        <p className="text-gray-300 text-sm mb-6">
+          Tem certeza que deseja excluir a partida de{' '}
+          <strong className="text-white">
+            {format(parseISO(partida.data), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          </strong>?
+          Esta ação não pode ser desfeita.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            {deleting ? 'Excluindo...' : 'Excluir Partida'}
+          </button>
+          <button
+            onClick={() => setShowDeleteModal(false)}
+            disabled={deleting}
+            className="flex-1 bg-[#222] hover:bg-[#333] disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

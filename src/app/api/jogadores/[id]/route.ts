@@ -31,7 +31,6 @@ export async function PUT(
       posicao_principal: body.posicao_principal,
       posicao_secundaria_1: body.posicao_secundaria_1 || null,
       posicao_secundaria_2: body.posicao_secundaria_2 || null,
-      mensalista: body.mensalista,
       nivel: body.nivel,
       telefone: body.telefone || null,
       aniversario: body.aniversario || null,

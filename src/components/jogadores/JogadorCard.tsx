@@ -16,11 +16,6 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-white font-semibold truncate">{jogador.nome}</h3>
-            {jogador.mensalista && (
-              <span className="bg-lime-500/20 text-lime-400 text-xs px-2 py-0.5 rounded font-medium">
-                Mensalista
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <PositionBadge posicao={jogador.posicao_principal} />
