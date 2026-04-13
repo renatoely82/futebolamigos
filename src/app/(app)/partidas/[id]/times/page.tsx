@@ -4,10 +4,19 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Jogador, PartidaJogadorComDetalhes, Partida, PropostaTimeComJogadores } from '@/lib/supabase'
+import { POSICAO_CORES } from '@/lib/supabase'
 import TeamProposalCard from '@/components/partidas/TeamProposalCard'
 import TeamEditor from '@/components/partidas/TeamEditor'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
+interface PartidaAnteriorTimes {
+  data: string
+  nome_time_a: string
+  nome_time_b: string
+  time_a: Jogador[]
+  time_b: Jogador[]
+}
 
 export default function TimesPage() {
   const params = useParams()
@@ -23,13 +32,26 @@ export default function TimesPage() {
   const [editTimeA, setEditTimeA] = useState<Jogador[]>([])
   const [editTimeB, setEditTimeB] = useState<Jogador[]>([])
   const [editBanco, setEditBanco] = useState<Jogador[]>([])
+  const [partidaAnterior, setPartidaAnterior] = useState<PartidaAnteriorTimes | null>(null)
+  const [showPartidaAnterior, setShowPartidaAnterior] = useState(false)
 
   const loadPartida = useCallback(async () => {
     const res = await fetch(`/api/partidas/${id}`)
     if (res.ok) setPartida(await res.json())
   }, [id])
 
-  useEffect(() => { loadPartida() }, [loadPartida])
+  const loadPartidaAnterior = useCallback(async () => {
+    const res = await fetch(`/api/partidas/${id}/times`)
+    if (res.ok) {
+      const data = await res.json()
+      setPartidaAnterior(data)
+    }
+  }, [id])
+
+  useEffect(() => {
+    loadPartida()
+    loadPartidaAnterior()
+  }, [loadPartida, loadPartidaAnterior])
 
   async function generateTeams() {
     setEditMode(false)
@@ -184,6 +206,54 @@ export default function TimesPage() {
           </div>
         )}
       </div>
+
+      {partidaAnterior && (
+        <div className="mb-5 border border-[#e2e8f0] rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowPartidaAnterior(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-semibold text-gray-600">
+                Jogo anterior —{' '}
+                {format(parseISO(partidaAnterior.data), "d 'de' MMMM", { locale: ptBR })}
+              </span>
+            </div>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${showPartidaAnterior ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showPartidaAnterior && (
+            <div className="px-4 py-3 grid grid-cols-2 gap-3">
+              {([
+                { nome: partidaAnterior.nome_time_a, jogadores: partidaAnterior.time_a },
+                { nome: partidaAnterior.nome_time_b, jogadores: partidaAnterior.time_b },
+              ] as const).map((time) => (
+                <div key={time.nome}>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">{time.nome}</p>
+                  <ul className="space-y-1">
+                    {time.jogadores.map((j) => (
+                      <li key={j.id} className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${POSICAO_CORES[j.posicao_principal]} shrink-0`}>
+                          {j.posicao_principal.substring(0, 3).toUpperCase()}
+                        </span>
+                        <span className="text-sm text-gray-700 truncate">{j.nome}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-xl px-4 py-3">

@@ -2,6 +2,57 @@ import { createClient } from '@/lib/supabase-server'
 import { generateTeamProposals } from '@/lib/team-balancer'
 import type { Jogador } from '@/lib/supabase'
 
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = await createClient()
+
+  const { data: currentPartida } = await supabase
+    .from('partidas')
+    .select('data, temporada_id')
+    .eq('id', id)
+    .single()
+
+  if (!currentPartida) return Response.json(null)
+
+  let query = supabase
+    .from('partidas')
+    .select('data, nome_time_a, nome_time_b, times_escolhidos')
+    .lt('data', currentPartida.data)
+    .not('times_escolhidos', 'is', null)
+    .order('data', { ascending: false })
+    .limit(1)
+
+  if (currentPartida.temporada_id) {
+    query = query.eq('temporada_id', currentPartida.temporada_id)
+  }
+
+  const { data: lastMatch } = await query.single()
+  if (!lastMatch?.times_escolhidos) return Response.json(null)
+
+  const allIds = [
+    ...lastMatch.times_escolhidos.time_a,
+    ...lastMatch.times_escolhidos.time_b,
+  ]
+
+  const { data: jogadores } = await supabase
+    .from('jogadores')
+    .select('*')
+    .in('id', allIds)
+
+  const jogadoresMap = new Map((jogadores ?? []).map((j: Jogador) => [j.id, j]))
+
+  return Response.json({
+    data: lastMatch.data,
+    nome_time_a: lastMatch.nome_time_a,
+    nome_time_b: lastMatch.nome_time_b,
+    time_a: lastMatch.times_escolhidos.time_a.map((id: string) => jogadoresMap.get(id)).filter(Boolean),
+    time_b: lastMatch.times_escolhidos.time_b.map((id: string) => jogadoresMap.get(id)).filter(Boolean),
+  })
+}
+
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
