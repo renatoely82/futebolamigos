@@ -114,6 +114,15 @@ export default async function PartidasPage({
                         </span>
                       )}
                     </div>
+                    {p.status === 'realizada' && p.placar_time_a !== null && p.placar_time_b !== null && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-gray-700 text-sm font-medium truncate max-w-[100px]">{p.nome_time_a}</span>
+                        <span className="bg-gray-800 text-white text-sm font-bold px-3 py-0.5 rounded-lg tabular-nums shrink-0">
+                          {p.placar_time_a} – {p.placar_time_b}
+                        </span>
+                        <span className="text-gray-700 text-sm font-medium truncate max-w-[100px]">{p.nome_time_b}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-4 mt-2 text-gray-500 text-sm">
                       {p.local && <span>{p.local}</span>}
                       <span>{count} jogadores</span>
