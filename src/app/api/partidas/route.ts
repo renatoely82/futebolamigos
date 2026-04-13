@@ -17,6 +17,11 @@ export async function GET(request: Request) {
     query = query.eq('temporada_id', temporadaId)
   }
 
+  const dataInicio = searchParams.get('data_inicio')
+  const dataFim = searchParams.get('data_fim')
+  if (dataInicio) query = query.gte('data', dataInicio)
+  if (dataFim) query = query.lte('data', dataFim)
+
   const { data, error } = await query
 
   if (error) return Response.json({ error: error.message }, { status: 500 })

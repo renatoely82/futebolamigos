@@ -1,17 +1,25 @@
 import { createClient } from '@/lib/supabase-server'
 import type { ClassificacaoEntry, Posicao, TeamSplit } from '@/lib/supabase'
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: temporadaId } = await params
   const supabase = await createClient()
+  const { searchParams } = new URL(request.url)
+  const dataInicio = searchParams.get('data_inicio')
+  const dataFim = searchParams.get('data_fim')
 
-  const { data: partidas } = await supabase
+  let partidasQuery = supabase
     .from('partidas')
     .select('id, placar_time_a, placar_time_b, times_escolhidos')
     .eq('temporada_id', temporadaId)
     .eq('status', 'realizada')
     .not('placar_time_a', 'is', null)
     .not('placar_time_b', 'is', null)
+
+  if (dataInicio) partidasQuery = partidasQuery.gte('data', dataInicio)
+  if (dataFim) partidasQuery = partidasQuery.lte('data', dataFim)
+
+  const { data: partidas } = await partidasQuery
 
   if (!partidas || partidas.length === 0) return Response.json([])
 

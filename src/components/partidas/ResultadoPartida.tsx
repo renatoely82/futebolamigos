@@ -279,32 +279,19 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                     <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorA}`}>{partida.nome_time_a}</p>
                     <div className="space-y-1.5">
                       {playersA.map(pj => {
-                        const golsJogador = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra)
-                        const golsContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra)
-                        const totalNormal = golsJogador.reduce((s, g) => s + g.quantidade, 0)
-                        const totalContra = golsContra.reduce((s, g) => s + g.quantidade, 0)
-                        const hasAny = totalNormal > 0 || totalContra > 0
+                        const totalNormal = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
+                        const totalContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
                         return (
                           <div key={pj.jogador_id} className="flex items-center gap-2">
-                            {hasAny && (
-                              <svg className={`w-3 h-3 shrink-0 ${colorA}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
-                              </svg>
-                            )}
-                            <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
-                            <div className="ml-auto flex items-center gap-1.5">
+                            <span className="text-gray-800 text-sm flex-1 truncate">{pj.jogador.nome}</span>
+                            <span className="flex items-center gap-1 shrink-0">
                               {totalNormal > 0 && (
-                                <span className={`text-xs font-semibold ${colorA}`}>
-                                  {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
-                                </span>
+                                <span className="text-xs font-semibold text-gray-500">⚽ {totalNormal}</span>
                               )}
                               {totalContra > 0 && (
-                                <span className="text-orange-500 text-xs font-semibold">
-                                  {totalContra} GC
-                                </span>
+                                <span className="text-xs font-semibold text-red-400">GC {totalContra}</span>
                               )}
-                            </div>
+                            </span>
                           </div>
                         )
                       })}
@@ -314,32 +301,19 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                     <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorB}`}>{partida.nome_time_b}</p>
                     <div className="space-y-1.5">
                       {playersB.map(pj => {
-                        const golsJogador = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra)
-                        const golsContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra)
-                        const totalNormal = golsJogador.reduce((s, g) => s + g.quantidade, 0)
-                        const totalContra = golsContra.reduce((s, g) => s + g.quantidade, 0)
-                        const hasAny = totalNormal > 0 || totalContra > 0
+                        const totalNormal = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
+                        const totalContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
                         return (
                           <div key={pj.jogador_id} className="flex items-center gap-2">
-                            {hasAny && (
-                              <svg className={`w-3 h-3 shrink-0 ${colorB}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
-                              </svg>
-                            )}
-                            <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
-                            <div className="ml-auto flex items-center gap-1.5">
+                            <span className="text-gray-800 text-sm flex-1 truncate">{pj.jogador.nome}</span>
+                            <span className="flex items-center gap-1 shrink-0">
                               {totalNormal > 0 && (
-                                <span className={`text-xs font-semibold ${colorB}`}>
-                                  {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
-                                </span>
+                                <span className="text-xs font-semibold text-gray-500">⚽ {totalNormal}</span>
                               )}
                               {totalContra > 0 && (
-                                <span className="text-orange-500 text-xs font-semibold">
-                                  {totalContra} GC
-                                </span>
+                                <span className="text-xs font-semibold text-red-400">GC {totalContra}</span>
                               )}
-                            </div>
+                            </span>
                           </div>
                         )
                       })}
@@ -351,28 +325,17 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                   {availablePlayers.sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')).map(pj => {
                     const totalNormal = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
                     const totalContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
-                    const hasAny = totalNormal > 0 || totalContra > 0
                     return (
                       <div key={pj.jogador_id} className="flex items-center gap-2">
-                        {hasAny && (
-                          <svg className="w-3 h-3 text-green-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
-                          </svg>
-                        )}
-                        <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
-                        <div className="ml-auto flex items-center gap-1.5">
+                        <span className="text-gray-800 text-sm flex-1 truncate">{pj.jogador.nome}</span>
+                        <span className="flex items-center gap-1 shrink-0">
                           {totalNormal > 0 && (
-                            <span className="text-green-600 text-xs font-semibold">
-                              {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
-                            </span>
+                            <span className="text-xs font-semibold text-gray-500">⚽ {totalNormal}</span>
                           )}
                           {totalContra > 0 && (
-                            <span className="text-orange-500 text-xs font-semibold">
-                              {totalContra} GC
-                            </span>
+                            <span className="text-xs font-semibold text-red-400">GC {totalContra}</span>
                           )}
-                        </div>
+                        </span>
                       </div>
                     )
                   })}
@@ -383,15 +346,19 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                   <p className="text-gray-500 text-xs font-medium mb-1.5">Sem time</p>
                   <div className="space-y-1.5">
                     {unassigned.map(pj => {
-                      const golsJogador = gols.find(g => g.jogador_id === pj.jogador_id)
+                      const totalNormal = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
+                      const totalContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
                       return (
                         <div key={pj.jogador_id} className="flex items-center gap-2">
-                          <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
-                          {golsJogador && (
-                            <span className="text-green-600 text-xs ml-auto font-semibold">
-                              {golsJogador.quantidade} {golsJogador.quantidade === 1 ? 'gol' : 'gols'}
-                            </span>
-                          )}
+                          <span className="text-gray-800 text-sm flex-1 truncate">{pj.jogador.nome}</span>
+                          <span className="flex items-center gap-1 shrink-0">
+                            {totalNormal > 0 && (
+                              <span className="text-xs font-semibold text-gray-500">⚽ {totalNormal}</span>
+                            )}
+                            {totalContra > 0 && (
+                              <span className="text-xs font-semibold text-red-400">GC {totalContra}</span>
+                            )}
+                          </span>
                         </div>
                       )
                     })}

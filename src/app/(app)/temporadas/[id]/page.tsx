@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
@@ -46,12 +46,27 @@ export default function TemporadaDetailPage() {
   const [updatingMeses, setUpdatingMeses] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [filtroInicio, setFiltroInicio] = useState('')
+  const [filtroFim, setFiltroFim] = useState('')
+  const filtroInicializado = useRef(false)
+
+  const buildParams = useCallback((extra: Record<string, string> = {}) => {
+    const p = new URLSearchParams(extra)
+    if (filtroInicio) p.set('data_inicio', filtroInicio)
+    if (filtroFim) p.set('data_fim', filtroFim)
+    return p
+  }, [filtroInicio, filtroFim])
 
   const load = useCallback(async () => {
+    const filtroParams = buildParams()
+    const classificacaoParams = new URLSearchParams(filtroParams)
+    const partidasParams = new URLSearchParams(filtroParams)
+    partidasParams.set('temporada_id', id)
+
     const [tRes, cRes, pRes, mRes, jRes] = await Promise.all([
       fetch(`/api/temporadas/${id}`),
-      fetch(`/api/temporadas/${id}/classificacao`),
-      fetch(`/api/partidas?temporada_id=${id}`),
+      fetch(`/api/temporadas/${id}/classificacao?${classificacaoParams}`),
+      fetch(`/api/partidas?${partidasParams}`),
       fetch(`/api/temporadas/${id}/mensalistas`),
       fetch(`/api/jogadores`),
     ])
@@ -61,7 +76,7 @@ export default function TemporadaDetailPage() {
     if (mRes.ok) setMensalistas(await mRes.json())
     if (jRes.ok) setTodosJogadores(await jRes.json())
     setLoading(false)
-  }, [id])
+  }, [id, buildParams])
 
   async function handleAddMensalista() {
     if (!selectedJogadorId) return
@@ -104,6 +119,25 @@ export default function TemporadaDetailPage() {
   }
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (temporada && !filtroInicializado.current) {
+      filtroInicializado.current = true
+      setFiltroInicio(temporada.data_inicio)
+      setFiltroFim(temporada.data_fim)
+    }
+  }, [temporada])
+
+  function handleFiltroChange(inicio: string, fim: string) {
+    setFiltroInicio(inicio)
+    setFiltroFim(fim)
+  }
+
+  function limparFiltro() {
+    if (!temporada) return
+    setFiltroInicio(temporada.data_inicio)
+    setFiltroFim(temporada.data_fim)
+  }
 
   async function handleSave(data: TemporadaFormData) {
     const res = await fetch(`/api/temporadas/${id}`, {
@@ -198,6 +232,58 @@ export default function TemporadaDetailPage() {
             </svg>
             Editar
           </button>
+        </div>
+      </div>
+
+      {/* Filtro por intervalo de data */}
+      <div className="bg-white border border-[#e2e8f0] rounded-xl px-4 py-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex items-center gap-2 text-gray-500 shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+            </svg>
+            <span className="text-sm font-medium text-gray-700">Filtrar período</span>
+          </div>
+          <div className="flex flex-wrap items-end gap-3 flex-1">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500">De</label>
+              <input
+                type="date"
+                value={filtroInicio}
+                min={temporada.data_inicio}
+                max={filtroFim || temporada.data_fim}
+                onChange={e => handleFiltroChange(e.target.value, filtroFim)}
+                className="bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500">Até</label>
+              <input
+                type="date"
+                value={filtroFim}
+                min={filtroInicio || temporada.data_inicio}
+                max={temporada.data_fim}
+                onChange={e => handleFiltroChange(filtroInicio, e.target.value)}
+                className="bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
+              />
+            </div>
+            {(filtroInicio !== temporada.data_inicio || filtroFim !== temporada.data_fim) && (
+              <button
+                onClick={limparFiltro}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 border border-[#d1d9e0] hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Restaurar
+              </button>
+            )}
+          </div>
+          {(filtroInicio !== temporada.data_inicio || filtroFim !== temporada.data_fim) && (
+            <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full shrink-0">
+              Filtro ativo
+            </span>
+          )}
         </div>
       </div>
 
