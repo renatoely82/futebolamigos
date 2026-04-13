@@ -62,6 +62,19 @@ export interface PagamentoMensalistaComJogador extends PagamentoMensalista {
   jogador: Jogador
 }
 
+export type CategoriaRegra = 'pagamento' | 'desistencias' | 'penalizacoes' | 'geral'
+
+export interface Regra {
+  id: string
+  temporada_id: string
+  categoria: CategoriaRegra
+  numero: number
+  descricao: string
+  ativa: boolean
+  criado_em: string
+  atualizado_em: string
+}
+
 export interface Temporada {
   id: string
   nome: string
