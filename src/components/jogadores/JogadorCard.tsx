@@ -11,11 +11,11 @@ interface JogadorCardProps {
 
 export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardProps) {
   return (
-    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 hover:border-[#3a3a3a] transition-colors">
+    <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-[#c1c4c9] transition-colors">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-white font-semibold truncate">{jogador.nome}</h3>
+            <h3 className="text-gray-800 font-semibold truncate">{jogador.nome}</h3>
           </div>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <PositionBadge posicao={jogador.posicao_principal} />
@@ -30,7 +30,7 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
             {[1, 2, 3, 4, 5].map(n => (
               <div
                 key={n}
-                className={`w-3 h-3 rounded-sm ${n <= jogador.nivel ? 'bg-lime-500' : 'bg-[#333]'}`}
+                className={`w-3 h-3 rounded-sm ${n <= jogador.nivel ? 'bg-green-500' : 'bg-gray-200'}`}
               />
             ))}
             <span className="text-gray-500 text-xs ml-1">Nível {jogador.nivel}</span>
@@ -42,7 +42,7 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
         <div className="flex gap-1 shrink-0">
           <button
             onClick={onEdit}
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Editar"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -51,7 +51,7 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
           </button>
           <button
             onClick={onDelete}
-            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
             title="Remover"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,7 +61,7 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
         </div>
       </div>
       {jogador.observacoes && (
-        <p className="text-gray-500 text-xs mt-3 border-t border-[#222] pt-3">{jogador.observacoes}</p>
+        <p className="text-gray-500 text-xs mt-3 border-t border-[#e9ecf1] pt-3">{jogador.observacoes}</p>
       )}
     </div>
   )

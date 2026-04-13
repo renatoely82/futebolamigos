@@ -9,6 +9,7 @@ import ResultadoPartida from '@/components/partidas/ResultadoPartida'
 import Modal from '@/components/ui/Modal'
 import { StatusBadge, PositionBadge } from '@/components/ui/Badge'
 import { sortByPosition } from '@/lib/team-balancer'
+import { getTeamColor } from '@/lib/team-colors'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -91,17 +92,17 @@ export default function PartidaDetailPage() {
   if (!partida) return <div className="p-6 text-gray-500">Partida não encontrada.</div>
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="flex items-start gap-3 mb-6">
-        <Link href="/partidas" className="text-gray-400 hover:text-white transition-colors mt-1">
+        <Link href="/partidas" className="text-gray-400 hover:text-gray-700 transition-colors mt-1">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
           </svg>
         </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-white text-2xl font-bold">
+            <h1 className="text-gray-800 text-2xl font-bold">
               {format(parseISO(partida.data), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </h1>
             <StatusBadge status={partida.status} />
@@ -111,7 +112,7 @@ export default function PartidaDetailPage() {
         <div className="flex gap-2 shrink-0">
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             title="Excluir partida"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,7 +133,7 @@ export default function PartidaDetailPage() {
           </button>
           <Link
             href={`/partidas/${id}/times`}
-            className="flex items-center gap-2 bg-lime-500 hover:bg-lime-400 text-black px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
           >
             Ver Times
           </Link>
@@ -140,9 +141,9 @@ export default function PartidaDetailPage() {
       </div>
 
       {/* Status selector */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 mb-6">
+      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-gray-400 text-sm">Status:</span>
+          <span className="text-gray-500 text-sm">Status:</span>
           {(['agendada', 'realizada', 'cancelada'] as const).map(s => (
             <button
               key={s}
@@ -150,8 +151,8 @@ export default function PartidaDetailPage() {
               onClick={() => handleStatusChange(s)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
                 partida.status === s
-                  ? 'bg-lime-500 text-black'
-                  : 'bg-[#222] text-gray-400 hover:bg-[#333] hover:text-white'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
               }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -161,9 +162,9 @@ export default function PartidaDetailPage() {
       </div>
 
       {/* Temporada */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 mb-6">
+      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3">
-          <span className="text-gray-400 text-sm shrink-0">Temporada:</span>
+          <span className="text-gray-500 text-sm shrink-0">Temporada:</span>
           {editingTemporada ? (
             <div className="flex items-center gap-2 flex-1">
               <select
@@ -171,7 +172,7 @@ export default function PartidaDetailPage() {
                 disabled={temporadaSaving}
                 defaultValue={partida.temporada_id ?? ''}
                 onChange={e => handleTemporadaChange(e.target.value)}
-                className="flex-1 bg-[#222] border border-[#333] text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-lime-500 disabled:opacity-50"
+                className="flex-1 bg-white border border-[#d1d9e0] text-gray-800 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-500 disabled:opacity-50"
               >
                 <option value="">Sem temporada</option>
                 {temporadas.map(t => (
@@ -180,7 +181,7 @@ export default function PartidaDetailPage() {
               </select>
               <button
                 onClick={() => setEditingTemporada(false)}
-                className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
+                className="text-gray-400 hover:text-gray-600 text-sm transition-colors"
               >
                 Cancelar
               </button>
@@ -188,15 +189,15 @@ export default function PartidaDetailPage() {
           ) : (
             <>
               {partida.temporada_id ? (
-                <span className="text-white text-sm font-medium">
+                <span className="text-gray-800 text-sm font-medium">
                   {temporadas.find(t => t.id === partida.temporada_id)?.nome ?? '—'}
                 </span>
               ) : (
-                <span className="text-gray-600 text-sm italic">Não vinculada</span>
+                <span className="text-gray-400 text-sm italic">Não vinculada</span>
               )}
               <button
                 onClick={() => setEditingTemporada(true)}
-                className="ml-auto text-gray-500 hover:text-lime-400 text-sm transition-colors"
+                className="ml-auto text-gray-500 hover:text-green-600 text-sm transition-colors"
               >
                 {partida.temporada_id ? 'Alterar' : 'Vincular'}
               </button>
@@ -207,13 +208,13 @@ export default function PartidaDetailPage() {
 
       {/* Times definidos */}
       {partida.times_escolhidos && (
-        <div className="bg-[#1a1a1a] border border-lime-500/30 rounded-xl p-6 mb-6">
+        <div className="bg-white border border-green-500/30 rounded-xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white font-semibold">Times Definidos</h2>
+            <h2 className="text-gray-800 font-semibold">Times Definidos</h2>
             {partida.status !== 'realizada' && (
               <Link
                 href={`/partidas/${id}/times`}
-                className="text-lime-400 text-sm hover:text-lime-300 transition-colors"
+                className="text-green-600 text-sm hover:text-green-700 transition-colors"
               >
                 Alterar →
               </Link>
@@ -221,7 +222,7 @@ export default function PartidaDetailPage() {
           </div>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lime-400 font-semibold text-sm mb-2">{partida.nome_time_a}</h3>
+              <h3 className={`font-semibold text-sm mb-2 ${getTeamColor(partida.nome_time_a, 'text-green-600')}`}>{partida.nome_time_a}</h3>
               <div className="space-y-1.5">
                 {sortByPosition(
                   partida.times_escolhidos.time_a
@@ -230,13 +231,13 @@ export default function PartidaDetailPage() {
                 ).map(jogador => (
                   <div key={jogador.id} className="flex items-center gap-2">
                     <PositionBadge posicao={jogador.posicao_principal} />
-                    <span className="text-white text-sm">{jogador.nome}</span>
+                    <span className="text-gray-800 text-sm">{jogador.nome}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="text-blue-400 font-semibold text-sm mb-2">{partida.nome_time_b}</h3>
+              <h3 className={`font-semibold text-sm mb-2 ${getTeamColor(partida.nome_time_b, 'text-blue-600')}`}>{partida.nome_time_b}</h3>
               <div className="space-y-1.5">
                 {sortByPosition(
                   partida.times_escolhidos.time_b
@@ -245,7 +246,7 @@ export default function PartidaDetailPage() {
                 ).map(jogador => (
                   <div key={jogador.id} className="flex items-center gap-2">
                     <PositionBadge posicao={jogador.posicao_principal} />
-                    <span className="text-white text-sm">{jogador.nome}</span>
+                    <span className="text-gray-800 text-sm">{jogador.nome}</span>
                   </div>
                 ))}
               </div>
@@ -264,7 +265,7 @@ export default function PartidaDetailPage() {
       )}
 
       {/* Players management */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+      <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
         <JogadoresPartida
           partidaId={id}
           confirmedPlayers={players}
@@ -279,9 +280,9 @@ export default function PartidaDetailPage() {
         onClose={() => { if (!deleting) setShowDeleteModal(false) }}
         title="Excluir Partida"
       >
-        <p className="text-gray-300 text-sm mb-6">
+        <p className="text-gray-600 text-sm mb-6">
           Tem certeza que deseja excluir a partida de{' '}
-          <strong className="text-white">
+          <strong className="text-gray-800">
             {format(parseISO(partida.data), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </strong>?
           Esta ação não pode ser desfeita.
@@ -290,14 +291,14 @@ export default function PartidaDetailPage() {
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="flex-1 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+            className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
           >
             {deleting ? 'Excluindo...' : 'Excluir Partida'}
           </button>
           <button
             onClick={() => setShowDeleteModal(false)}
             disabled={deleting}
-            className="flex-1 bg-[#222] hover:bg-[#333] disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+            className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
           >
             Cancelar
           </button>

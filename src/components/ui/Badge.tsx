@@ -11,9 +11,9 @@ export function PositionBadge({ posicao }: { posicao: Posicao }) {
 
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    agendada: 'bg-blue-500/20 text-blue-400',
-    realizada: 'bg-lime-500/20 text-lime-400',
-    cancelada: 'bg-red-500/20 text-red-400',
+    agendada: 'bg-blue-100 text-blue-600',
+    realizada: 'bg-green-100 text-green-700',
+    cancelada: 'bg-red-100 text-red-600',
   }
   const label: Record<string, string> = {
     agendada: 'Agendada',
@@ -21,7 +21,7 @@ export function StatusBadge({ status }: { status: string }) {
     cancelada: 'Cancelada',
   }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${map[status] ?? 'bg-gray-500/20 text-gray-400'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${map[status] ?? 'bg-gray-100 text-gray-600'}`}>
       {label[status] ?? status}
     </span>
   )

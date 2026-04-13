@@ -46,35 +46,35 @@ export default function TemporadaForm({ initial, onSave, onCancel }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">Nome *</label>
+        <label className="block text-sm font-medium text-gray-600 mb-1">Nome *</label>
         <input
           type="text"
           required
           value={form.nome}
           onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
-          className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500"
+          className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
           placeholder="Ex: 2025/2026"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Data de Início *</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Data de Início *</label>
           <input
             type="date"
             required
             value={form.data_inicio}
             onChange={e => setForm(f => ({ ...f, data_inicio: e.target.value }))}
-            className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-lime-500"
+            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Data de Fim *</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Data de Fim *</label>
           <input
             type="date"
             required
             value={form.data_fim}
             onChange={e => setForm(f => ({ ...f, data_fim: e.target.value }))}
-            className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-lime-500"
+            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
           />
         </div>
       </div>
@@ -83,25 +83,25 @@ export default function TemporadaForm({ initial, onSave, onCancel }: Props) {
           type="checkbox"
           checked={form.ativa}
           onChange={e => setForm(f => ({ ...f, ativa: e.target.checked }))}
-          className="w-4 h-4 accent-lime-500"
+          className="w-4 h-4 accent-green-500"
         />
-        <span className="text-sm text-gray-300">Definir como temporada ativa</span>
+        <span className="text-sm text-gray-600">Definir como temporada ativa</span>
       </label>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <div className="flex gap-3 pt-2">
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 bg-lime-500 hover:bg-lime-400 disabled:opacity-50 text-black font-semibold py-2.5 rounded-lg transition-colors"
+          className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
         >
           {loading ? 'Salvando...' : 'Salvar'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 bg-[#222] hover:bg-[#333] text-white font-semibold py-2.5 rounded-lg transition-colors"
+          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
         >
           Cancelar
         </button>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Partida, PartidaJogadorComDetalhes, GolComDetalhes } from '@/lib/supabase'
+import { getTeamColor } from '@/lib/team-colors'
 
 interface Props {
   partida: Partida
@@ -102,48 +103,50 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
     .sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR'))
 
   const hasTeams = partida.times_escolhidos != null
+  const colorA = getTeamColor(partida.nome_time_a, 'text-green-600')
+  const colorB = getTeamColor(partida.nome_time_b, 'text-blue-600')
 
   function renderGoalRow(pj: typeof availablePlayers[number]) {
     const entry = golsEdit[pj.jogador_id] ?? { normal: 0, contra: 0 }
     return (
       <div key={pj.jogador_id} className="flex items-center gap-2">
-        <span className="text-white text-sm flex-1 truncate min-w-0">{pj.jogador.nome}</span>
+        <span className="text-gray-800 text-sm flex-1 truncate min-w-0">{pj.jogador.nome}</span>
         {/* Gols normais */}
         <div className="flex items-center gap-1">
           <span className="text-gray-500 text-xs w-4 text-right">G</span>
           <button
             onClick={() => setPlayerGoals(pj.jogador_id, 'normal', entry.normal - 1)}
             disabled={entry.normal === 0}
-            className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white disabled:opacity-30 flex items-center justify-center text-base leading-none"
+            className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:opacity-30 flex items-center justify-center text-base leading-none"
           >
             −
           </button>
-          <span className={`w-5 text-center text-sm font-bold ${entry.normal > 0 ? 'text-lime-400' : 'text-gray-600'}`}>
+          <span className={`w-5 text-center text-sm font-bold ${entry.normal > 0 ? 'text-green-600' : 'text-gray-400'}`}>
             {entry.normal}
           </span>
           <button
             onClick={() => setPlayerGoals(pj.jogador_id, 'normal', entry.normal + 1)}
-            className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white flex items-center justify-center text-base leading-none"
+            className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center text-base leading-none"
           >
             +
           </button>
         </div>
         {/* Gols contra */}
         <div className="flex items-center gap-1">
-          <span className="text-orange-400 text-xs w-6 text-right font-medium">GC</span>
+          <span className="text-orange-500 text-xs w-6 text-right font-medium">GC</span>
           <button
             onClick={() => setPlayerGoals(pj.jogador_id, 'contra', entry.contra - 1)}
             disabled={entry.contra === 0}
-            className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white disabled:opacity-30 flex items-center justify-center text-base leading-none"
+            className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:opacity-30 flex items-center justify-center text-base leading-none"
           >
             −
           </button>
-          <span className={`w-5 text-center text-sm font-bold ${entry.contra > 0 ? 'text-orange-400' : 'text-gray-600'}`}>
+          <span className={`w-5 text-center text-sm font-bold ${entry.contra > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
             {entry.contra}
           </span>
           <button
             onClick={() => setPlayerGoals(pj.jogador_id, 'contra', entry.contra + 1)}
-            className="w-6 h-6 rounded bg-[#222] hover:bg-[#333] text-white flex items-center justify-center text-base leading-none"
+            className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center text-base leading-none"
           >
             +
           </button>
@@ -154,13 +157,13 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
 
   if (editing) {
     return (
-      <div className="bg-[#1a1a1a] border border-lime-500/30 rounded-xl p-6 mb-6">
-        <h2 className="text-white font-semibold mb-4">Resultado da Partida</h2>
+      <div className="bg-white border border-green-500/30 rounded-xl p-6 mb-6">
+        <h2 className="text-gray-800 font-semibold mb-4">Resultado da Partida</h2>
 
         {/* Placar */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1">
-            <label className="text-xs text-lime-400 font-medium uppercase tracking-wide block mb-1">
+            <label className={`text-xs font-medium uppercase tracking-wide block mb-1 ${getTeamColor(partida.nome_time_a, 'text-green-600')}`}>
               {partida.nome_time_a}
             </label>
             <input
@@ -168,13 +171,13 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
               min="0"
               value={placarA}
               onChange={e => setPlacarA(e.target.value)}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-white text-2xl font-bold text-center focus:outline-none focus:border-lime-500"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-2xl font-bold text-center focus:outline-none focus:border-green-500"
               placeholder="0"
             />
           </div>
-          <span className="text-gray-500 text-2xl font-bold mt-5">×</span>
+          <span className="text-gray-400 text-2xl font-bold mt-5">×</span>
           <div className="flex-1">
-            <label className="text-xs text-blue-400 font-medium uppercase tracking-wide block mb-1">
+            <label className={`text-xs font-medium uppercase tracking-wide block mb-1 ${getTeamColor(partida.nome_time_b, 'text-blue-600')}`}>
               {partida.nome_time_b}
             </label>
             <input
@@ -182,7 +185,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
               min="0"
               value={placarB}
               onChange={e => setPlacarB(e.target.value)}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-white text-2xl font-bold text-center focus:outline-none focus:border-blue-500"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-2xl font-bold text-center focus:outline-none focus:border-blue-500"
               placeholder="0"
             />
           </div>
@@ -191,15 +194,15 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
         {/* Artilheiros */}
         {availablePlayers.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-gray-400 text-sm font-medium mb-3">Artilheiros</h3>
+            <h3 className="text-gray-500 text-sm font-medium mb-3">Artilheiros</h3>
             {hasTeams ? (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-lime-400 text-xs font-semibold uppercase tracking-wide mb-2">{partida.nome_time_a}</p>
+                  <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorA}`}>{partida.nome_time_a}</p>
                   <div className="space-y-2">{playersA.map(renderGoalRow)}</div>
                 </div>
                 <div>
-                  <p className="text-blue-400 text-xs font-semibold uppercase tracking-wide mb-2">{partida.nome_time_b}</p>
+                  <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorB}`}>{partida.nome_time_b}</p>
                   <div className="space-y-2">{playersB.map(renderGoalRow)}</div>
                 </div>
               </div>
@@ -219,14 +222,14 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 bg-lime-500 hover:bg-lime-400 disabled:opacity-50 text-black font-semibold py-2.5 rounded-lg transition-colors"
+            className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
           >
             {saving ? 'Salvando...' : 'Salvar Resultado'}
           </button>
           <button
             onClick={() => setEditing(false)}
             disabled={saving}
-            className="flex-1 bg-[#222] hover:bg-[#333] disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+            className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
           >
             Cancelar
           </button>
@@ -236,12 +239,12 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 mb-6">
+    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-white font-semibold">Resultado da Partida</h2>
+        <h2 className="text-gray-800 font-semibold">Resultado da Partida</h2>
         <button
           onClick={startEdit}
-          className="text-lime-400 text-sm hover:text-lime-300 transition-colors"
+          className="text-green-600 text-sm hover:text-green-700 transition-colors"
         >
           {hasResult ? 'Editar →' : 'Informar resultado →'}
         </button>
@@ -252,17 +255,17 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
           {/* Placar */}
           <div className="flex items-center justify-center gap-6 mb-5">
             <div className="text-center">
-              <div className="text-lime-400 text-xs font-medium uppercase tracking-wide mb-1">
+              <div className={`text-xs font-medium uppercase tracking-wide mb-1 ${colorA}`}>
                 {partida.nome_time_a}
               </div>
-              <div className="text-white text-5xl font-bold">{partida.placar_time_a}</div>
+              <div className="text-gray-800 text-5xl font-bold">{partida.placar_time_a}</div>
             </div>
-            <div className="text-gray-600 text-3xl font-bold">×</div>
+            <div className="text-gray-400 text-3xl font-bold">×</div>
             <div className="text-center">
-              <div className="text-blue-400 text-xs font-medium uppercase tracking-wide mb-1">
+              <div className={`text-xs font-medium uppercase tracking-wide mb-1 ${colorB}`}>
                 {partida.nome_time_b}
               </div>
-              <div className="text-white text-5xl font-bold">{partida.placar_time_b}</div>
+              <div className="text-gray-800 text-5xl font-bold">{partida.placar_time_b}</div>
             </div>
           </div>
 
@@ -273,7 +276,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
               {hasTeams ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-lime-400 text-xs font-semibold uppercase tracking-wide mb-2">{partida.nome_time_a}</p>
+                    <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorA}`}>{partida.nome_time_a}</p>
                     <div className="space-y-1.5">
                       {playersA.map(pj => {
                         const golsJogador = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra)
@@ -284,20 +287,20 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                         return (
                           <div key={pj.jogador_id} className="flex items-center gap-2">
                             {hasAny && (
-                              <svg className="w-3 h-3 text-lime-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <svg className={`w-3 h-3 shrink-0 ${colorA}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10"/>
                                 <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
                               </svg>
                             )}
-                            <span className="text-white text-sm">{pj.jogador.nome}</span>
+                            <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
                             <div className="ml-auto flex items-center gap-1.5">
                               {totalNormal > 0 && (
-                                <span className="text-lime-400 text-xs font-semibold">
+                                <span className={`text-xs font-semibold ${colorA}`}>
                                   {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
                                 </span>
                               )}
                               {totalContra > 0 && (
-                                <span className="text-orange-400 text-xs font-semibold">
+                                <span className="text-orange-500 text-xs font-semibold">
                                   {totalContra} GC
                                 </span>
                               )}
@@ -308,7 +311,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                     </div>
                   </div>
                   <div>
-                    <p className="text-blue-400 text-xs font-semibold uppercase tracking-wide mb-2">{partida.nome_time_b}</p>
+                    <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorB}`}>{partida.nome_time_b}</p>
                     <div className="space-y-1.5">
                       {playersB.map(pj => {
                         const golsJogador = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra)
@@ -319,20 +322,20 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                         return (
                           <div key={pj.jogador_id} className="flex items-center gap-2">
                             {hasAny && (
-                              <svg className="w-3 h-3 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <svg className={`w-3 h-3 shrink-0 ${colorB}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10"/>
                                 <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
                               </svg>
                             )}
-                            <span className="text-white text-sm">{pj.jogador.nome}</span>
+                            <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
                             <div className="ml-auto flex items-center gap-1.5">
                               {totalNormal > 0 && (
-                                <span className="text-blue-400 text-xs font-semibold">
+                                <span className={`text-xs font-semibold ${colorB}`}>
                                   {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
                                 </span>
                               )}
                               {totalContra > 0 && (
-                                <span className="text-orange-400 text-xs font-semibold">
+                                <span className="text-orange-500 text-xs font-semibold">
                                   {totalContra} GC
                                 </span>
                               )}
@@ -352,20 +355,20 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                     return (
                       <div key={pj.jogador_id} className="flex items-center gap-2">
                         {hasAny && (
-                          <svg className="w-3 h-3 text-lime-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-3 h-3 text-green-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"/>
                             <polygon points="12,8 15.8,10.76 14.35,15.24 9.65,15.24 8.2,10.76" fill="currentColor" strokeWidth="0.5"/>
                           </svg>
                         )}
-                        <span className="text-white text-sm">{pj.jogador.nome}</span>
+                        <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
                         <div className="ml-auto flex items-center gap-1.5">
                           {totalNormal > 0 && (
-                            <span className="text-lime-400 text-xs font-semibold">
+                            <span className="text-green-600 text-xs font-semibold">
                               {totalNormal} {totalNormal === 1 ? 'gol' : 'gols'}
                             </span>
                           )}
                           {totalContra > 0 && (
-                            <span className="text-orange-400 text-xs font-semibold">
+                            <span className="text-orange-500 text-xs font-semibold">
                               {totalContra} GC
                             </span>
                           )}
@@ -377,15 +380,15 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
               )}
               {unassigned.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-gray-600 text-xs font-medium mb-1.5">Sem time</p>
+                  <p className="text-gray-500 text-xs font-medium mb-1.5">Sem time</p>
                   <div className="space-y-1.5">
                     {unassigned.map(pj => {
                       const golsJogador = gols.find(g => g.jogador_id === pj.jogador_id)
                       return (
                         <div key={pj.jogador_id} className="flex items-center gap-2">
-                          <span className="text-white text-sm">{pj.jogador.nome}</span>
+                          <span className="text-gray-800 text-sm">{pj.jogador.nome}</span>
                           {golsJogador && (
-                            <span className="text-lime-400 text-xs ml-auto font-semibold">
+                            <span className="text-green-600 text-xs ml-auto font-semibold">
                               {golsJogador.quantidade} {golsJogador.quantidade === 1 ? 'gol' : 'gols'}
                             </span>
                           )}
@@ -399,7 +402,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
           )}
         </>
       ) : (
-        <p className="text-gray-600 text-sm text-center py-2">Nenhum resultado informado.</p>
+        <p className="text-gray-400 text-sm text-center py-2">Nenhum resultado informado.</p>
       )}
     </div>
   )

@@ -51,15 +51,15 @@ export default function TemporadasPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-white text-2xl font-bold">Temporadas</h1>
+          <h1 className="text-gray-800 text-2xl font-bold">Temporadas</h1>
           <p className="text-gray-500 text-sm mt-0.5">{temporadas.length} temporada(s) cadastrada(s)</p>
         </div>
         <Link
           href="/temporadas/nova"
-          className="bg-lime-500 hover:bg-lime-400 text-black font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+          className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeWidth={2.5} strokeLinecap="round" d="M12 5v14M5 12h14" />
@@ -73,7 +73,7 @@ export default function TemporadasPage() {
       ) : temporadas.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-gray-500">Nenhuma temporada cadastrada.</p>
-          <Link href="/temporadas/nova" className="mt-4 inline-block text-lime-400 hover:text-lime-300 text-sm">
+          <Link href="/temporadas/nova" className="mt-4 inline-block text-green-600 hover:text-green-700 text-sm">
             Criar primeira temporada
           </Link>
         </div>
@@ -82,13 +82,13 @@ export default function TemporadasPage() {
           {temporadas.map(t => (
             <div
               key={t.id}
-              className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 flex items-center justify-between gap-4 hover:border-[#3a3a3a] transition-colors"
+              className="bg-white border border-[#e2e8f0] rounded-xl p-4 flex items-center justify-between gap-4 hover:border-[#c1c4c9] transition-colors"
             >
               <Link href={`/temporadas/${t.id}`} className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-white font-semibold">{t.nome}</span>
+                  <span className="text-gray-800 font-semibold">{t.nome}</span>
                   {t.ativa && (
-                    <span className="text-xs bg-lime-500/20 text-lime-400 border border-lime-500/30 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">
                       Ativa
                     </span>
                   )}
@@ -101,7 +101,7 @@ export default function TemporadasPage() {
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => { setEditing(t); setModalOpen(true) }}
-                  className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Editar"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +110,7 @@ export default function TemporadasPage() {
                 </button>
                 <button
                   onClick={() => handleDelete(t)}
-                  className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   title="Excluir"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

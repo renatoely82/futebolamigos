@@ -16,6 +16,7 @@ import {
 import type { Jogador, PropostaTimeComJogadores } from '@/lib/supabase'
 import { PositionBadge } from '@/components/ui/Badge'
 import { sortByPosition } from '@/lib/team-balancer'
+import { getTeamColor } from '@/lib/team-colors'
 
 interface TeamProposalCardProps {
   proposta: PropostaTimeComJogadores
@@ -34,11 +35,11 @@ function PlayerContent({ jogador }: { jogador: Jogador }) {
         <PositionBadge posicao={jogador.posicao_principal} />
         <div className="flex gap-0.5 ml-auto">
           {[1, 2, 3, 4, 5].map(n => (
-            <div key={n} className={`w-2 h-2 rounded-sm ${n <= jogador.nivel ? 'bg-lime-500' : 'bg-[#333]'}`} />
+            <div key={n} className={`w-2 h-2 rounded-sm ${n <= jogador.nivel ? 'bg-green-500' : 'bg-gray-200'}`} />
           ))}
         </div>
       </div>
-      <span className="text-white text-xs mt-0.5 block leading-snug">{jogador.nome}</span>
+      <span className="text-gray-800 text-xs mt-0.5 block leading-snug">{jogador.nome}</span>
     </>
   )
 }
@@ -62,7 +63,7 @@ function DraggablePlayer({ jogador, propNum, sourceTeam }: {
     <div
       ref={setNodeRef}
       style={style}
-      className={`py-1.5 border-b border-[#222] last:border-0 cursor-grab active:cursor-grabbing select-none transition-opacity ${isDragging ? 'opacity-30' : ''}`}
+      className={`py-1.5 border-b border-gray-100 last:border-0 cursor-grab active:cursor-grabbing select-none transition-opacity ${isDragging ? 'opacity-30' : ''}`}
       {...listeners}
       {...attributes}
     >
@@ -80,12 +81,12 @@ function DroppableTeam({ id, label, score, players, propNum, isDropTarget }: {
   isDropTarget: boolean
 }) {
   const { isOver, setNodeRef } = useDroppable({ id })
-  const color = id === 'time-a' ? 'text-lime-400' : 'text-blue-400'
+  const color = getTeamColor(label, id === 'time-a' ? 'text-green-600' : 'text-blue-600')
 
   return (
     <div
       ref={setNodeRef}
-      className={`p-4 transition-colors ${isOver && isDropTarget ? 'bg-white/5 rounded-lg' : ''}`}
+      className={`p-4 transition-colors ${isOver && isDropTarget ? 'bg-gray-50 rounded-lg' : ''}`}
     >
       <div className="flex items-center justify-between mb-3">
         <span className={`${color} font-semibold text-sm`}>{label}</span>
@@ -95,7 +96,7 @@ function DroppableTeam({ id, label, score, players, propNum, isDropTarget }: {
         <DraggablePlayer key={j.id} jogador={j} propNum={propNum} sourceTeam={id} />
       ))}
       {players.length === 0 && (
-        <div className="text-gray-600 text-xs text-center py-4 border border-dashed border-[#333] rounded-lg">
+        <div className="text-gray-400 text-xs text-center py-4 border border-dashed border-gray-300 rounded-lg">
           Arraste um jogador aqui
         </div>
       )}
@@ -160,18 +161,18 @@ export default function TeamProposalCard({
   }
 
   return (
-    <div className={`bg-[#1a1a1a] border rounded-xl overflow-hidden transition-all ${
-      selected ? 'border-lime-500 ring-1 ring-lime-500/50' : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
+    <div className={`bg-white border rounded-xl overflow-hidden transition-all ${
+      selected ? 'border-green-500 ring-1 ring-green-500/50' : 'border-[#e2e8f0] hover:border-[#c1c4c9]'
     }`}>
-      <div className="p-4 border-b border-[#222] flex items-center justify-between">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-white font-semibold">Proposta {proposta.proposta_numero}</span>
+          <span className="text-gray-800 font-semibold">Proposta {proposta.proposta_numero}</span>
           {onTeamsChange && (
-            <span className="text-gray-600 text-xs">• arraste para trocar</span>
+            <span className="text-gray-500 text-xs">• arraste para trocar</span>
           )}
         </div>
         {selected && (
-          <span className="bg-lime-500 text-black text-xs font-bold px-2 py-0.5 rounded">Selecionada</span>
+          <span className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded">Selecionada</span>
         )}
       </div>
 
@@ -180,7 +181,7 @@ export default function TeamProposalCard({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-2 divide-x divide-[#222]">
+        <div className="grid grid-cols-2 divide-x divide-gray-100">
           <DroppableTeam
             id="time-a"
             label={nomeTimeA}
@@ -200,21 +201,21 @@ export default function TeamProposalCard({
         </div>
         <DragOverlay>
           {activePlayer && (
-            <div className="bg-[#2a2a2a] border border-lime-500/60 rounded-lg p-2.5 shadow-2xl cursor-grabbing min-w-[140px]">
+            <div className="bg-white border border-green-500/60 rounded-lg p-2.5 shadow-2xl cursor-grabbing min-w-[140px]">
               <PlayerContent jogador={activePlayer} />
             </div>
           )}
         </DragOverlay>
       </DndContext>
 
-      <div className="p-4 border-t border-[#222]">
+      <div className="p-4 border-t border-gray-100">
         <button
           onClick={onSelect}
           disabled={loading || selected}
           className={`w-full py-2 rounded-lg font-semibold text-sm transition-colors ${
             selected
-              ? 'bg-lime-500/20 text-lime-400 cursor-default'
-              : 'bg-lime-500 hover:bg-lime-400 text-black disabled:opacity-50'
+              ? 'bg-green-100 text-green-700 cursor-default'
+              : 'bg-green-500 hover:bg-green-600 text-white disabled:opacity-50'
           }`}
         >
           {selected ? 'Selecionada' : 'Escolher este time'}

@@ -167,22 +167,22 @@ export default function PagamentosPage() {
   const temporadaSelecionada = temporadas.find(t => t.id === temporadaId)
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-white text-2xl font-bold">Pagamentos</h1>
+        <h1 className="text-gray-800 text-2xl font-bold">Pagamentos</h1>
         <p className="text-gray-500 text-sm mt-1">Controlo mensal dos mensalistas por temporada</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 space-y-3">
+      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Temporada</label>
             <select
               value={temporadaId}
               onChange={e => setTemporadaId(e.target.value)}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-lime-500 transition-colors"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors"
             >
               <option value="">Selecione uma temporada...</option>
               {temporadas.map(t => (
@@ -201,7 +201,7 @@ export default function PagamentosPage() {
                 setMesSelecionado(meses.find(m => m.mes === mes && m.ano === ano) ?? null)
               }}
               disabled={meses.length === 0}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-lime-500 transition-colors disabled:opacity-40"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors disabled:opacity-40"
             >
               {meses.length === 0 && <option value="">—</option>}
               {meses.map(m => (
@@ -216,26 +216,26 @@ export default function PagamentosPage() {
 
       {/* Results */}
       {!temporadaId || !mesSelecionado ? (
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl py-16 text-center text-gray-500 text-sm">
+        <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center text-gray-500 text-sm">
           Selecione uma temporada e um mês para ver os pagamentos.
         </div>
       ) : loading ? (
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl py-16 text-center text-gray-500 text-sm">
+        <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center text-gray-500 text-sm">
           Carregando...
         </div>
       ) : pagamentos.length === 0 ? (
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl py-16 text-center">
+        <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center">
           <p className="text-gray-500 text-sm">Nenhum mensalista nesta temporada.</p>
-          <p className="text-gray-600 text-xs mt-1">
-            Adicione mensalistas em <span className="text-gray-400">Temporadas</span>.
+          <p className="text-gray-400 text-xs mt-1">
+            Adicione mensalistas em <span className="text-gray-500">Temporadas</span>.
           </p>
         </div>
       ) : (
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
+        <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
           {/* Summary header */}
-          <div className="px-5 py-4 border-b border-[#2a2a2a] flex items-center justify-between">
+          <div className="px-5 py-4 border-b border-[#e9ecf1] flex items-center justify-between">
             <div>
-              <p className="text-white font-semibold text-sm">
+              <p className="text-gray-800 font-semibold text-sm">
                 {mesSelecionado.label.charAt(0).toUpperCase() + mesSelecionado.label.slice(1)}
                 {temporadaSelecionada && (
                   <span className="text-gray-500 font-normal ml-2">— {temporadaSelecionada.nome}</span>
@@ -243,14 +243,14 @@ export default function PagamentosPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold ${pagos === total ? 'text-lime-400' : pagos > 0 ? 'text-yellow-400' : 'text-gray-400'}`}>
+              <span className={`text-sm font-bold ${pagos === total ? 'text-green-600' : pagos > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
                 {pagos}/{total}
               </span>
-              <span className="text-gray-600 text-xs">pagos</span>
+              <span className="text-gray-500 text-xs">pagos</span>
               {/* Progress bar */}
-              <div className="w-20 h-1.5 bg-[#333] rounded-full overflow-hidden">
+              <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${pagos === total ? 'bg-lime-500' : 'bg-yellow-500'}`}
+                  className={`h-full rounded-full transition-all ${pagos === total ? 'bg-green-500' : 'bg-yellow-500'}`}
                   style={{ width: total > 0 ? `${(pagos / total) * 100}%` : '0%' }}
                 />
               </div>
@@ -258,7 +258,7 @@ export default function PagamentosPage() {
           </div>
 
           {/* Player list */}
-          <div className="divide-y divide-[#222]">
+          <div className="divide-y divide-gray-100">
             {pagamentos.map(entry => {
               const isToggling = toggling.has(entry.jogador_id)
               const isNotaOpen = notasAberta === entry.jogador_id
@@ -268,7 +268,7 @@ export default function PagamentosPage() {
                   <div className="flex items-center justify-between px-5 py-3.5 gap-3">
                     {/* Name */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
+                      <p className="text-gray-800 text-sm font-medium truncate">
                         {entry.jogador?.nome ?? '—'}
                       </p>
                       {entry.pago && entry.data_pagamento && (
@@ -277,7 +277,7 @@ export default function PagamentosPage() {
                         </p>
                       )}
                       {entry.observacoes && (
-                        <p className="text-gray-600 text-xs mt-0.5 truncate italic">{entry.observacoes}</p>
+                        <p className="text-gray-400 text-xs mt-0.5 truncate italic">{entry.observacoes}</p>
                       )}
                     </div>
 
@@ -296,8 +296,8 @@ export default function PagamentosPage() {
                         }}
                         className={`p-1.5 rounded-lg transition-colors ${
                           entry.observacoes
-                            ? 'text-yellow-400 hover:bg-yellow-500/10'
-                            : 'text-gray-600 hover:text-gray-400 hover:bg-white/5'
+                            ? 'text-yellow-600 hover:bg-yellow-50'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                         }`}
                         title="Nota"
                       >
@@ -312,8 +312,8 @@ export default function PagamentosPage() {
                         disabled={isToggling}
                         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
                           entry.pago
-                            ? 'bg-lime-500/20 text-lime-400 border border-lime-500/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30'
-                            : 'bg-[#222] text-gray-400 border border-[#333] hover:bg-lime-500/10 hover:text-lime-400 hover:border-lime-500/30'
+                            ? 'bg-green-100 text-green-700 border border-green-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                            : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-green-50 hover:text-green-600 hover:border-green-200'
                         } ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {isToggling ? (
@@ -343,25 +343,25 @@ export default function PagamentosPage() {
 
                   {/* Inline note editor */}
                   {isNotaOpen && (
-                    <div className="px-5 pb-4 pt-0 bg-[#161616]">
+                    <div className="px-5 pb-4 pt-0 bg-gray-50">
                       <textarea
                         value={notaTexto}
                         onChange={e => setNotaTexto(e.target.value)}
                         placeholder="Observação sobre este pagamento..."
                         rows={2}
-                        className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-lime-500 resize-none transition-colors"
+                        className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none transition-colors"
                       />
                       <div className="flex gap-2 mt-2">
                         <button
                           onClick={() => salvarNota(entry)}
                           disabled={salvandoNota}
-                          className="bg-lime-500 hover:bg-lime-400 disabled:opacity-50 text-black text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
+                          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
                         >
                           {salvandoNota ? 'Salvando...' : 'Guardar'}
                         </button>
                         <button
                           onClick={() => { setNotasAberta(null); setNotaTexto('') }}
-                          className="bg-[#222] hover:bg-[#333] text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
                         >
                           Cancelar
                         </button>
@@ -375,8 +375,8 @@ export default function PagamentosPage() {
 
           {/* Footer summary */}
           {pagos === total && total > 0 && (
-            <div className="px-5 py-3 border-t border-[#2a2a2a] bg-lime-500/5">
-              <p className="text-lime-400 text-sm text-center font-medium">
+            <div className="px-5 py-3 border-t border-gray-100 bg-green-50">
+              <p className="text-green-600 text-sm text-center font-medium">
                 Todos os mensalistas pagaram este mês!
               </p>
             </div>

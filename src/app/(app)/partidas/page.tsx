@@ -53,10 +53,10 @@ export default async function PartidasPage({
   const temporadaSelecionada = listaTemporadas.find(t => t.id === temporadaSelecionadaId) ?? null
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-white text-2xl font-bold">Partidas</h1>
+          <h1 className="text-gray-800 text-2xl font-bold">Partidas</h1>
           <p className="text-gray-500 text-sm mt-0.5">
             {partidas.length} partida{partidas.length !== 1 ? 's' : ''}
             {temporadaSelecionada ? ` · ${temporadaSelecionada.nome}` : ''}
@@ -71,7 +71,7 @@ export default async function PartidasPage({
           )}
           <Link
             href="/partidas/nova"
-            className="bg-lime-500 hover:bg-lime-400 text-black font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+            className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeWidth={2.5} strokeLinecap="round" d="M12 5v14M5 12h14" />
@@ -88,7 +88,7 @@ export default async function PartidasPage({
               ? `Nenhuma partida em ${temporadaSelecionada.nome}.`
               : 'Nenhuma partida registrada.'}
           </p>
-          <Link href="/partidas/nova" className="mt-4 text-lime-400 hover:text-lime-300 text-sm block">
+          <Link href="/partidas/nova" className="mt-4 text-green-600 hover:text-green-700 text-sm block">
             Registrar primeira partida
           </Link>
         </div>
@@ -99,17 +99,17 @@ export default async function PartidasPage({
             return (
               <div
                 key={p.id}
-                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 hover:border-[#3a3a3a] transition-colors"
+                className="bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-[#c1c4c9] transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-white font-semibold">
+                      <span className="text-gray-800 font-semibold">
                         {format(parseISO(p.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
                       </span>
                       <StatusBadge status={p.status} />
                       {p.times_escolhidos && (
-                        <span className="bg-purple-500/20 text-purple-400 text-xs px-2 py-0.5 rounded font-medium">
+                        <span className="bg-purple-100 text-purple-600 text-xs px-2 py-0.5 rounded font-medium">
                           Times definidos
                         </span>
                       )}
@@ -122,13 +122,13 @@ export default async function PartidasPage({
                   <div className="flex gap-2 shrink-0">
                     <Link
                       href={`/partidas/${p.id}`}
-                      className="text-gray-400 hover:text-white hover:bg-white/5 px-3 py-1.5 rounded-lg text-sm transition-colors"
+                      className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg text-sm transition-colors"
                     >
                       Detalhes
                     </Link>
                     <Link
                       href={`/partidas/${p.id}/times`}
-                      className="text-lime-400 hover:text-lime-300 hover:bg-lime-500/10 px-3 py-1.5 rounded-lg text-sm transition-colors"
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg text-sm transition-colors"
                     >
                       Times
                     </Link>

@@ -130,15 +130,15 @@ export default function TimesPage() {
   const isRealizada = partida?.status === 'realizada'
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6">
       <div className="flex items-start gap-3 mb-6">
-        <Link href={`/partidas/${id}`} className="text-gray-400 hover:text-white transition-colors mt-1">
+        <Link href={`/partidas/${id}`} className="text-gray-400 hover:text-gray-700 transition-colors mt-1">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
           </svg>
         </Link>
         <div className="flex-1">
-          <h1 className="text-white text-2xl font-bold">
+          <h1 className="text-gray-800 text-2xl font-bold">
             {editMode ? 'Alterar Times' : 'Propostas de Times'}
           </h1>
           {partida && (
@@ -154,7 +154,7 @@ export default function TimesPage() {
               <button
                 onClick={enterEditMode}
                 disabled={loading}
-                className="flex items-center gap-2 bg-[#2a2a2a] hover:bg-[#333] disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg transition-colors border border-[#3a3a3a]"
+                className="flex items-center gap-2 bg-white hover:bg-gray-100 disabled:opacity-50 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-[#e2e8f0]"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -165,7 +165,7 @@ export default function TimesPage() {
             {editMode ? (
               <button
                 onClick={() => router.push(`/partidas/${id}`)}
-                className="flex items-center gap-2 bg-[#2a2a2a] hover:bg-[#333] text-white font-semibold px-4 py-2 rounded-lg transition-colors border border-[#3a3a3a]"
+                className="flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-[#e2e8f0]"
               >
                 Concluir
               </button>
@@ -173,7 +173,7 @@ export default function TimesPage() {
               <button
                 onClick={generateTeams}
                 disabled={generating}
-                className="flex items-center gap-2 bg-lime-500 hover:bg-lime-400 disabled:opacity-50 text-black font-semibold px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
               >
                 <svg className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -186,8 +186,8 @@ export default function TimesPage() {
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <p className="text-red-600 text-sm">{error}</p>
         </div>
       )}
 
@@ -208,21 +208,21 @@ export default function TimesPage() {
           <div className="text-6xl mb-4">⚽</div>
           {selectedTeams ? (
             <>
-              <p className="text-gray-400 text-lg font-medium">Times já definidos</p>
-              <p className="text-gray-500 text-sm mt-2 mb-6">
+              <p className="text-gray-500 text-lg font-medium">Times já definidos</p>
+              <p className="text-gray-400 text-sm mt-2 mb-6">
                 Clique em &quot;Alterar&quot; para editar os times, ou &quot;Gerar Times&quot; para novas propostas.
               </p>
             </>
           ) : (
             <>
-              <p className="text-gray-400 text-lg font-medium">Pronto para sortear os times?</p>
-              <p className="text-gray-500 text-sm mt-2 mb-6">
+              <p className="text-gray-500 text-lg font-medium">Pronto para sortear os times?</p>
+              <p className="text-gray-400 text-sm mt-2 mb-6">
                 Clique em &quot;Gerar Times&quot; para ver 3 propostas balanceadas por posição e nível.
               </p>
               <button
                 onClick={generateTeams}
                 disabled={generating}
-                className="bg-lime-500 hover:bg-lime-400 text-black font-semibold px-6 py-3 rounded-lg transition-colors"
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
               >
                 Gerar Times
               </button>
@@ -257,7 +257,7 @@ export default function TimesPage() {
             <div className="mt-8 flex justify-center">
               <Link
                 href={`/partidas/${id}`}
-                className="flex items-center gap-2 bg-lime-500 hover:bg-lime-400 text-black font-semibold px-6 py-3 rounded-lg transition-colors"
+                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />

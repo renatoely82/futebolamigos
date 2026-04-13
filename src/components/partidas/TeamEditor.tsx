@@ -17,6 +17,7 @@ import {
 import type { Jogador } from '@/lib/supabase'
 import { PositionBadge } from '@/components/ui/Badge'
 import { sortByPosition } from '@/lib/team-balancer'
+import { getTeamColor } from '@/lib/team-colors'
 
 function PlayerContent({ jogador }: { jogador: Jogador }) {
   return (
@@ -25,11 +26,11 @@ function PlayerContent({ jogador }: { jogador: Jogador }) {
         <PositionBadge posicao={jogador.posicao_principal} />
         <div className="flex gap-0.5 ml-auto">
           {[1, 2, 3, 4, 5].map(n => (
-            <div key={n} className={`w-2 h-2 rounded-sm ${n <= jogador.nivel ? 'bg-lime-500' : 'bg-[#333]'}`} />
+            <div key={n} className={`w-2 h-2 rounded-sm ${n <= jogador.nivel ? 'bg-green-500' : 'bg-gray-200'}`} />
           ))}
         </div>
       </div>
-      <span className="text-white text-xs mt-0.5 block leading-snug">{jogador.nome}</span>
+      <span className="text-gray-800 text-xs mt-0.5 block leading-snug">{jogador.nome}</span>
     </>
   )
 }
@@ -54,7 +55,7 @@ function DraggablePlayer({ jogador, sourceZone }: {
     <div
       ref={setNodeRef}
       style={style}
-      className={`py-1.5 border-b border-[#222] last:border-0 cursor-grab active:cursor-grabbing select-none transition-opacity ${isDragging ? 'opacity-30' : ''}`}
+      className={`py-1.5 border-b border-gray-100 last:border-0 cursor-grab active:cursor-grabbing select-none transition-opacity ${isDragging ? 'opacity-30' : ''}`}
       {...listeners}
       {...attributes}
     >
@@ -78,7 +79,7 @@ function DroppableZone({ id, label, color, players, isOver, saving }: {
     <div
       ref={setNodeRef}
       className={`p-4 rounded-xl border transition-colors ${
-        isOver ? 'border-lime-500/50 bg-lime-500/5' : 'border-[#2a2a2a] bg-[#1a1a1a]'
+        isOver ? 'border-green-500/50 bg-green-50' : 'border-[#e2e8f0] bg-white'
       }`}
     >
       <div className="flex items-center justify-between mb-3">
@@ -96,7 +97,7 @@ function DroppableZone({ id, label, color, players, isOver, saving }: {
         <DraggablePlayer key={j.id} jogador={j} sourceZone={id} />
       ))}
       {players.length === 0 && (
-        <div className="text-gray-600 text-xs text-center py-4 border border-dashed border-[#333] rounded-lg">
+        <div className="text-gray-400 text-xs text-center py-4 border border-dashed border-gray-300 rounded-lg">
           Arraste um jogador aqui
         </div>
       )}
@@ -195,7 +196,7 @@ export default function TeamEditor({
           <DroppableZone
             id="time-a"
             label={nomeTimeA}
-            color="text-lime-400"
+            color={getTeamColor(nomeTimeA, 'text-green-600')}
             players={timeA}
             isOver={overZone === 'time-a'}
             saving={saving}
@@ -203,7 +204,7 @@ export default function TeamEditor({
           <DroppableZone
             id="time-b"
             label={nomeTimeB}
-            color="text-blue-400"
+            color={getTeamColor(nomeTimeB, 'text-blue-600')}
             players={timeB}
             isOver={overZone === 'time-b'}
             saving={saving}
@@ -214,7 +215,7 @@ export default function TeamEditor({
           <DroppableZone
             id="banco"
             label="Jogadores disponíveis"
-            color="text-gray-400"
+            color="text-gray-500"
             players={banco}
             isOver={overZone === 'banco'}
             saving={saving}
@@ -222,7 +223,7 @@ export default function TeamEditor({
         )}
 
         {banco.length === 0 && (
-          <div className="text-center py-3 text-gray-600 text-xs border border-dashed border-[#2a2a2a] rounded-xl">
+          <div className="text-center py-3 text-gray-400 text-xs border border-dashed border-gray-200 rounded-xl">
             Todos os jogadores estão em um time
           </div>
         )}
@@ -230,7 +231,7 @@ export default function TeamEditor({
 
       <DragOverlay>
         {activePlayer && (
-          <div className="bg-[#2a2a2a] border border-lime-500/60 rounded-lg p-2.5 shadow-2xl cursor-grabbing min-w-[160px]">
+          <div className="bg-white border border-green-500/60 rounded-lg p-2.5 shadow-2xl cursor-grabbing min-w-[160px]">
             <PlayerContent jogador={activePlayer} />
           </div>
         )}

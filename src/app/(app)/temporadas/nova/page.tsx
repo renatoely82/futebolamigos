@@ -19,17 +19,17 @@ export default function NovaTemporadaPage() {
   }
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-xl">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/temporadas" className="text-gray-400 hover:text-white transition-colors">
+        <Link href="/temporadas" className="text-gray-400 hover:text-gray-700 transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
           </svg>
         </Link>
-        <h1 className="text-white text-2xl font-bold">Nova Temporada</h1>
+        <h1 className="text-gray-800 text-2xl font-bold">Nova Temporada</h1>
       </div>
 
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+      <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
         <TemporadaForm
           onSave={handleSave}
           onCancel={() => router.push('/temporadas')}

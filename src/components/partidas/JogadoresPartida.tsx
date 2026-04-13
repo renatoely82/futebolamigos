@@ -60,7 +60,7 @@ export default function JogadoresPartida({
     <div className="space-y-6">
       {/* Confirmed list */}
       <div>
-        <h3 className="text-white font-semibold mb-3">
+        <h3 className="text-gray-800 font-semibold mb-3">
           Convocados ({confirmedPlayers.length})
         </h3>
         {confirmedPlayers.length === 0 ? (
@@ -70,18 +70,18 @@ export default function JogadoresPartida({
             {[...confirmedPlayers].sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')).map(({ jogador, adicionado_manualmente }) => (
               <div
                 key={jogador.id}
-                className="flex items-center gap-3 bg-[#111] border border-[#222] rounded-lg px-4 py-2.5"
+                className="flex items-center gap-3 bg-white border border-[#e9ecf1] rounded-lg px-4 py-2.5"
               >
                 <PositionBadge posicao={jogador.posicao_principal} />
-                <span className="text-white text-sm flex-1">{jogador.nome}</span>
+                <span className="text-gray-800 text-sm flex-1">{jogador.nome}</span>
                 {!adicionado_manualmente && (
-                  <span className="text-lime-500 text-xs">Mensalista</span>
+                  <span className="text-green-600 text-xs">Mensalista</span>
                 )}
                 {!readonly && (
                   <button
                     onClick={() => handleRemove(jogador.id)}
                     disabled={loading === jogador.id}
-                    className="text-gray-500 hover:text-red-400 transition-colors p-1 rounded disabled:opacity-40"
+                    className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded disabled:opacity-40"
                     title="Remover"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,13 +97,13 @@ export default function JogadoresPartida({
 
       {!readonly && (
         <div>
-          <h3 className="text-white font-semibold mb-3">Adicionar Jogador</h3>
+          <h3 className="text-gray-800 font-semibold mb-3">Adicionar Jogador</h3>
           <input
             type="text"
             placeholder="Buscar jogador..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 mb-3 text-sm"
+            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 mb-3 text-sm"
           />
           {available.length === 0 ? (
             <p className="text-gray-500 text-sm">
@@ -114,14 +114,14 @@ export default function JogadoresPartida({
               {available.map(j => (
                 <div
                   key={j.id}
-                  className="flex items-center gap-3 bg-[#111] border border-[#222] rounded-lg px-4 py-2.5"
+                  className="flex items-center gap-3 bg-white border border-[#e9ecf1] rounded-lg px-4 py-2.5"
                 >
                   <PositionBadge posicao={j.posicao_principal} />
-                  <span className="text-white text-sm flex-1">{j.nome}</span>
+                  <span className="text-gray-800 text-sm flex-1">{j.nome}</span>
                   <button
                     onClick={() => handleAdd(j.id)}
                     disabled={loading === j.id}
-                    className="text-gray-400 hover:text-lime-400 transition-colors p-1 rounded disabled:opacity-40"
+                    className="text-gray-400 hover:text-green-600 transition-colors p-1 rounded disabled:opacity-40"
                     title="Adicionar"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

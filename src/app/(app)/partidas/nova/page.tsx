@@ -35,13 +35,13 @@ function CalendarioInline({ value, onChange }: { value: string; onChange: (v: st
   while (cells.length % 7 !== 0) cells.push(null)
 
   return (
-    <div className="bg-[#111] border border-[#333] rounded-xl p-4 select-none">
+    <div className="bg-white border border-[#d1d9e0] rounded-xl p-4 select-none">
       <div className="flex items-center justify-between mb-3">
-        <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-[#222] text-gray-400 hover:text-white transition-colors">
+        <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <span className="text-white font-semibold text-sm">{MESES[viewMonth]} {viewYear}</span>
-        <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-[#222] text-gray-400 hover:text-white transition-colors">
+        <span className="text-gray-800 font-semibold text-sm">{MESES[viewMonth]} {viewYear}</span>
+        <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
@@ -61,7 +61,7 @@ function CalendarioInline({ value, onChange }: { value: string; onChange: (v: st
               type="button"
               onClick={() => selectDay(day)}
               className={`text-sm rounded-lg py-2 w-full transition-colors font-medium
-                ${isSelected ? 'bg-lime-500 text-black' : isToday ? 'bg-[#222] text-lime-400' : 'text-gray-300 hover:bg-[#222] hover:text-white'}`}
+                ${isSelected ? 'bg-green-500 text-white' : isToday ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
             >
               {day}
             </button>
@@ -126,24 +126,24 @@ export default function NovaPartidaPage() {
   }
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-xl">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/partidas" className="text-gray-400 hover:text-white transition-colors">
+        <Link href="/partidas" className="text-gray-400 hover:text-gray-700 transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
           </svg>
         </Link>
-        <h1 className="text-white text-2xl font-bold">Nova Partida</h1>
+        <h1 className="text-gray-800 text-2xl font-bold">Nova Partida</h1>
       </div>
 
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+      <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Data *</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Data *</label>
             <button
               type="button"
               onClick={() => setShowCalendar(v => !v)}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-left text-white focus:outline-none focus:border-lime-500 flex items-center justify-between"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-left text-gray-800 focus:outline-none focus:border-green-500 flex items-center justify-between"
             >
               <span>
                 {form.data
@@ -164,77 +164,77 @@ export default function NovaPartidaPage() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Local</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Local</label>
             <input
               type="text"
               value={form.local}
               onChange={e => setForm(f => ({ ...f, local: e.target.value }))}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
               placeholder="Ex: Quadra do clube"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Número de Jogadores</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Número de Jogadores</label>
             <input
               type="number"
               min="2"
               max="100"
               value={form.numero_jogadores}
               onChange={e => setForm(f => ({ ...f, numero_jogadores: e.target.value }))}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
               placeholder="Ex: 14"
             />
             {showOddWarning && (
-              <p className="text-yellow-400 text-xs mt-1">
+              <p className="text-yellow-600 text-xs mt-1">
                 Número ímpar — não é possível dividir igualmente nos dois times.
               </p>
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Nome do Time A</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Nome do Time A</label>
               <input
                 type="text"
                 value={form.nome_time_a}
                 onChange={e => setForm(f => ({ ...f, nome_time_a: e.target.value }))}
-                className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500"
+                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
                 placeholder="Amarelo"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Nome do Time B</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Nome do Time B</label>
               <input
                 type="text"
                 value={form.nome_time_b}
                 onChange={e => setForm(f => ({ ...f, nome_time_b: e.target.value }))}
-                className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500"
+                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
                 placeholder="Azul"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Observações</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Observações</label>
             <textarea
               value={form.observacoes}
               onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
               rows={3}
-              className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 resize-none"
+              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
               placeholder="Informações extras..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Temporada</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Temporada</label>
             {temporadas.length === 0 ? (
               <p className="text-gray-500 text-sm py-2">
                 Nenhuma temporada cadastrada.{' '}
-                <Link href="/temporadas/nova" className="text-lime-400 hover:text-lime-300">Criar temporada</Link>
+                <Link href="/temporadas/nova" className="text-green-600 hover:text-green-700">Criar temporada</Link>
               </p>
             ) : (
               <select
                 value={form.temporada_id}
                 onChange={e => setForm(f => ({ ...f, temporada_id: e.target.value }))}
-                className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-lime-500"
+                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
               >
                 <option value="">Sem temporada</option>
                 {temporadas.map(t => (
@@ -251,36 +251,36 @@ export default function NovaPartidaPage() {
             onClick={() => setForm(f => ({ ...f, incluir_mensalistas: !f.incluir_mensalistas }))}
             className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors ${
               form.incluir_mensalistas
-                ? 'bg-lime-500/10 border-lime-500/30'
-                : 'bg-[#111] border-[#333]'
+                ? 'bg-green-50 border-green-200'
+                : 'bg-white border-[#d1d9e0]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <svg className={`w-5 h-5 flex-shrink-0 ${form.incluir_mensalistas ? 'text-lime-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-5 h-5 flex-shrink-0 ${form.incluir_mensalistas ? 'text-green-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
-              <span className={`text-sm font-medium ${form.incluir_mensalistas ? 'text-lime-400' : 'text-gray-400'}`}>
+              <span className={`text-sm font-medium ${form.incluir_mensalistas ? 'text-green-600' : 'text-gray-500'}`}>
                 Incluir mensalistas automaticamente
               </span>
             </div>
-            <div className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${form.incluir_mensalistas ? 'bg-lime-500' : 'bg-[#444]'}`}>
+            <div className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${form.incluir_mensalistas ? 'bg-green-500' : 'bg-gray-200'}`}>
               <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${form.incluir_mensalistas ? 'left-5' : 'left-1'}`} />
             </div>
           </button>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-lime-500 hover:bg-lime-400 disabled:opacity-50 text-black font-semibold py-2.5 rounded-lg transition-colors"
+              className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
             >
               {loading ? 'Criando...' : 'Criar Partida'}
             </button>
             <Link
               href="/partidas"
-              className="flex-1 text-center bg-[#222] hover:bg-[#333] text-white font-semibold py-2.5 rounded-lg transition-colors"
+              className="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
             >
               Cancelar
             </Link>

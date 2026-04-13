@@ -21,23 +21,23 @@ export default function ClassificacaoTable({ entries }: Props) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-gray-400 text-xs uppercase tracking-wider border-b border-[#2a2a2a]">
+          <tr className="text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
             <th className="text-left py-2.5 px-3 w-10">#</th>
             <th className="text-left py-2.5 px-3">Jogador</th>
             <th className="text-center py-2.5 px-2">J</th>
             <th className="text-center py-2.5 px-2">V</th>
             <th className="text-center py-2.5 px-2">E</th>
             <th className="text-center py-2.5 px-2">D</th>
-            <th className="text-center py-2.5 px-2 font-bold text-white">Pts</th>
+            <th className="text-center py-2.5 px-2 font-bold text-gray-800">Pts</th>
             <th className="text-center py-2.5 px-2">Gols</th>
             <th className="text-center py-2.5 px-2">Aprov%</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#1e1e1e]">
+        <tbody className="divide-y divide-gray-100">
           {entries.map((entry, idx) => (
             <tr
               key={entry.jogador_id}
-              className={`transition-colors ${idx < 3 ? 'bg-lime-500/5' : 'hover:bg-white/[0.02]'}`}
+              className={`transition-colors ${idx < 3 ? 'bg-green-50' : 'hover:bg-gray-50'}`}
             >
               <td className="py-3 px-3 text-center">
                 {idx < 3 ? (
@@ -47,17 +47,17 @@ export default function ClassificacaoTable({ entries }: Props) {
                 )}
               </td>
               <td className="py-3 px-3">
-                <span className={`font-medium ${idx < 3 ? 'text-white' : 'text-gray-200'}`}>
+                <span className={`font-medium ${idx < 3 ? 'text-gray-800' : 'text-gray-700'}`}>
                   {entry.nome}
                 </span>
               </td>
-              <td className="py-3 px-2 text-center text-gray-300">{entry.jogos}</td>
-              <td className="py-3 px-2 text-center text-green-400">{entry.vitorias}</td>
-              <td className="py-3 px-2 text-center text-yellow-400">{entry.empates}</td>
-              <td className="py-3 px-2 text-center text-red-400">{entry.derrotas}</td>
-              <td className="py-3 px-2 text-center font-bold text-white">{entry.pontos}</td>
-              <td className="py-3 px-2 text-center text-gray-300">{entry.gols}</td>
-              <td className="py-3 px-2 text-center text-gray-300">{entry.aproveitamento.toFixed(1)}%</td>
+              <td className="py-3 px-2 text-center text-gray-600">{entry.jogos}</td>
+              <td className="py-3 px-2 text-center text-green-600">{entry.vitorias}</td>
+              <td className="py-3 px-2 text-center text-yellow-600">{entry.empates}</td>
+              <td className="py-3 px-2 text-center text-red-600">{entry.derrotas}</td>
+              <td className="py-3 px-2 text-center font-bold text-gray-800">{entry.pontos}</td>
+              <td className="py-3 px-2 text-center text-gray-600">{entry.gols}</td>
+              <td className="py-3 px-2 text-center text-gray-600">{entry.aproveitamento.toFixed(1)}%</td>
             </tr>
           ))}
         </tbody>
