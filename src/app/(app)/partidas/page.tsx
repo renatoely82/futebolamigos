@@ -93,20 +93,17 @@ export default async function PartidasPage({
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {partidas.map(p => {
             const count = p.player_count
             return (
               <div
                 key={p.id}
-                className="bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-[#c1c4c9] transition-colors"
+                className="bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-[#c1c4c9] transition-colors flex flex-col gap-3"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-gray-800 font-semibold">
-                        {format(parseISO(p.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                      </span>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <StatusBadge status={p.status} />
                       {p.times_escolhidos && (
                         <span className="bg-purple-100 text-purple-600 text-xs px-2 py-0.5 rounded font-medium">
@@ -114,19 +111,24 @@ export default async function PartidasPage({
                         </span>
                       )}
                     </div>
-                    {p.status === 'realizada' && p.placar_time_a !== null && p.placar_time_b !== null && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-gray-700 text-sm font-medium truncate max-w-[100px]">{p.nome_time_a}</span>
-                        <span className="bg-gray-800 text-white text-sm font-bold px-3 py-0.5 rounded-lg tabular-nums shrink-0">
-                          {p.placar_time_a} – {p.placar_time_b}
-                        </span>
-                        <span className="text-gray-700 text-sm font-medium truncate max-w-[100px]">{p.nome_time_b}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-4 mt-2 text-gray-500 text-sm">
-                      {p.local && <span>{p.local}</span>}
-                      <span>{count} jogadores</span>
-                    </div>
+                    <span className="text-gray-800 font-semibold text-sm mt-1 block">
+                      {format(parseISO(p.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </span>
+                  </div>
+                </div>
+                {p.status === 'realizada' && p.placar_time_a !== null && p.placar_time_b !== null && (
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-gray-700 text-sm font-medium truncate">{p.nome_time_a}</span>
+                    <span className="bg-gray-800 text-white text-sm font-bold px-3 py-0.5 rounded-lg tabular-nums shrink-0">
+                      {p.placar_time_a} – {p.placar_time_b}
+                    </span>
+                    <span className="text-gray-700 text-sm font-medium truncate">{p.nome_time_b}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-auto">
+                  <div className="text-gray-500 text-sm flex items-center gap-3">
+                    {p.local && <span className="truncate max-w-[120px]">{p.local}</span>}
+                    <span>{count} jogadores</span>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Link
