@@ -22,3 +22,137 @@
  GET /api/temporadas 200 in 309ms (next.js: 180ms, application-code: 130ms)
  GET /api/temporadas 200 in 94ms (next.js: 3ms, application-code: 91ms)
  GET /partidas 200 in 373ms (next.js: 6ms, application-code: 367ms)
+ GET /partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/times 200 in 1516ms (next.js: 1462ms, application-code: 54ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1 200 in 1543ms (next.js: 1331ms, application-code: 212ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1 200 in 281ms (next.js: 139ms, application-code: 142ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/times 200 in 1841ms (next.js: 1192ms, application-code: 649ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/times 200 in 526ms (next.js: 116ms, application-code: 410ms)
+ GET /partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1 200 in 1254ms (next.js: 1207ms, application-code: 47ms)
+ GET /api/temporadas 200 in 703ms (next.js: 9ms, application-code: 694ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1 200 in 608ms (next.js: 117ms, application-code: 491ms)
+ GET /api/jogadores 200 in 713ms (next.js: 80ms, application-code: 633ms)
+ GET /api/temporadas 200 in 120ms (next.js: 6ms, application-code: 114ms)
+ GET /api/jogadores 200 in 106ms (next.js: 5ms, application-code: 100ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1 200 in 141ms (next.js: 3ms, application-code: 138ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/jogadores 200 in 1622ms (next.js: 1511ms, application-code: 110ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/jogadores 200 in 406ms (next.js: 129ms, application-code: 278ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/gols 200 in 1372ms (next.js: 1255ms, application-code: 117ms)
+ GET /partidas 200 in 556ms (next.js: 5ms, application-code: 551ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/gols 200 in 265ms (next.js: 167ms, application-code: 98ms)
+⨯ ReferenceError: StatusBadge is not defined
+    at <unknown> (src\app\(app)\partidas\page.tsx:104:24)
+    at Array.map (<anonymous>)
+    at PartidasPage (src\app\(app)\partidas\page.tsx:94:21)
+  102 |                   <div className="flex-1 min-w-0">
+  103 |                     <div className="flex items-center gap-2 flex-wrap">
+> 104 |                       <StatusBadge status={p.status} />
+      |                        ^
+  105 |                       {p.times_escolhidos && (
+  106 |                         <span className="bg-purple-100 text-purple-600 text-xs px-2 py-0....
+  107 |                           Times definidos {
+  digest: '1248010499'
+}
+ GET /partidas 200 in 1228ms (next.js: 1073ms, application-code: 155ms)
+⨯ ReferenceError: StatusBadge is not defined
+    at <unknown> (src\app\(app)\partidas\page.tsx:104:24)
+    at Array.map (<anonymous>)
+    at PartidasPage (src\app\(app)\partidas\page.tsx:94:21)
+  102 |                   <div className="flex-1 min-w-0">
+  103 |                     <div className="flex items-center gap-2 flex-wrap">
+> 104 |                       <StatusBadge status={p.status} />
+      |                        ^
+  105 |                       {p.times_escolhidos && (
+  106 |                         <span className="bg-purple-100 text-purple-600 text-xs px-2 py-0....
+  107 |                           Times definidos {
+  digest: '1248010499'
+}
+ GET /partidas 200 in 68ms (next.js: 6ms, application-code: 62ms)
+⨯ ReferenceError: StatusBadge is not defined
+    at <unknown> (src\app\(app)\partidas\page.tsx:104:24)
+    at Array.map (<anonymous>)
+    at PartidasPage (src\app\(app)\partidas\page.tsx:94:21)
+  102 |                   <div className="flex-1 min-w-0">
+  103 |                     <div className="flex items-center gap-2 flex-wrap">
+> 104 |                       <StatusBadge status={p.status} />
+      |                        ^
+  105 |                       {p.times_escolhidos && (
+  106 |                         <span className="bg-purple-100 text-purple-600 text-xs px-2 py-0....
+  107 |                           Times definidos {
+  digest: '1248010499'
+}
+ GET /partidas 200 in 73ms (next.js: 4ms, application-code: 69ms)
+⨯ ReferenceError: StatusBadge is not defined
+    at <unknown> (src\app\(app)\partidas\page.tsx:104:24)
+    at Array.map (<anonymous>)
+    at PartidasPage (src\app\(app)\partidas\page.tsx:94:21)
+  102 |                   <div className="flex-1 min-w-0">
+  103 |                     <div className="flex items-center gap-2 flex-wrap">
+> 104 |                       <StatusBadge status={p.status} />
+      |                        ^
+  105 |                       {p.times_escolhidos && (
+  106 |                         <span className="bg-purple-100 text-purple-600 text-xs px-2 py-0....
+  107 |                           Times definidos {
+  digest: '1248010499'
+}
+ GET /partidas 200 in 70ms (next.js: 5ms, application-code: 65ms)
+✓ Compiled in 560ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /partidas 200 in 940ms (next.js: 214ms, application-code: 726ms)
+ GET /partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e/times 200 in 208ms (next.js: 158ms, application-code: 50ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e 200 in 653ms (next.js: 200ms, application-code: 452ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e 200 in 95ms (next.js: 4ms, application-code: 92ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e/times 200 in 818ms (next.js: 413ms, application-code: 405ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e/times 200 in 294ms (next.js: 4ms, application-code: 290ms)
+ GET /partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e 200 in 257ms (next.js: 204ms, application-code: 53ms)
+ GET /api/temporadas 200 in 607ms (next.js: 91ms, application-code: 515ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e/jogadores 200 in 500ms (next.js: 229ms, application-code: 270ms)
+ GET /api/jogadores 200 in 617ms (next.js: 36ms, application-code: 581ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e 200 in 599ms (next.js: 475ms, application-code: 124ms)
+ GET /api/temporadas 200 in 96ms (next.js: 10ms, application-code: 86ms)
+ GET /api/jogadores 200 in 169ms (next.js: 4ms, application-code: 165ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e/jogadores 200 in 166ms (next.js: 3ms, application-code: 163ms)
+ GET /api/partidas/e0417e41-dbb6-4a51-ade7-ee4e5229927e 200 in 112ms (next.js: 4ms, application-code: 108ms)
+ GET /partidas 200 in 297ms (next.js: 5ms, application-code: 292ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/jogadores 200 in 392ms (next.js: 276ms, application-code: 116ms)
+ GET /api/partidas/7d41f6da-e1d1-4a0d-9428-221153197b7a/jogadores 200 in 326ms (next.js: 234ms, application-code: 92ms)
+ GET /api/partidas/b33adac3-5599-4b49-91a9-c23863d85c96/jogadores 200 in 274ms (next.js: 104ms, application-code: 171ms)
+ GET /partidas 200 in 466ms (next.js: 7ms, application-code: 459ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/jogadores 200 in 318ms (next.js: 223ms, application-code: 95ms)
+ GET /partidas 200 in 472ms (next.js: 7ms, application-code: 465ms)
+✓ Compiled in 163ms
+ GET /partidas 200 in 401ms (next.js: 253ms, application-code: 148ms)
+ GET /partidas 200 in 602ms (next.js: 7ms, application-code: 595ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/jogadores 200 in 468ms (next.js: 224ms, application-code: 244ms)
+ GET /api/partidas/9ffb38cb-8c32-4f0a-8469-03c2f892a5d1/gols 200 in 610ms (next.js: 418ms, application-code: 192ms)
+ GET /api/partidas/b33adac3-5599-4b49-91a9-c23863d85c96/gols 200 in 494ms (next.js: 321ms, application-code: 173ms)
+ GET /api/partidas/b33adac3-5599-4b49-91a9-c23863d85c96/jogadores 200 in 512ms (next.js: 130ms, application-code: 382ms)
+ GET /api/partidas/8e41f332-e594-4c36-ab9d-875af40008ac/gols 200 in 976ms (next.js: 630ms, application-code: 346ms)
+ GET /api/partidas/8e41f332-e594-4c36-ab9d-875af40008ac/jogadores 200 in 979ms (next.js: 247ms, application-code: 732ms)
+ GET /api/partidas/7d41f6da-e1d1-4a0d-9428-221153197b7a/gols 200 in 519ms (next.js: 398ms, application-code: 121ms)
+ GET /api/partidas/7d41f6da-e1d1-4a0d-9428-221153197b7a/jogadores 200 in 523ms (next.js: 198ms, application-code: 324ms)
+ GET /api/partidas/ee972a98-1b56-4a68-a9b7-c063c23289de/gols 200 in 560ms (next.js: 418ms, application-code: 142ms)
+ GET /api/partidas/ee972a98-1b56-4a68-a9b7-c063c23289de/jogadores 200 in 564ms (next.js: 223ms, application-code: 341ms)
+ GET /api/partidas/8aba4017-2b17-4f6f-be21-5f81fff9c839/gols 200 in 471ms (next.js: 193ms, application-code: 277ms)
+ GET /api/partidas/8aba4017-2b17-4f6f-be21-5f81fff9c839/jogadores 200 in 472ms (next.js: 300ms, application-code: 172ms)
+ GET /api/partidas/6523db01-c593-4434-9a1f-9be704d9581e/gols 200 in 400ms (next.js: 199ms, application-code: 201ms)
+ GET /api/partidas/6523db01-c593-4434-9a1f-9be704d9581e/jogadores 200 in 405ms (next.js: 307ms, application-code: 98ms)
+ GET /api/partidas/6a35ddd4-d8fb-46fd-a9f2-96f8f59e6790/gols 200 in 471ms (next.js: 215ms, application-code: 256ms)
+ GET /api/partidas/6a35ddd4-d8fb-46fd-a9f2-96f8f59e6790/jogadores 200 in 262ms (next.js: 99ms, application-code: 163ms)
+ GET /api/partidas/4c5f2bc4-8c7a-4e1f-a999-118a2ebde19f/gols 200 in 552ms (next.js: 293ms, application-code: 258ms)
+ GET /api/partidas/4c5f2bc4-8c7a-4e1f-a999-118a2ebde19f/jogadores 200 in 569ms (next.js: 188ms, application-code: 380ms)
+ GET /api/partidas/e502365c-c50b-4825-a89f-d6285fd37350/gols 200 in 752ms (next.js: 297ms, application-code: 455ms)
+ GET /api/partidas/e502365c-c50b-4825-a89f-d6285fd37350/jogadores 200 in 755ms (next.js: 195ms, application-code: 560ms)
+ GET /api/partidas/5f86711e-3c4c-4db4-9c0f-2f97a8429b6a/gols 200 in 353ms (next.js: 264ms, application-code: 89ms)
+ GET /api/partidas/5f86711e-3c4c-4db4-9c0f-2f97a8429b6a/jogadores 200 in 370ms (next.js: 162ms, application-code: 208ms)
+ GET /api/partidas/24665894-baa5-49d8-9b81-68b33b995792/gols 200 in 476ms (next.js: 211ms, application-code: 266ms)
+ GET /api/partidas/24665894-baa5-49d8-9b81-68b33b995792/jogadores 200 in 560ms (next.js: 457ms, application-code: 103ms)
+ GET /api/partidas/f3aed497-8edf-4754-8751-c48f6bbade66/gols 200 in 392ms (next.js: 306ms, application-code: 86ms)
+ GET /api/partidas/f3aed497-8edf-4754-8751-c48f6bbade66/jogadores 200 in 405ms (next.js: 122ms, application-code: 283ms)
+ GET /api/partidas/1a96544c-14c4-43fc-a933-025838e9129b/gols 200 in 259ms (next.js: 116ms, application-code: 143ms)
+ GET /api/partidas/1a96544c-14c4-43fc-a933-025838e9129b/jogadores 200 in 359ms (next.js: 235ms, application-code: 124ms)
+ GET /api/partidas/4148b22c-12f9-4d6f-b7fd-9fde0697d012/gols 200 in 475ms (next.js: 184ms, application-code: 291ms)
+ GET /api/partidas/4148b22c-12f9-4d6f-b7fd-9fde0697d012/jogadores 200 in 289ms (next.js: 107ms, application-code: 182ms)
+ GET /api/partidas/e9d754d5-8a01-4f44-af12-de669a501c37/gols 200 in 367ms (next.js: 174ms, application-code: 193ms)
+ GET /api/partidas/e9d754d5-8a01-4f44-af12-de669a501c37/jogadores 200 in 375ms (next.js: 276ms, application-code: 99ms)
+ GET /api/partidas/b8371663-c061-4fcd-acf3-4dc0263b0a05/gols 200 in 349ms (next.js: 143ms, application-code: 206ms)
+ GET /api/partidas/b8371663-c061-4fcd-acf3-4dc0263b0a05/jogadores 200 in 408ms (next.js: 257ms, application-code: 151ms)

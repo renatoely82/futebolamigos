@@ -1,0 +1,207 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { StatusBadge } from '@/components/ui/Badge'
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { POSICAO_CORES } from '@/lib/supabase'
+import type { Jogador, GolComDetalhes, PartidaJogadorComDetalhes } from '@/lib/supabase'
+import type { PartidaComCount } from './types'
+
+interface TimesData {
+  time_a: Jogador[]
+  time_b: Jogador[]
+  gols: Map<string, { normal: number; contra: number }>
+}
+
+function EscalacaoInline({
+  partidaId,
+  timesIds,
+  nomeTimeA,
+  nomeTimeB,
+}: {
+  partidaId: string
+  timesIds: { time_a: string[]; time_b: string[] }
+  nomeTimeA: string
+  nomeTimeB: string
+}) {
+  const [times, setTimes] = useState<TimesData | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  async function toggle() {
+    if (open) { setOpen(false); return }
+    setOpen(true)
+    if (times) return
+    setLoading(true)
+    try {
+      const [resJogadores, resGols] = await Promise.all([
+        fetch(`/api/partidas/${partidaId}/jogadores`),
+        fetch(`/api/partidas/${partidaId}/gols`),
+      ])
+      if (!resJogadores.ok) return
+      const rows: PartidaJogadorComDetalhes[] = await resJogadores.json()
+      const map = new Map(rows.map(r => [r.jogador_id, r.jogador]))
+
+      const golsMap = new Map<string, { normal: number; contra: number }>()
+      if (resGols.ok) {
+        const golsData: GolComDetalhes[] = await resGols.json()
+        for (const g of golsData) {
+          const entry = golsMap.get(g.jogador_id) ?? { normal: 0, contra: 0 }
+          if (g.gol_contra) entry.contra += g.quantidade
+          else entry.normal += g.quantidade
+          golsMap.set(g.jogador_id, entry)
+        }
+      }
+
+      setTimes({
+        time_a: timesIds.time_a.map(id => map.get(id)).filter(Boolean) as Jogador[],
+        time_b: timesIds.time_b.map(id => map.get(id)).filter(Boolean) as Jogador[],
+        gols: golsMap,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={toggle}
+        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+          open
+            ? 'bg-green-100 text-green-700'
+            : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+        }`}
+      >
+        {open ? 'Fechar' : 'Times'}
+      </button>
+
+      {open && (
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          {loading ? (
+            <p className="text-gray-400 text-xs text-center py-2">Carregando...</p>
+          ) : times ? (
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { nome: nomeTimeA, jogadores: times.time_a },
+                { nome: nomeTimeB, jogadores: times.time_b },
+              ] as const).map(time => (
+                <div key={time.nome}>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">{time.nome}</p>
+                  <ul className="space-y-1">
+                    {time.jogadores.map(j => {
+                      const g = times.gols.get(j.id)
+                      return (
+                        <li key={j.id} className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${POSICAO_CORES[j.posicao_principal]}`}>
+                            {j.posicao_principal.substring(0, 3).toUpperCase()}
+                          </span>
+                          <span className="text-sm text-gray-700 truncate flex-1">{j.nome}</span>
+                          {g && (
+                            <span className="flex items-center gap-1 shrink-0">
+                              {g.normal > 0 && (
+                                <span className="text-xs font-semibold text-gray-500">
+                                  ⚽ {g.normal}
+                                </span>
+                              )}
+                              {g.contra > 0 && (
+                                <span className="text-xs font-semibold text-red-400">
+                                  GC {g.contra}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-xs text-center py-2">Não foi possível carregar os times.</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function PartidaCardList({ partidas }: { partidas: PartidaComCount[] }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      {partidas.map(p => {
+        const count = p.player_count
+        const isRealizada = p.status === 'realizada'
+        const temTimes = isRealizada && !!p.times_escolhidos
+
+        return (
+          <div
+            key={p.id}
+            className="bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-[#c1c4c9] transition-colors flex flex-col gap-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <StatusBadge status={p.status} />
+                  {p.times_escolhidos && (
+                    <span className="bg-purple-100 text-purple-600 text-xs px-2 py-0.5 rounded font-medium">
+                      Times definidos
+                    </span>
+                  )}
+                </div>
+                <span className="text-gray-800 font-semibold text-sm mt-1 block">
+                  {format(parseISO(p.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </span>
+              </div>
+            </div>
+
+            {isRealizada && p.placar_time_a !== null && p.placar_time_b !== null && (
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-gray-700 text-sm font-medium truncate">{p.nome_time_a}</span>
+                <span className="bg-gray-800 text-white text-sm font-bold px-3 py-0.5 rounded-lg tabular-nums shrink-0">
+                  {p.placar_time_a} – {p.placar_time_b}
+                </span>
+                <span className="text-gray-700 text-sm font-medium truncate">{p.nome_time_b}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mt-auto">
+              <div className="text-gray-500 text-sm flex items-center gap-3">
+                {p.local && <span className="truncate max-w-[120px]">{p.local}</span>}
+                <span>{count} jogadores</span>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Link
+                  href={`/partidas/${p.id}`}
+                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg text-sm transition-colors"
+                >
+                  Detalhes
+                </Link>
+                {temTimes ? null : (
+                  <Link
+                    href={`/partidas/${p.id}/times`}
+                    className="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg text-sm transition-colors"
+                  >
+                    Times
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {temTimes && (
+              <EscalacaoInline
+                partidaId={p.id}
+                timesIds={p.times_escolhidos!}
+                nomeTimeA={p.nome_time_a}
+                nomeTimeB={p.nome_time_b}
+              />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
