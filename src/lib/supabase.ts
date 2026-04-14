@@ -95,6 +95,7 @@ export interface ClassificacaoEntry {
   derrotas: number
   pontos: number
   gols: number
+  gols_contra: number
   aproveitamento: number
 }
 

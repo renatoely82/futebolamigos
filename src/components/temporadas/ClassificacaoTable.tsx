@@ -1,14 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import type { ClassificacaoEntry } from '@/lib/supabase'
 
 interface Props {
   entries: ClassificacaoEntry[]
+  temporadaId: string
 }
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
-export default function ClassificacaoTable({ entries }: Props) {
+export default function ClassificacaoTable({ entries, temporadaId }: Props) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -29,7 +31,8 @@ export default function ClassificacaoTable({ entries }: Props) {
             <th className="text-center py-2.5 px-2">E</th>
             <th className="text-center py-2.5 px-2">D</th>
             <th className="text-center py-2.5 px-2 font-bold text-gray-800">Pts</th>
-            <th className="text-center py-2.5 px-2">Gols</th>
+            <th className="text-center py-2.5 px-2 cursor-help" title="Gols a Favor">GA</th>
+            <th className="text-center py-2.5 px-2 cursor-help" title="Gols Contra">GC</th>
             <th className="text-center py-2.5 px-2">Aprov%</th>
           </tr>
         </thead>
@@ -47,9 +50,12 @@ export default function ClassificacaoTable({ entries }: Props) {
                 )}
               </td>
               <td className="py-3 px-3">
-                <span className={`font-medium ${idx < 3 ? 'text-gray-800' : 'text-gray-700'}`}>
+                <Link
+                  href={`/temporadas/${temporadaId}/jogadores/${entry.jogador_id}`}
+                  className={`font-medium hover:underline hover:text-green-700 transition-colors ${idx < 3 ? 'text-gray-800' : 'text-gray-700'}`}
+                >
                   {entry.nome}
-                </span>
+                </Link>
               </td>
               <td className="py-3 px-2 text-center text-gray-600">{entry.jogos}</td>
               <td className="py-3 px-2 text-center text-green-600">{entry.vitorias}</td>
@@ -57,6 +63,7 @@ export default function ClassificacaoTable({ entries }: Props) {
               <td className="py-3 px-2 text-center text-red-600">{entry.derrotas}</td>
               <td className="py-3 px-2 text-center font-bold text-gray-800">{entry.pontos}</td>
               <td className="py-3 px-2 text-center text-gray-600">{entry.gols}</td>
+              <td className="py-3 px-2 text-center text-gray-600">{entry.gols_contra}</td>
               <td className="py-3 px-2 text-center text-gray-600">{entry.aproveitamento.toFixed(1)}%</td>
             </tr>
           ))}

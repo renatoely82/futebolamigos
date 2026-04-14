@@ -300,7 +300,7 @@ export default function TemporadaDetailPage() {
               <h2 className="text-gray-800 font-semibold">Tabela de Classificação</h2>
             </div>
             <div className="p-2">
-              <ClassificacaoTable entries={classificacao} />
+              <ClassificacaoTable entries={classificacao} temporadaId={id} />
             </div>
           </div>
 

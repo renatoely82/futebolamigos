@@ -48,10 +48,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const partidaMap = new Map(partidas.map(p => [p.id, p]))
 
   const golsMap = new Map<string, number>()
+  const golsContraMap = new Map<string, number>()
   for (const g of gols) {
-    if (g.gol_contra) continue  // gols contra não contam na artilharia
     const key = `${g.jogador_id}:${g.partida_id}`
-    golsMap.set(key, (golsMap.get(key) ?? 0) + g.quantidade)
+    if (g.gol_contra) {
+      golsContraMap.set(key, (golsContraMap.get(key) ?? 0) + g.quantidade)
+    } else {
+      golsMap.set(key, (golsMap.get(key) ?? 0) + g.quantidade)
+    }
   }
 
   const stats = new Map<string, ClassificacaoEntry>()
@@ -73,6 +77,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         derrotas: 0,
         pontos: 0,
         gols: 0,
+        gols_contra: 0,
         aproveitamento: 0,
       })
     }
@@ -80,6 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const entry = stats.get(pj.jogador_id)!
     entry.jogos += 1
     entry.gols += golsMap.get(`${pj.jogador_id}:${pj.partida_id}`) ?? 0
+    entry.gols_contra += golsContraMap.get(`${pj.jogador_id}:${pj.partida_id}`) ?? 0
 
     const tc = partida.times_escolhidos as TeamSplit | null
     const pA = partida.placar_time_a as number
