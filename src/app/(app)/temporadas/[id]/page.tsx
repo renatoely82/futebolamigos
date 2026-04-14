@@ -32,6 +32,18 @@ function getMesesTemporada(dataInicio: string, dataFim: string): number[] {
   return meses
 }
 
+function getMesesTemporadaComAno(dataInicio: string, dataFim: string): { mes: number; ano: number }[] {
+  const inicio = new Date(dataInicio + 'T00:00:00')
+  const fim = new Date(dataFim + 'T00:00:00')
+  const result: { mes: number; ano: number }[] = []
+  const cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1)
+  while (cur <= fim) {
+    result.push({ mes: cur.getMonth() + 1, ano: cur.getFullYear() })
+    cur.setMonth(cur.getMonth() + 1)
+  }
+  return result
+}
+
 export default function TemporadaDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [temporada, setTemporada] = useState<Temporada | null>(null)
@@ -44,10 +56,12 @@ export default function TemporadaDetailPage() {
   const [selectedMeses, setSelectedMeses] = useState<number[] | null>(null) // null = todos
   const [savingMensalista, setSavingMensalista] = useState(false)
   const [updatingMeses, setUpdatingMeses] = useState<string | null>(null)
+  const [pagamentosStatus, setPagamentosStatus] = useState<Map<string, boolean>>(new Map())
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [filtroInicio, setFiltroInicio] = useState('')
   const [filtroFim, setFiltroFim] = useState('')
+  const [filtroMes, setFiltroMes] = useState<number | null>(null)
   const filtroInicializado = useRef(false)
 
   const buildParams = useCallback((extra: Record<string, string> = {}) => {
@@ -63,18 +77,25 @@ export default function TemporadaDetailPage() {
     const partidasParams = new URLSearchParams(filtroParams)
     partidasParams.set('temporada_id', id)
 
-    const [tRes, cRes, pRes, mRes, jRes] = await Promise.all([
+    const [tRes, cRes, pRes, mRes, jRes, pagRes] = await Promise.all([
       fetch(`/api/temporadas/${id}`),
       fetch(`/api/temporadas/${id}/classificacao?${classificacaoParams}`),
       fetch(`/api/partidas?${partidasParams}`),
       fetch(`/api/temporadas/${id}/mensalistas`),
       fetch(`/api/jogadores`),
+      fetch(`/api/pagamentos?temporada_id=${id}`),
     ])
     if (tRes.ok) setTemporada(await tRes.json())
     if (cRes.ok) setClassificacao(await cRes.json())
     if (pRes.ok) setPartidas(await pRes.json())
     if (mRes.ok) setMensalistas(await mRes.json())
     if (jRes.ok) setTodosJogadores(await jRes.json())
+    if (pagRes.ok) {
+      const pagData: { jogador_id: string; mes: number; ano: number; pago: boolean }[] = await pagRes.json()
+      const map = new Map<string, boolean>()
+      pagData.forEach(p => map.set(`${p.jogador_id}-${p.mes}-${p.ano}`, p.pago))
+      setPagamentosStatus(map)
+    }
     setLoading(false)
   }, [id, buildParams])
 
@@ -188,6 +209,13 @@ export default function TemporadaDetailPage() {
   const mensalistasOrdenados = [...mensalistas]
     .filter(m => m.jogador != null)
     .sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR'))
+
+  const mensalistasFiltrados = filtroMes === null
+    ? mensalistasOrdenados
+    : mensalistasOrdenados.filter(m => {
+        const mesesTemporada = temporada ? getMesesTemporada(temporada.data_inicio, temporada.data_fim) : []
+        return (m.meses ?? mesesTemporada).includes(filtroMes)
+      })
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -307,34 +335,65 @@ export default function TemporadaDetailPage() {
           {/* Mensalistas */}
           {(() => {
             const mesesTemporada = getMesesTemporada(temporada.data_inicio, temporada.data_fim)
+            const mesesComAno = getMesesTemporadaComAno(temporada.data_inicio, temporada.data_fim)
+            const mesParaAno = mesesComAno.reduce((acc, { mes, ano }) => { acc[mes] = ano; return acc }, {} as Record<number, number>)
             return (
               <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-[#e9ecf1] flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.52M9 20H4v-2a4 4 0 015.916-3.52M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zm-18 0a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <h2 className="text-gray-800 font-semibold">Mensalistas</h2>
-                    <span className="text-gray-500 text-sm">({mensalistas.length})</span>
+                <div className="px-5 py-4 border-b border-[#e9ecf1]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.52M9 20H4v-2a4 4 0 015.916-3.52M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zm-18 0a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <h2 className="text-gray-800 font-semibold">Mensalistas</h2>
+                      <span className="text-gray-500 text-sm">({mensalistas.length})</span>
+                    </div>
+                    <button
+                      onClick={() => { setSelectedJogadorId(''); setSelectedMeses(null); setAddMensalistaOpen(true) }}
+                      className="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeWidth={2} strokeLinecap="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Adicionar
+                    </button>
                   </div>
-                  <button
-                    onClick={() => { setSelectedJogadorId(''); setSelectedMeses(null); setAddMensalistaOpen(true) }}
-                    className="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeWidth={2} strokeLinecap="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Adicionar
-                  </button>
+                  {mensalistasOrdenados.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {mesesTemporada.map(mes => {
+                        const total = mensalistasOrdenados.filter(m => (m.meses ?? mesesTemporada).includes(mes)).length
+                        const ativo = filtroMes === mes
+                        return (
+                          <button
+                            key={mes}
+                            type="button"
+                            onClick={() => setFiltroMes(ativo ? null : mes)}
+                            className={`flex items-center gap-1 rounded-lg px-2 py-1 border transition-colors ${
+                              ativo
+                                ? 'bg-green-500 border-green-600 text-white'
+                                : 'bg-gray-50 border-gray-200 hover:bg-green-50 hover:border-green-300'
+                            }`}
+                          >
+                            <span className={`text-xs font-medium ${ativo ? 'text-white' : 'text-gray-500'}`}>{MESES_NOMES[mes - 1]}</span>
+                            <span className={`text-xs font-bold ${ativo ? 'text-white' : 'text-green-700'}`}>{total}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {mensalistasOrdenados.length === 0 ? (
                   <div className="py-10 text-center text-gray-500 text-sm">
                     Nenhum mensalista nesta temporada.
                   </div>
+                ) : mensalistasFiltrados.length === 0 ? (
+                  <div className="py-10 text-center text-gray-500 text-sm">
+                    Nenhum mensalista em {MESES_NOMES[(filtroMes ?? 1) - 1]}.
+                  </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {mensalistasOrdenados.map(m => {
+                    {mensalistasFiltrados.map(m => {
                       const mesesAtivos = m.meses ?? mesesTemporada
                       const isUpdating = updatingMeses === m.jogador_id
                       return (
@@ -354,18 +413,38 @@ export default function TemporadaDetailPage() {
                           <div className={`flex flex-wrap gap-1 ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
                             {mesesTemporada.map(mes => {
                               const ativo = mesesAtivos.includes(mes)
+                              const ano = mesParaAno[mes]
+                              const statusKey = `${m.jogador_id}-${mes}-${ano}`
+                              const pago = pagamentosStatus.get(statusKey)
                               return (
-                                <button
-                                  key={mes}
-                                  onClick={() => handleToggleMes(m.jogador_id, mes, m.meses, mesesTemporada)}
-                                  className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-colors ${
-                                    ativo
-                                      ? 'bg-green-100 text-green-700 border-green-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
-                                      : 'bg-transparent text-gray-500 border-gray-200 hover:bg-green-50 hover:text-green-600 hover:border-green-200'
-                                  }`}
-                                >
-                                  {MESES_NOMES[mes - 1]}
-                                </button>
+                                <div key={mes} className="flex flex-col items-center gap-0.5">
+                                  <button
+                                    onClick={() => handleToggleMes(m.jogador_id, mes, m.meses, mesesTemporada)}
+                                    className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-colors ${
+                                      ativo
+                                        ? 'bg-green-100 text-green-700 border-green-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                                        : 'bg-transparent text-gray-500 border-gray-200 hover:bg-green-50 hover:text-green-600 hover:border-green-200'
+                                    }`}
+                                  >
+                                    {MESES_NOMES[mes - 1]}
+                                  </button>
+                                  {ativo && (
+                                    pago === true ? (
+                                      <span title="Pago">
+                                        <svg className="w-3 h-3 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                          <path strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </span>
+                                    ) : (
+                                      <span title="Pendente">
+                                        <svg className="w-3 h-3 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                          <circle cx="12" cy="12" r="9" strokeWidth={2.5} />
+                                          <path strokeWidth={2.5} strokeLinecap="round" d="M12 8v4m0 3.5h.01" />
+                                        </svg>
+                                      </span>
+                                    )
+                                  )}
+                                </div>
                               )
                             })}
                           </div>

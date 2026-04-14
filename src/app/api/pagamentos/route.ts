@@ -9,8 +9,18 @@ export async function GET(request: Request) {
   const mes = searchParams.get('mes')
   const ano = searchParams.get('ano')
 
-  if (!temporada_id || !mes || !ano) {
-    return Response.json({ error: 'temporada_id, mes e ano são obrigatórios' }, { status: 400 })
+  if (!temporada_id) {
+    return Response.json({ error: 'temporada_id é obrigatório' }, { status: 400 })
+  }
+
+  // If no mes/ano, return all raw payment records for the season
+  if (!mes || !ano) {
+    const { data, error } = await supabase
+      .from('pagamentos_mensalistas')
+      .select('jogador_id, mes, ano, pago')
+      .eq('temporada_id', temporada_id)
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json(data ?? [])
   }
 
   // Get all mensalistas for this season
