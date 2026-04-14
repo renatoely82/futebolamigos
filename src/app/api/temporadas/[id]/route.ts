@@ -39,6 +39,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   return Response.json(data)
 }
 
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const supabase = await createClient()
+  const body = await request.json()
+
+  const updateData: Record<string, unknown> = {}
+  if ('valor_mensalidade' in body) updateData.valor_mensalidade = body.valor_mensalidade ?? null
+  if ('valor_diarista' in body) updateData.valor_diarista = body.valor_diarista ?? null
+
+  const { data, error } = await supabase
+    .from('temporadas')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return Response.json({ error: error.message }, { status: 500 })
+  return Response.json(data)
+}
+
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()

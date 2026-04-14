@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { Partida, Jogador, PartidaJogadorComDetalhes, Temporada } from '@/lib/supabase'
+import type { Partida, Jogador, PartidaJogadorComDetalhes, Temporada, FormaPagamento } from '@/lib/supabase'
 import JogadoresPartida from '@/components/partidas/JogadoresPartida'
 import ResultadoPartida from '@/components/partidas/ResultadoPartida'
 import Modal from '@/components/ui/Modal'
@@ -12,6 +12,25 @@ import { sortByPosition } from '@/lib/team-balancer'
 import { getTeamColor } from '@/lib/team-colors'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
+interface DiaristaEntry {
+  jogador_id: string
+  jogador: { id: string; nome: string; posicao_principal: string } | null
+  pagamento_id: string | null
+  pago: boolean
+  valor_pago: number | null
+  forma_pagamento: FormaPagamento | null
+  data_pagamento: string | null
+  observacoes: string | null
+}
+
+const FORMAS_DIARISTA: { value: FormaPagamento; label: string; color: string }[] = [
+  { value: 'CASH', label: 'CASH', color: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200' },
+  { value: 'BIZUM', label: 'BIZUM', color: 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200' },
+  { value: 'PIX', label: 'PIX', color: 'bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-200' },
+  { value: 'LESÃO', label: 'LESÃO', color: 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200' },
+  { value: 'SAMBA', label: 'SAMBA', color: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200' },
+]
 
 export default function PartidaDetailPage() {
   const params = useParams()
@@ -28,6 +47,16 @@ export default function PartidaDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [editingTemporada, setEditingTemporada] = useState(false)
   const [temporadaSaving, setTemporadaSaving] = useState(false)
+  // Diaristas payment state
+  const [diaristas, setDiaristas] = useState<DiaristaEntry[]>([])
+  const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null)
+  const [editDiaristaForm, setEditDiaristaForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string }>({ valor: '', forma: null, obs: '' })
+  const [savingDiarista, setSavingDiarista] = useState<Set<string>>(new Set())
+
+  const loadDiaristas = useCallback(async () => {
+    const res = await fetch(`/api/partidas/${id}/pagamentos-diaristas`)
+    if (res.ok) setDiaristas(await res.json())
+  }, [id])
 
   const loadPartida = useCallback(async () => {
     const [pRes, pjRes, apRes, tRes] = await Promise.all([
@@ -41,7 +70,8 @@ export default function PartidaDetailPage() {
     if (apRes.ok) setAllPlayers(await apRes.json())
     if (tRes.ok) setTemporadas(await tRes.json())
     setLoading(false)
-  }, [id])
+    loadDiaristas()
+  }, [id, loadDiaristas])
 
   useEffect(() => { loadPartida() }, [loadPartida])
 
@@ -86,6 +116,54 @@ export default function PartidaDetailPage() {
     const playerList = players.map(p => `• ${p.jogador.nome}`).join('\n')
     const msg = `⚽ *Futebol Amigos*\n📅 ${dateStr}${partida.local ? `\n📍 ${partida.local}` : ''}\n\n*Convocados (${players.length}):*\n${playerList}`
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  const temporadaAtual = temporadas.find(t => t.id === partida?.temporada_id) ?? null
+  const valorDiaristaDefault = temporadaAtual?.valor_diarista ?? null
+
+  async function salvarPagamentoDiarista(entry: DiaristaEntry) {
+    const key = entry.jogador_id
+    setSavingDiarista(prev => new Set(prev).add(key))
+    const valorNum = editDiaristaForm.valor ? Number(editDiaristaForm.valor) : null
+    const isento = editDiaristaForm.forma === 'LESÃO' || editDiaristaForm.forma === 'SAMBA'
+    const pago = isento ? false : (valorNum !== null && valorNum > 0)
+    await fetch(`/api/partidas/${id}/pagamentos-diaristas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jogador_id: entry.jogador_id,
+        pago,
+        valor_pago: isento ? null : valorNum,
+        forma_pagamento: editDiaristaForm.forma,
+        data_pagamento: pago ? new Date().toISOString() : null,
+        observacoes: editDiaristaForm.obs || null,
+      }),
+    })
+    setSavingDiarista(prev => { const s = new Set(prev); s.delete(key); return s })
+    setEditandoDiaristaId(null)
+    loadDiaristas()
+  }
+
+  function abrirEdicaoDiarista(entry: DiaristaEntry) {
+    setEditandoDiaristaId(entry.jogador_id)
+    setEditDiaristaForm({
+      valor: entry.valor_pago !== null ? String(entry.valor_pago) : (valorDiaristaDefault !== null ? String(valorDiaristaDefault) : ''),
+      forma: entry.forma_pagamento,
+      obs: entry.observacoes ?? '',
+    })
+  }
+
+  function getDiaristaStatus(entry: DiaristaEntry) {
+    if (entry.forma_pagamento === 'LESÃO' || entry.forma_pagamento === 'SAMBA') {
+      return { label: entry.forma_pagamento, classes: 'bg-gray-100 text-gray-500 border-gray-200' }
+    }
+    if (entry.pago || (entry.valor_pago !== null && valorDiaristaDefault !== null && entry.valor_pago >= valorDiaristaDefault)) {
+      return { label: 'Pago', classes: 'bg-green-100 text-green-700 border-green-200' }
+    }
+    if (entry.valor_pago !== null && entry.valor_pago > 0) {
+      return { label: 'Parcial', classes: 'bg-yellow-100 text-yellow-700 border-yellow-200' }
+    }
+    return { label: 'Pendente', classes: 'bg-red-50 text-red-500 border-red-200' }
   }
 
   if (loading) return <div className="p-6 text-gray-500">Carregando...</div>
@@ -267,16 +345,166 @@ export default function PartidaDetailPage() {
         />
       )}
 
-      {/* Players management */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
-        <JogadoresPartida
-          partidaId={id}
-          confirmedPlayers={players}
-          allPlayers={allPlayers}
-          onUpdate={loadPartida}
-          readonly={partida.status === 'realizada'}
-        />
-      </div>
+      {/* Players management + Diaristas (side by side when realizada) */}
+      {partida.status === 'realizada' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Convocados */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
+            <JogadoresPartida
+              partidaId={id}
+              confirmedPlayers={players}
+              allPlayers={allPlayers}
+              onUpdate={() => { loadPartida(); loadDiaristas() }}
+              readonly
+            />
+          </div>
+
+          {/* Diaristas payment */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
+              <h2 className="text-gray-800 font-semibold text-sm">Pagamentos — Diaristas</h2>
+              <p className="text-gray-400 text-xs mt-0.5">
+                {diaristas.length === 0
+                  ? 'Nenhum diarista nesta partida'
+                  : `${diaristas.filter(d => d.pago || d.forma_pagamento === 'LESÃO' || d.forma_pagamento === 'SAMBA').length}/${diaristas.length} resolvidos${valorDiaristaDefault !== null ? ` · Valor padrão: ${valorDiaristaDefault} €` : ''}`
+                }
+              </p>
+            </div>
+            {diaristas.length === 0 ? (
+              <p className="px-6 py-4 text-gray-400 text-sm">Nenhum diarista.</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {diaristas.map(entry => {
+                  const isSaving = savingDiarista.has(entry.jogador_id)
+                  const isEditing = editandoDiaristaId === entry.jogador_id
+                  const status = getDiaristaStatus(entry)
+                  const isento = entry.forma_pagamento === 'LESÃO' || entry.forma_pagamento === 'SAMBA'
+
+                  return (
+                    <div key={entry.jogador_id}>
+                      <div className="flex items-center justify-between px-4 py-3 gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-800 text-sm font-medium truncate">
+                            {entry.jogador?.nome ?? '—'}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {entry.forma_pagamento && !isento && (
+                              <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${FORMAS_DIARISTA.find(f => f.value === entry.forma_pagamento)?.color ?? ''}`}>
+                                {entry.forma_pagamento}
+                              </span>
+                            )}
+                            {entry.valor_pago !== null && !isento && (
+                              <span className="text-xs text-gray-500">
+                                {entry.valor_pago}{valorDiaristaDefault !== null ? ` / ${valorDiaristaDefault} €` : ' €'}
+                              </span>
+                            )}
+                            {entry.observacoes && (
+                              <span className="text-xs text-gray-400 italic truncate max-w-[120px]">{entry.observacoes}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="shrink-0">
+                          <button
+                            onClick={() => isEditing ? setEditandoDiaristaId(null) : abrirEdicaoDiarista(entry)}
+                            disabled={isSaving}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${status.classes} ${isSaving ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
+                          >
+                            {isSaving ? (
+                              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            ) : status.label === 'Pago' ? (
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : null}
+                            {status.label}
+                          </button>
+                        </div>
+                      </div>
+
+                      {isEditing && (
+                        <div className="px-4 pb-4 pt-1 bg-gray-50 space-y-3">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1.5">Forma de pagamento</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {FORMAS_DIARISTA.map(f => (
+                                <button
+                                  key={f.value}
+                                  onClick={() => setEditDiaristaForm(prev => ({ ...prev, forma: prev.forma === f.value ? null : f.value }))}
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                                    editDiaristaForm.forma === f.value
+                                      ? f.color + ' ring-2 ring-offset-1 ring-current'
+                                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {f.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {editDiaristaForm.forma !== 'LESÃO' && editDiaristaForm.forma !== 'SAMBA' && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Valor pago (€)</p>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.5"
+                                  value={editDiaristaForm.valor}
+                                  onChange={e => setEditDiaristaForm(prev => ({ ...prev, valor: e.target.value }))}
+                                  placeholder={valorDiaristaDefault !== null ? String(valorDiaristaDefault) : '0'}
+                                  className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Observação</p>
+                                <input
+                                  type="text"
+                                  value={editDiaristaForm.obs}
+                                  onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
+                                  placeholder="opcional..."
+                                  className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => salvarPagamentoDiarista(entry)}
+                              disabled={isSaving}
+                              className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
+                            >
+                              Guardar
+                            </button>
+                            <button
+                              onClick={() => setEditandoDiaristaId(null)}
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
+          <JogadoresPartida
+            partidaId={id}
+            confirmedPlayers={players}
+            allPlayers={allPlayers}
+            onUpdate={() => { loadPartida(); loadDiaristas() }}
+            readonly={false}
+          />
+        </div>
+      )}
 
       <Modal
         open={showDeleteModal}

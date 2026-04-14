@@ -45,6 +45,8 @@ export interface TemporadaMensalista {
   criado_em: string
 }
 
+export type FormaPagamento = 'CASH' | 'BIZUM' | 'PIX' | 'LESÃO' | 'SAMBA'
+
 export interface PagamentoMensalista {
   id: string
   temporada_id: string
@@ -54,6 +56,8 @@ export interface PagamentoMensalista {
   pago: boolean
   data_pagamento: string | null
   observacoes: string | null
+  valor_pago: number | null
+  forma_pagamento: FormaPagamento | null
   criado_em: string
   atualizado_em: string
 }
@@ -81,8 +85,27 @@ export interface Temporada {
   data_inicio: string
   data_fim: string
   ativa: boolean
+  valor_mensalidade: number | null
+  valor_diarista: number | null
   criado_em: string
   atualizado_em: string
+}
+
+export interface PagamentoDiarista {
+  id: string
+  partida_id: string
+  jogador_id: string
+  pago: boolean
+  valor_pago: number | null
+  forma_pagamento: FormaPagamento | null
+  data_pagamento: string | null
+  observacoes: string | null
+  criado_em: string
+  atualizado_em: string
+}
+
+export interface PagamentoDiaristaComJogador extends PagamentoDiarista {
+  jogador: Jogador
 }
 
 export interface ClassificacaoEntry {
@@ -207,6 +230,11 @@ export type Database = {
         Row: PagamentoMensalista
         Insert: Omit<PagamentoMensalista, 'id' | 'criado_em' | 'atualizado_em'>
         Update: Partial<Omit<PagamentoMensalista, 'id' | 'criado_em' | 'atualizado_em'>>
+      }
+      pagamentos_diaristas: {
+        Row: PagamentoDiarista
+        Insert: Omit<PagamentoDiarista, 'id' | 'criado_em' | 'atualizado_em'>
+        Update: Partial<Omit<PagamentoDiarista, 'id' | 'criado_em' | 'atualizado_em'>>
       }
     }
   }
