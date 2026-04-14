@@ -189,9 +189,12 @@ export default function PartidaDetailPage() {
           ) : (
             <>
               {partida.temporada_id ? (
-                <span className="text-gray-800 text-sm font-medium">
+                <a
+                  href={`/temporadas/${partida.temporada_id}`}
+                  className="text-green-600 hover:text-green-700 text-sm font-medium underline"
+                >
                   {temporadas.find(t => t.id === partida.temporada_id)?.nome ?? '—'}
-                </span>
+                </a>
               ) : (
                 <span className="text-gray-400 text-sm italic">Não vinculada</span>
               )}

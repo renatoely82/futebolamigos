@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { StatusBadge } from '@/components/ui/Badge'
 import { format, parseISO } from 'date-fns'
@@ -8,6 +9,7 @@ import { ptBR } from 'date-fns/locale'
 import { POSICAO_CORES } from '@/lib/supabase'
 import type { Jogador, GolComDetalhes, PartidaJogadorComDetalhes } from '@/lib/supabase'
 import type { PartidaComCount } from './types'
+import Modal from '@/components/ui/Modal'
 
 interface TimesData {
   time_a: Jogador[]
@@ -130,7 +132,50 @@ function EscalacaoInline({
 }
 
 export default function PartidaCardList({ partidas }: { partidas: PartidaComCount[] }) {
+  const router = useRouter()
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDelete() {
+    if (!confirmId) return
+    setDeleting(true)
+    try {
+      await fetch(`/api/partidas/${confirmId}`, { method: 'DELETE' })
+      setConfirmId(null)
+      router.refresh()
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
+    <>
+      <Modal
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        title="Excluir partida"
+      >
+        <p className="text-gray-600 text-sm mb-6">
+          Tem certeza que deseja excluir esta partida? Todos os dados vinculados (jogadores, gols, times) serão removidos permanentemente.
+        </p>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={() => setConfirmId(null)}
+            disabled={deleting}
+            className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-60"
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </button>
+        </div>
+      </Modal>
+
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
       {partidas.map(p => {
         const count = p.player_count
@@ -156,6 +201,15 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
                   {format(parseISO(p.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </span>
               </div>
+              <button
+                onClick={() => setConfirmId(p.id)}
+                className="text-gray-300 hover:text-red-400 transition-colors p-1 rounded shrink-0"
+                title="Excluir partida"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </div>
 
             {isRealizada && p.placar_time_a !== null && p.placar_time_b !== null && (
@@ -203,5 +257,6 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
         )
       })}
     </div>
+    </>
   )
 }
