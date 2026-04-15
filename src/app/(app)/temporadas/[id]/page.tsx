@@ -10,6 +10,7 @@ import Modal from '@/components/ui/Modal'
 import TemporadaForm, { type TemporadaFormData } from '@/components/temporadas/TemporadaForm'
 import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
 import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
+import JogadorDetalheModal from '@/components/temporadas/JogadorDetalheModal'
 
 interface MensalistaEntry {
   id: string
@@ -59,6 +60,8 @@ export default function TemporadaDetailPage() {
   const [pagamentosStatus, setPagamentosStatus] = useState<Map<string, boolean>>(new Map())
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [jogadorDetalheId, setJogadorDetalheId] = useState<string | null>(null)
+  const [jogadorDetalheNome, setJogadorDetalheNome] = useState<string | null>(null)
   const [filtroInicio, setFiltroInicio] = useState('')
   const [filtroFim, setFiltroFim] = useState('')
   const [filtroMes, setFiltroMes] = useState<number | null>(null)
@@ -328,7 +331,11 @@ export default function TemporadaDetailPage() {
               <h2 className="text-gray-800 font-semibold">Tabela de Classificação</h2>
             </div>
             <div className="p-2">
-              <ClassificacaoTable entries={classificacao} temporadaId={id} />
+              <ClassificacaoTable
+                entries={classificacao}
+                temporadaId={id}
+                onSelectJogador={(jid) => { setJogadorDetalheNome(null); setJogadorDetalheId(jid) }}
+              />
             </div>
           </div>
 
@@ -605,6 +612,21 @@ export default function TemporadaDetailPage() {
           onSave={handleSave}
           onCancel={() => setModalOpen(false)}
         />
+      </Modal>
+
+      <Modal
+        open={!!jogadorDetalheId}
+        onClose={() => { setJogadorDetalheId(null); setJogadorDetalheNome(null) }}
+        title={jogadorDetalheNome ?? ''}
+        size="xl"
+      >
+        {jogadorDetalheId && (
+          <JogadorDetalheModal
+            temporadaId={id}
+            jogadorId={jogadorDetalheId}
+            onNomeLoaded={(nome) => setJogadorDetalheNome(nome)}
+          />
+        )}
       </Modal>
     </div>
   )

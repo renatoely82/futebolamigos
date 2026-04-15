@@ -6,11 +6,12 @@ import type { ClassificacaoEntry } from '@/lib/supabase'
 interface Props {
   entries: ClassificacaoEntry[]
   temporadaId: string
+  onSelectJogador?: (jogadorId: string) => void
 }
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
-export default function ClassificacaoTable({ entries, temporadaId }: Props) {
+export default function ClassificacaoTable({ entries, temporadaId, onSelectJogador }: Props) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -50,12 +51,21 @@ export default function ClassificacaoTable({ entries, temporadaId }: Props) {
                 )}
               </td>
               <td className="py-3 px-3">
-                <Link
-                  href={`/temporadas/${temporadaId}/jogadores/${entry.jogador_id}`}
-                  className={`font-medium hover:underline hover:text-green-700 transition-colors ${idx < 3 ? 'text-gray-800' : 'text-gray-700'}`}
-                >
-                  {entry.nome}
-                </Link>
+                {onSelectJogador ? (
+                  <button
+                    onClick={() => onSelectJogador(entry.jogador_id)}
+                    className={`font-medium hover:underline hover:text-green-700 transition-colors text-left ${idx < 3 ? 'text-gray-800' : 'text-gray-700'}`}
+                  >
+                    {entry.nome}
+                  </button>
+                ) : (
+                  <Link
+                    href={`/temporadas/${temporadaId}/jogadores/${entry.jogador_id}`}
+                    className={`font-medium hover:underline hover:text-green-700 transition-colors ${idx < 3 ? 'text-gray-800' : 'text-gray-700'}`}
+                  >
+                    {entry.nome}
+                  </Link>
+                )}
               </td>
               <td className="py-3 px-2 text-center text-gray-600">{entry.jogos}</td>
               <td className="py-3 px-2 text-center text-green-600">{entry.vitorias}</td>

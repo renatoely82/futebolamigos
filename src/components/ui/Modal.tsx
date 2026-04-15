@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
+  size?: 'xl'
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+export default function Modal({ open, onClose, title, children, size }: ModalProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -26,7 +27,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="absolute inset-0 bg-gray-900/60" />
-      <div className="relative bg-white border border-[#e2e8f0] rounded-xl w-full max-w-lg shadow-2xl">
+      <div className={`relative bg-white border border-[#e2e8f0] rounded-xl w-full shadow-2xl ${size === 'xl' ? 'max-w-2xl' : 'max-w-lg'}`}>
         <div className="flex items-center justify-between p-5 border-b border-[#e9ecf1]">
           <h2 className="text-gray-800 font-semibold text-lg">{title}</h2>
           <button
@@ -38,7 +39,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
             </svg>
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className={`p-5 ${size === 'xl' ? 'overflow-y-auto max-h-[75vh]' : ''}`}>{children}</div>
       </div>
     </div>
   )
