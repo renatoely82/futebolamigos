@@ -211,7 +211,7 @@ export default function RegrasPage() {
           {todasTemporadas.length > 0 && (
             <button
               onClick={() => { setOrigemId(''); setCopiarError(''); setCopiarOpen(true) }}
-              className="bg-white hover:bg-gray-100 text-gray-700 border border-[#e2e8f0] px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="bg-white hover:bg-gray-100 text-gray-700 border border-[#e0e0e0] px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -234,7 +234,7 @@ export default function RegrasPage() {
 
       {/* Empty state */}
       {totalRegras === 0 && (
-        <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center">
+        <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center">
           <svg className="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
@@ -263,9 +263,9 @@ export default function RegrasPage() {
         <div className="space-y-4">
           {regrasPorCategoria.map(cat => (
             cat.regras.length === 0 ? null : (
-              <div key={cat.value} className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+              <div key={cat.value} className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
                 {/* Category header */}
-                <div className={`px-5 py-3 border-b border-[#e9ecf1] flex items-center justify-between`}>
+                <div className={`px-5 py-3 border-b border-[#e0e0e0] flex items-center justify-between`}>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full border ${CATEGORIA_CORES[cat.value]}`}>
                       {cat.label}
@@ -372,7 +372,7 @@ export default function RegrasPage() {
             <select
               value={formCategoria}
               onChange={e => setFormCategoria(e.target.value as CategoriaRegra)}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
             >
               {CATEGORIAS.map(cat => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -386,7 +386,7 @@ export default function RegrasPage() {
               onChange={e => setFormDescricao(e.target.value)}
               placeholder="Descreva a regra..."
               rows={3}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
             />
           </div>
           {formError && (
@@ -425,7 +425,7 @@ export default function RegrasPage() {
             <select
               value={origemId}
               onChange={e => setOrigemId(e.target.value)}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
             >
               <option value="">Selecione uma temporada...</option>
               {todasTemporadas.map(t => (

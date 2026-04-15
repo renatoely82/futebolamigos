@@ -29,7 +29,7 @@ export default function NovaTemporadaPage() {
         <h1 className="text-gray-800 text-2xl font-bold">Nova Temporada</h1>
       </div>
 
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl p-6">
         <TemporadaForm
           onSave={handleSave}
           onCancel={() => router.push('/temporadas')}

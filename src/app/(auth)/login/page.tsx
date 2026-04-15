@@ -47,7 +47,7 @@ export default function LoginPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full bg-white border border-[#e2e8f0] rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
               placeholder="seu@email.com"
             />
           </div>
@@ -59,7 +59,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full bg-white border border-[#e2e8f0] rounded-lg px-4 py-3 pr-12 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-4 py-3 pr-12 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
                 placeholder="••••••••"
               />
               <button

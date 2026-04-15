@@ -79,7 +79,7 @@ function DroppableZone({ id, label, color, players, isOver, saving }: {
     <div
       ref={setNodeRef}
       className={`p-4 rounded-xl border transition-colors ${
-        isOver ? 'border-green-500/50 bg-green-50' : 'border-[#e2e8f0] bg-white'
+        isOver ? 'border-green-500/50 bg-green-50' : 'border-[#e0e0e0] bg-white'
       }`}
     >
       <div className="flex items-center justify-between mb-3">

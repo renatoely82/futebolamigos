@@ -27,8 +27,8 @@ export default function Modal({ open, onClose, title, children, size }: ModalPro
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="absolute inset-0 bg-gray-900/60" />
-      <div className={`relative bg-white border border-[#e2e8f0] rounded-xl w-full shadow-2xl ${size === 'xl' ? 'max-w-2xl' : 'max-w-lg'}`}>
-        <div className="flex items-center justify-between p-5 border-b border-[#e9ecf1]">
+      <div className={`relative bg-white border border-[#e0e0e0] rounded-xl w-full shadow-2xl ${size === 'xl' ? 'max-w-2xl' : 'max-w-lg'}`}>
+        <div className="flex items-center justify-between p-5 border-b border-[#e0e0e0]">
           <h2 className="text-gray-800 font-semibold text-lg">{title}</h2>
           <button
             onClick={onClose}

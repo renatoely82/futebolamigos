@@ -383,14 +383,14 @@ export default function PagamentosPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 space-y-3">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Temporada</label>
             <select
               value={temporadaId}
               onChange={e => setTemporadaId(e.target.value)}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors"
             >
               <option value="">Selecione uma temporada...</option>
               {temporadas.map(t => (
@@ -409,7 +409,7 @@ export default function PagamentosPage() {
                 setMesSelecionado(meses.find(m => m.mes === mes && m.ano === ano) ?? null)
               }}
               disabled={meses.length === 0}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors disabled:opacity-40"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors disabled:opacity-40"
             >
               {meses.length === 0 && <option value="">—</option>}
               {meses.map(m => (
@@ -511,7 +511,7 @@ export default function PagamentosPage() {
                   value={mensalidadeInput}
                   onChange={e => setMensalidadeInput(e.target.value)}
                   placeholder="ex: 21"
-                  className="w-20 bg-white border border-[#d1d9e0] rounded-lg px-2 py-1 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                  className="w-20 bg-white border border-[#e0e0e0] rounded-lg px-2 py-1 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                   autoFocus
                 />
                 <button
@@ -561,7 +561,7 @@ export default function PagamentosPage() {
                   value={diaristaInput}
                   onChange={e => setDiaristaInput(e.target.value)}
                   placeholder="ex: 10"
-                  className="w-20 bg-white border border-[#d1d9e0] rounded-lg px-2 py-1 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                  className="w-20 bg-white border border-[#e0e0e0] rounded-lg px-2 py-1 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                   autoFocus
                 />
                 <button
@@ -603,15 +603,15 @@ export default function PagamentosPage() {
 
       {/* Results — Mensalistas */}
       {tab === 'mensalistas' && (!temporadaId || !mesSelecionado ? (
-        <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center text-gray-500 text-sm">
+        <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center text-gray-500 text-sm">
           Selecione uma temporada e um mês para ver os pagamentos.
         </div>
       ) : loading ? (
-        <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center text-gray-500 text-sm">
+        <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center text-gray-500 text-sm">
           Carregando...
         </div>
       ) : pagamentos.length === 0 ? (
-        <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center">
+        <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center">
           <p className="text-gray-500 text-sm">Nenhum mensalista nesta temporada.</p>
           <p className="text-gray-400 text-xs mt-1">
             Adicione mensalistas em <span className="text-gray-500">Temporadas</span>.
@@ -620,7 +620,7 @@ export default function PagamentosPage() {
       ) : (
         <>
           {/* Financial summary */}
-          <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 space-y-3">
+          <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 space-y-3">
             <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Resumo financeiro</p>
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center">
@@ -678,7 +678,7 @@ export default function PagamentosPage() {
           </div>
 
           {/* Player list */}
-          <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+          <div className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
             <div className="divide-y divide-gray-100">
               {pagamentos.map(entry => {
                 const isSaving = saving.has(entry.jogador_id)
@@ -786,7 +786,7 @@ export default function PagamentosPage() {
                               value={editForm.credito}
                               onChange={e => setEditForm(prev => ({ ...prev, credito: e.target.value }))}
                               placeholder="0"
-                              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-indigo-400"
+                              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-indigo-400"
                             />
                           </div>
                           <div>
@@ -798,7 +798,7 @@ export default function PagamentosPage() {
                               value={editForm.valor}
                               onChange={e => setEditForm(prev => ({ ...prev, valor: e.target.value }))}
                               placeholder={valorEsperado !== null ? String(valorEsperado) : '0'}
-                              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                             />
                           </div>
                           <div>
@@ -808,7 +808,7 @@ export default function PagamentosPage() {
                               value={editForm.obs}
                               onChange={e => setEditForm(prev => ({ ...prev, obs: e.target.value }))}
                               placeholder="opcional..."
-                              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                             />
                           </div>
                         </div>
@@ -849,27 +849,27 @@ export default function PagamentosPage() {
       {/* Results — Diaristas */}
       {tab === 'diaristas' && (
         !temporadaId || !mesSelecionado ? (
-          <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center text-gray-500 text-sm">
+          <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center text-gray-500 text-sm">
             Selecione uma temporada e um mês para ver os pagamentos de diaristas.
           </div>
         ) : loadingDiaristas ? (
-          <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center text-gray-500 text-sm">
+          <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center text-gray-500 text-sm">
             Carregando...
           </div>
         ) : diaristasPorPartida.length === 0 ? (
-          <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center">
+          <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center">
             <p className="text-gray-500 text-sm">Nenhuma partida com diaristas neste mês.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {/* Filtro de partida */}
             {diaristasPorPartida.length > 1 && (
-              <div className="bg-white border border-[#e2e8f0] rounded-xl px-4 py-3">
+              <div className="bg-white border border-[#e0e0e0] rounded-xl px-4 py-3">
                 <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Filtrar partida</label>
                 <select
                   value={partidaFiltroId}
                   onChange={e => setPartidaFiltroId(e.target.value)}
-                  className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors"
+                  className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors"
                 >
                   <option value="">Todas as partidas</option>
                   {diaristasPorPartida.map(({ partida, diaristas }) => {
@@ -893,7 +893,7 @@ export default function PagamentosPage() {
               const totalRecebidoPartida = diaristas.reduce((s, d) => s + (d.valor_pago ?? 0), 0)
 
               return (
-                <div key={partida.id} className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+                <div key={partida.id} className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
                   {/* Partida header */}
                   <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
                     <div>
@@ -1025,7 +1025,7 @@ export default function PagamentosPage() {
                                         value={editDiaristaForm.valor}
                                         onChange={e => setEditDiaristaForm(prev => ({ ...prev, valor: e.target.value }))}
                                         placeholder={valorDiaristaEsperado !== null ? String(valorDiaristaEsperado) : '0'}
-                                        className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                        className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                                       />
                                     </div>
                                     <div>
@@ -1035,7 +1035,7 @@ export default function PagamentosPage() {
                                         value={editDiaristaForm.obs}
                                         onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
                                         placeholder="opcional..."
-                                        className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                        className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                                       />
                                     </div>
                                   </div>
@@ -1051,7 +1051,7 @@ export default function PagamentosPage() {
                                     value={editDiaristaForm.obs}
                                     onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
                                     placeholder="opcional..."
-                                    className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                    className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                                   />
                                 </div>
                               )}

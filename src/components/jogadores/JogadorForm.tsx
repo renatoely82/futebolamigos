@@ -64,7 +64,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
           type="text"
           value={form.nome}
           onChange={e => set('nome', e.target.value)}
-          className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+          className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
           placeholder="Nome do jogador"
         />
       </div>
@@ -76,7 +76,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
           <select
             value={form.posicao_principal}
             onChange={e => set('posicao_principal', e.target.value as Posicao)}
-            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
           >
             {POSICOES.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
@@ -86,7 +86,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
           <select
             value={form.posicao_secundaria_1 ?? ''}
             onChange={e => set('posicao_secundaria_1', e.target.value ? e.target.value as Posicao : null)}
-            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
           >
             {posNullOptions.map(p => <option key={p} value={p}>{p || 'Nenhuma'}</option>)}
           </select>
@@ -96,7 +96,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
           <select
             value={form.posicao_secundaria_2 ?? ''}
             onChange={e => set('posicao_secundaria_2', e.target.value ? e.target.value as Posicao : null)}
-            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
           >
             {posNullOptions.map(p => <option key={p} value={p}>{p || 'Nenhuma'}</option>)}
           </select>
@@ -135,7 +135,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
             type="tel"
             value={form.telefone}
             onChange={e => set('telefone', e.target.value)}
-            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
             placeholder="+55 11 99999-0000"
           />
         </div>
@@ -145,7 +145,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
             type="date"
             value={form.aniversario}
             onChange={e => set('aniversario', e.target.value)}
-            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
           />
         </div>
       </div>
@@ -157,7 +157,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
           value={form.observacoes}
           onChange={e => set('observacoes', e.target.value)}
           rows={2}
-          className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
+          className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
           placeholder="Notas sobre o jogador..."
         />
       </div>

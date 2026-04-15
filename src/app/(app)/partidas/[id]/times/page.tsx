@@ -176,7 +176,7 @@ export default function TimesPage() {
               <button
                 onClick={enterEditMode}
                 disabled={loading}
-                className="flex items-center gap-2 bg-white hover:bg-gray-100 disabled:opacity-50 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-[#e2e8f0]"
+                className="flex items-center gap-2 bg-white hover:bg-gray-100 disabled:opacity-50 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-[#e0e0e0]"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -187,7 +187,7 @@ export default function TimesPage() {
             {editMode ? (
               <button
                 onClick={() => router.push(`/partidas/${id}`)}
-                className="flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-[#e2e8f0]"
+                className="flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-[#e0e0e0]"
               >
                 Concluir
               </button>
@@ -208,7 +208,7 @@ export default function TimesPage() {
       </div>
 
       {partidaAnterior && (
-        <div className="mb-5 border border-[#e2e8f0] rounded-xl overflow-hidden">
+        <div className="mb-5 border border-[#e0e0e0] rounded-xl overflow-hidden">
           <button
             onClick={() => setShowPartidaAnterior(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"

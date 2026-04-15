@@ -75,35 +75,35 @@ export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoad
 
       {/* Stats grid */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        <div className="bg-gray-50 border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-center">
+        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-center">
           <p className="text-xl font-bold text-gray-800">{totalJogos}</p>
           <p className="text-xs text-gray-500 mt-0.5">Jogos</p>
         </div>
-        <div className="bg-gray-50 border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-center">
+        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-center">
           <p className="text-xl font-bold text-green-600">{vitorias}</p>
           <p className="text-xs text-gray-500 mt-0.5">Vitórias</p>
         </div>
-        <div className="bg-gray-50 border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-center">
+        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-center">
           <p className="text-xl font-bold text-yellow-600">{empates}</p>
           <p className="text-xs text-gray-500 mt-0.5">Empates</p>
         </div>
-        <div className="bg-gray-50 border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-center">
+        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-center">
           <p className="text-xl font-bold text-red-600">{derrotas}</p>
           <p className="text-xs text-gray-500 mt-0.5">Derrotas</p>
         </div>
-        <div className="bg-gray-50 border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-center">
+        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-center">
           <p className="text-xl font-bold text-gray-800">{totalGols}</p>
           <p className="text-xs text-gray-500 mt-0.5" title="Gols a Favor">GA</p>
         </div>
-        <div className="bg-gray-50 border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-center">
+        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-center">
           <p className="text-xl font-bold text-gray-800">{totalGC}</p>
           <p className="text-xs text-gray-500 mt-0.5" title="Gols Contra">GC</p>
         </div>
       </div>
 
       {/* Matches */}
-      <div className="border border-[#e2e8f0] rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#e9ecf1] flex items-center gap-2 bg-gray-50">
+      <div className="border border-[#e0e0e0] rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#e0e0e0] flex items-center gap-2 bg-gray-50">
           <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
             <path strokeWidth={1.5} d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />

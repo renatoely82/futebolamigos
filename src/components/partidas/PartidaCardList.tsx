@@ -185,7 +185,7 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
         return (
           <div
             key={p.id}
-            className="bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-[#c1c4c9] transition-colors flex flex-col gap-3"
+            className="bg-white border border-[#e0e0e0] rounded-xl p-4 hover:border-[#c8c8c8] transition-colors flex flex-col gap-3"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">

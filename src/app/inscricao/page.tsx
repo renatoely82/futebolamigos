@@ -137,7 +137,7 @@ export default function InscricaoPage() {
               <select
                 value={jogadorId}
                 onChange={e => setJogadorId(e.target.value)}
-                className="w-full bg-white border border-[#e2e8f0] rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:border-green-500 transition-colors"
+                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:border-green-500 transition-colors"
               >
                 <option value="">Selecione...</option>
                 {jogadores.map(j => (

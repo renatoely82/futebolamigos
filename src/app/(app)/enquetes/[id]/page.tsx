@@ -121,7 +121,7 @@ export default function EnqueteAdminPage() {
 
       {/* Results */}
       {resultados && (
-        <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 mb-6">
+        <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-700">Resultados</h2>
             <span className="text-sm text-gray-500">{resultados.totalVotos} de {resultados.totalInscritos} votos</span>
@@ -149,7 +149,7 @@ export default function EnqueteAdminPage() {
       )}
 
       {/* Links por jogador */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl p-4">
         <h2 className="font-semibold text-gray-700 mb-3">Links de votação</h2>
         <div className="space-y-2">
           {enquete.enquete_tokens

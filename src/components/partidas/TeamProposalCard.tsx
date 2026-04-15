@@ -162,7 +162,7 @@ export default function TeamProposalCard({
 
   return (
     <div className={`bg-white border rounded-xl overflow-hidden transition-all ${
-      selected ? 'border-green-500 ring-1 ring-green-500/50' : 'border-[#e2e8f0] hover:border-[#c1c4c9]'
+      selected ? 'border-green-500 ring-1 ring-green-500/50' : 'border-[#e0e0e0] hover:border-[#c8c8c8]'
     }`}>
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-2">

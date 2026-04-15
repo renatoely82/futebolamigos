@@ -283,7 +283,7 @@ export default function TemporadaDetailPage() {
       </div>
 
       {/* Filtro por intervalo de data */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl px-4 py-3">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl px-4 py-3">
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex items-center gap-2 text-gray-500 shrink-0">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -300,7 +300,7 @@ export default function TemporadaDetailPage() {
                 min={temporada.data_inicio}
                 max={filtroFim || temporada.data_fim}
                 onChange={e => setFiltroInicio(e.target.value)}
-                className="bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
+                className="bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -311,13 +311,13 @@ export default function TemporadaDetailPage() {
                 min={filtroInicio || temporada.data_inicio}
                 max={temporada.data_fim}
                 onChange={e => setFiltroFim(e.target.value)}
-                className="bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
+                className="bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
               />
             </div>
             {filtroAtivo && (
               <button
                 onClick={limparFiltro}
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 border border-[#d1d9e0] hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 border border-[#e0e0e0] hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
@@ -335,8 +335,8 @@ export default function TemporadaDetailPage() {
       </div>
 
       {/* Tab navigation */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-        <div className="flex overflow-x-auto border-b border-[#e9ecf1]">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
+        <div className="flex overflow-x-auto border-b border-[#e0e0e0]">
           {abas.map(aba => (
             <button
               key={aba.id}
@@ -375,7 +375,7 @@ export default function TemporadaDetailPage() {
           {/* Partidas */}
           {abaAtiva === 'partidas' && (
             <>
-              <div className="px-5 py-3 border-b border-[#e9ecf1] flex items-center justify-between">
+              <div className="px-5 py-3 border-b border-[#e0e0e0] flex items-center justify-between">
                 <span className="text-gray-500 text-sm">{partidas.length} partida(s)</span>
               </div>
               <PartidasList partidas={partidas} />
@@ -389,7 +389,7 @@ export default function TemporadaDetailPage() {
             const mesParaAno = mesesComAno.reduce((acc, { mes, ano }) => { acc[mes] = ano; return acc }, {} as Record<number, number>)
             return (
               <>
-                <div className="px-5 py-3 border-b border-[#e9ecf1]">
+                <div className="px-5 py-3 border-b border-[#e0e0e0]">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500 text-sm">({mensalistas.length})</span>
                     <button
@@ -523,7 +523,7 @@ export default function TemporadaDetailPage() {
                 <select
                   value={selectedJogadorId}
                   onChange={e => setSelectedJogadorId(e.target.value)}
-                  className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
+                  className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-green-500"
                 >
                   <option value="">Selecione um jogador...</option>
                   {disponiveis.map(j => (

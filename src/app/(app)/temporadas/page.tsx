@@ -82,7 +82,7 @@ export default function TemporadasPage() {
           {temporadas.map(t => (
             <div
               key={t.id}
-              className="bg-white border border-[#e2e8f0] rounded-xl p-4 flex items-center justify-between gap-4 hover:border-[#c1c4c9] transition-colors"
+              className="bg-white border border-[#e0e0e0] rounded-xl p-4 flex items-center justify-between gap-4 hover:border-[#c8c8c8] transition-colors"
             >
               <Link href={`/temporadas/${t.id}`} className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">

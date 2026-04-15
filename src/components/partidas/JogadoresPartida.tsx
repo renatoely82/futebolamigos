@@ -68,7 +68,7 @@ export default function JogadoresPartida({
           {[...confirmedPlayers].sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')).map(({ jogador, adicionado_manualmente }) => (
             <div
               key={jogador.id}
-              className="flex items-center gap-3 bg-white border border-[#e9ecf1] rounded-lg px-4 py-2.5"
+              className="flex items-center gap-3 bg-white border border-[#e0e0e0] rounded-lg px-4 py-2.5"
             >
               <PositionBadge posicao={jogador.posicao_principal} />
               <span className="text-gray-800 text-sm flex-1">{jogador.nome}</span>
@@ -108,7 +108,7 @@ export default function JogadoresPartida({
           placeholder="Buscar jogador..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 mb-3 text-sm"
+          className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 mb-3 text-sm"
         />
         {available.length === 0 ? (
           <p className="text-gray-500 text-sm">
@@ -119,7 +119,7 @@ export default function JogadoresPartida({
             {available.map(j => (
               <div
                 key={j.id}
-                className="flex items-center gap-3 bg-white border border-[#e9ecf1] rounded-lg px-4 py-2.5"
+                className="flex items-center gap-3 bg-white border border-[#e0e0e0] rounded-lg px-4 py-2.5"
               >
                 <PositionBadge posicao={j.posicao_principal} />
                 <span className="text-gray-800 text-sm flex-1">{j.nome}</span>

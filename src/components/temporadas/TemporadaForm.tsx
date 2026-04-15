@@ -52,7 +52,7 @@ export default function TemporadaForm({ initial, onSave, onCancel }: Props) {
           required
           value={form.nome}
           onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
-          className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+          className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
           placeholder="Ex: 2025/2026"
         />
       </div>
@@ -64,7 +64,7 @@ export default function TemporadaForm({ initial, onSave, onCancel }: Props) {
             required
             value={form.data_inicio}
             onChange={e => setForm(f => ({ ...f, data_inicio: e.target.value }))}
-            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
           />
         </div>
         <div>
@@ -74,7 +74,7 @@ export default function TemporadaForm({ initial, onSave, onCancel }: Props) {
             required
             value={form.data_fim}
             onChange={e => setForm(f => ({ ...f, data_fim: e.target.value }))}
-            className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
           />
         </div>
       </div>

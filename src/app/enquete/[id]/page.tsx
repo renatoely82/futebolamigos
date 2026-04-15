@@ -119,7 +119,7 @@ export default function VotacaoPage() {
         )}
 
         {stage === 'vote' && enquete && (
-          <div className="bg-white border border-[#e2e8f0] rounded-2xl shadow-sm p-5">
+          <div className="bg-white border border-[#e0e0e0] rounded-2xl shadow-sm p-5">
             <p className="text-xs text-gray-400 mb-1">Olá, {jogadorNome} 👋</p>
             <h1 className="text-gray-800 font-bold text-lg mb-4">{enquete.titulo}</h1>
             {enquete.descricao && <p className="text-gray-500 text-sm mb-4">{enquete.descricao}</p>}
@@ -166,7 +166,7 @@ export default function VotacaoPage() {
         )}
 
         {stage === 'results' && resultados && enquete && (
-          <div className="bg-white border border-[#e2e8f0] rounded-2xl shadow-sm p-5">
+          <div className="bg-white border border-[#e0e0e0] rounded-2xl shadow-sm p-5">
             <div className="text-center mb-4">
               <svg className="w-8 h-8 text-green-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

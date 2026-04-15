@@ -171,7 +171,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
               min="0"
               value={placarA}
               onChange={e => setPlacarA(e.target.value)}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-2xl font-bold text-center focus:outline-none focus:border-green-500"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-2xl font-bold text-center focus:outline-none focus:border-green-500"
               placeholder="0"
             />
           </div>
@@ -185,7 +185,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
               min="0"
               value={placarB}
               onChange={e => setPlacarB(e.target.value)}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-2xl font-bold text-center focus:outline-none focus:border-blue-500"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-2xl font-bold text-center focus:outline-none focus:border-blue-500"
               placeholder="0"
             />
           </div>
@@ -239,7 +239,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   }
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 mb-6">
+    <div className="bg-white border border-[#e0e0e0] rounded-xl p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-gray-800 font-semibold">Resultado da Partida</h2>
         <button

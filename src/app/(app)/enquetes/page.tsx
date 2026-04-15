@@ -53,7 +53,7 @@ export default async function EnquetesPage() {
               <Link
                 key={e.id}
                 href={`/enquetes/${e.id}`}
-                className="block bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-green-300 transition-colors"
+                className="block bg-white border border-[#e0e0e0] rounded-xl p-4 hover:border-green-300 transition-colors"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">

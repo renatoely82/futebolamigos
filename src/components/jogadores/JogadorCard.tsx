@@ -11,7 +11,7 @@ interface JogadorCardProps {
 
 export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardProps) {
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 hover:border-[#c1c4c9] transition-colors">
+    <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 hover:border-[#c8c8c8] transition-colors">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -61,7 +61,7 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
         </div>
       </div>
       {jogador.observacoes && (
-        <p className="text-gray-500 text-xs mt-3 border-t border-[#e9ecf1] pt-3">{jogador.observacoes}</p>
+        <p className="text-gray-500 text-xs mt-3 border-t border-[#e0e0e0] pt-3">{jogador.observacoes}</p>
       )}
     </div>
   )

@@ -80,9 +80,9 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 bg-white border-r border-[#e9ecf1] flex-col h-full shrink-0">
+      <aside className="hidden md:flex w-56 bg-white border-r border-[#e0e0e0] flex-col h-full shrink-0">
         {/* Logo */}
-        <div className="p-4 border-b border-[#e9ecf1]">
+        <div className="p-4 border-b border-[#e0e0e0]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -117,7 +117,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Logout */}
-        <div className="p-2 border-t border-[#e9ecf1]">
+        <div className="p-2 border-t border-[#e0e0e0]">
           <button
             onClick={handleLogout}
             disabled={loggingOut}
@@ -134,7 +134,7 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#e9ecf1] flex items-stretch">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#e0e0e0] flex items-stretch">
         {navItems.map((item) => {
           const active = pathname.startsWith(item.href)
           return (

@@ -35,7 +35,7 @@ function CalendarioInline({ value, onChange }: { value: string; onChange: (v: st
   while (cells.length % 7 !== 0) cells.push(null)
 
   return (
-    <div className="bg-white border border-[#d1d9e0] rounded-xl p-4 select-none">
+    <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 select-none">
       <div className="flex items-center justify-between mb-3">
         <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -136,14 +136,14 @@ export default function NovaPartidaPage() {
         <h1 className="text-gray-800 text-2xl font-bold">Nova Partida</h1>
       </div>
 
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Data *</label>
             <button
               type="button"
               onClick={() => setShowCalendar(v => !v)}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-left text-gray-800 focus:outline-none focus:border-green-500 flex items-center justify-between"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-left text-gray-800 focus:outline-none focus:border-green-500 flex items-center justify-between"
             >
               <span>
                 {form.data
@@ -169,7 +169,7 @@ export default function NovaPartidaPage() {
               type="text"
               value={form.local}
               onChange={e => setForm(f => ({ ...f, local: e.target.value }))}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
               placeholder="Ex: Quadra do clube"
             />
           </div>
@@ -181,7 +181,7 @@ export default function NovaPartidaPage() {
               max="100"
               value={form.numero_jogadores}
               onChange={e => setForm(f => ({ ...f, numero_jogadores: e.target.value }))}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
               placeholder="Ex: 14"
             />
             {showOddWarning && (
@@ -197,7 +197,7 @@ export default function NovaPartidaPage() {
                 type="text"
                 value={form.nome_time_a}
                 onChange={e => setForm(f => ({ ...f, nome_time_a: e.target.value }))}
-                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
                 placeholder="Amarelo"
               />
             </div>
@@ -207,7 +207,7 @@ export default function NovaPartidaPage() {
                 type="text"
                 value={form.nome_time_b}
                 onChange={e => setForm(f => ({ ...f, nome_time_b: e.target.value }))}
-                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
                 placeholder="Azul"
               />
             </div>
@@ -218,7 +218,7 @@ export default function NovaPartidaPage() {
               value={form.observacoes}
               onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
               rows={3}
-              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
               placeholder="Informações extras..."
             />
           </div>
@@ -234,7 +234,7 @@ export default function NovaPartidaPage() {
               <select
                 value={form.temporada_id}
                 onChange={e => setForm(f => ({ ...f, temporada_id: e.target.value }))}
-                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
               >
                 <option value="">Sem temporada</option>
                 {temporadas.map(t => (
@@ -252,7 +252,7 @@ export default function NovaPartidaPage() {
             className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors ${
               form.incluir_mensalistas
                 ? 'bg-green-50 border-green-200'
-                : 'bg-white border-[#d1d9e0]'
+                : 'bg-white border-[#e0e0e0]'
             }`}
           >
             <div className="flex items-center gap-3">

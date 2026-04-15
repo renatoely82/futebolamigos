@@ -73,7 +73,7 @@ export default function NovaEnquetePage() {
             onChange={e => setTitulo(e.target.value)}
             required
             placeholder="Ex: Qual horário preferem para o racha?"
-            className="w-full bg-white border border-[#e2e8f0] rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
           />
         </div>
 
@@ -84,7 +84,7 @@ export default function NovaEnquetePage() {
             onChange={e => setDescricao(e.target.value)}
             rows={2}
             placeholder="Contexto adicional..."
-            className="w-full bg-white border border-[#e2e8f0] rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors resize-none"
+            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors resize-none"
           />
         </div>
 
@@ -98,7 +98,7 @@ export default function NovaEnquetePage() {
                   value={op}
                   onChange={e => updateOpcao(i, e.target.value)}
                   placeholder={`Opção ${i + 1}`}
-                  className="flex-1 bg-white border border-[#e2e8f0] rounded-lg px-4 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+                  className="flex-1 bg-white border border-[#e0e0e0] rounded-lg px-4 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
                 />
                 {opcoes.length > 2 && (
                   <button

@@ -266,7 +266,7 @@ export default function PartidaDetailPage() {
       )}
 
       {/* Status selector */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 mb-6">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-gray-500 text-sm">Status:</span>
           {(['agendada', 'realizada', 'cancelada'] as const).map(s => (
@@ -287,7 +287,7 @@ export default function PartidaDetailPage() {
       </div>
 
       {/* Temporada */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 mb-6">
+      <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3">
           <span className="text-gray-500 text-sm shrink-0">Temporada:</span>
           {editingTemporada ? (
@@ -297,7 +297,7 @@ export default function PartidaDetailPage() {
                 disabled={temporadaSaving}
                 defaultValue={partida.temporada_id ?? ''}
                 onChange={e => handleTemporadaChange(e.target.value)}
-                className="flex-1 bg-white border border-[#d1d9e0] text-gray-800 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-500 disabled:opacity-50"
+                className="flex-1 bg-white border border-[#e0e0e0] text-gray-800 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-500 disabled:opacity-50"
               >
                 <option value="">Sem temporada</option>
                 {temporadas.map(t => (
@@ -396,7 +396,7 @@ export default function PartidaDetailPage() {
       {partida.status === 'realizada' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Convocados */}
-          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
+          <div className="bg-white border border-[#e0e0e0] rounded-xl p-6">
             <JogadoresPartida
               partidaId={id}
               confirmedPlayers={players}
@@ -407,7 +407,7 @@ export default function PartidaDetailPage() {
           </div>
 
           {/* Diaristas payment */}
-          <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+          <div className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
               <h2 className="text-gray-800 font-semibold text-sm">Pagamentos — Diaristas</h2>
               <p className="text-gray-400 text-xs mt-0.5">
@@ -514,7 +514,7 @@ export default function PartidaDetailPage() {
                                     value={editDiaristaForm.valor}
                                     onChange={e => setEditDiaristaForm(prev => ({ ...prev, valor: e.target.value }))}
                                     placeholder={valorDiaristaDefault !== null ? String(valorDiaristaDefault) : '0'}
-                                    className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                    className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                                   />
                                 </div>
                                 <div>
@@ -524,7 +524,7 @@ export default function PartidaDetailPage() {
                                     value={editDiaristaForm.obs}
                                     onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
                                     placeholder="opcional..."
-                                    className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                    className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                                   />
                                 </div>
                               </div>
@@ -540,7 +540,7 @@ export default function PartidaDetailPage() {
                                 value={editDiaristaForm.obs}
                                 onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
                                 placeholder="opcional..."
-                                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                               />
                             </div>
                           )}
@@ -570,7 +570,7 @@ export default function PartidaDetailPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white border border-[#e2e8f0] rounded-xl p-6">
+        <div className="bg-white border border-[#e0e0e0] rounded-xl p-6">
           <JogadoresPartida
             partidaId={id}
             confirmedPlayers={players}
