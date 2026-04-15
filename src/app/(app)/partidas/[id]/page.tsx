@@ -140,6 +140,7 @@ export default function PartidaDetailPage() {
 
     const goleiros = players.filter(p => p.jogador.posicao_principal === 'Goleiro')
     const mensalistas = players.filter(p => p.jogador.posicao_principal !== 'Goleiro' && !p.adicionado_manualmente)
+      .sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR'))
     const suplentes = players.filter(p => p.jogador.posicao_principal !== 'Goleiro' && p.adicionado_manualmente)
 
     const golLine = (i: number) => `${i + 1}- ${goleiros[i]?.jogador.nome ?? ''}`
