@@ -11,6 +11,7 @@ import TemporadaForm, { type TemporadaFormData } from '@/components/temporadas/T
 import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
 import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
 import JogadorDetalheModal from '@/components/temporadas/JogadorDetalheModal'
+import PartidasList from '@/components/temporadas/PartidasList'
 
 interface MensalistaEntry {
   id: string
@@ -18,6 +19,8 @@ interface MensalistaEntry {
   jogador: Jogador
   meses: number[] | null
 }
+
+type Aba = 'classificacao' | 'artilheiros' | 'partidas' | 'mensalistas'
 
 const MESES_NOMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -54,7 +57,7 @@ export default function TemporadaDetailPage() {
   const [todosJogadores, setTodosJogadores] = useState<Jogador[]>([])
   const [addMensalistaOpen, setAddMensalistaOpen] = useState(false)
   const [selectedJogadorId, setSelectedJogadorId] = useState('')
-  const [selectedMeses, setSelectedMeses] = useState<number[] | null>(null) // null = todos
+  const [selectedMeses, setSelectedMeses] = useState<number[] | null>(null)
   const [savingMensalista, setSavingMensalista] = useState(false)
   const [updatingMeses, setUpdatingMeses] = useState<string | null>(null)
   const [pagamentosStatus, setPagamentosStatus] = useState<Map<string, boolean>>(new Map())
@@ -65,20 +68,21 @@ export default function TemporadaDetailPage() {
   const [filtroInicio, setFiltroInicio] = useState('')
   const [filtroFim, setFiltroFim] = useState('')
   const [filtroMes, setFiltroMes] = useState<number | null>(null)
+  const [abaAtiva, setAbaAtiva] = useState<Aba>('classificacao')
   const filtroInicializado = useRef(false)
 
-  const buildParams = useCallback((extra: Record<string, string> = {}) => {
-    const p = new URLSearchParams(extra)
-    if (filtroInicio) p.set('data_inicio', filtroInicio)
-    if (filtroFim) p.set('data_fim', filtroFim)
-    return p
-  }, [filtroInicio, filtroFim])
+  const load = useCallback(async (inicio?: string, fim?: string) => {
+    const di = inicio ?? filtroInicio
+    const df = fim ?? filtroFim
 
-  const load = useCallback(async () => {
-    const filtroParams = buildParams()
-    const classificacaoParams = new URLSearchParams(filtroParams)
-    const partidasParams = new URLSearchParams(filtroParams)
+    const classificacaoParams = new URLSearchParams()
+    if (di) classificacaoParams.set('data_inicio', di)
+    if (df) classificacaoParams.set('data_fim', df)
+
+    const partidasParams = new URLSearchParams()
     partidasParams.set('temporada_id', id)
+    if (di) partidasParams.set('data_inicio', di)
+    if (df) partidasParams.set('data_fim', df)
 
     const [tRes, cRes, pRes, mRes, jRes, pagRes] = await Promise.all([
       fetch(`/api/temporadas/${id}`),
@@ -100,7 +104,26 @@ export default function TemporadaDetailPage() {
       setPagamentosStatus(map)
     }
     setLoading(false)
-  }, [id, buildParams])
+  }, [id, filtroInicio, filtroFim])
+
+  // Initial load
+  useEffect(() => { load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Initialize filter once temporada is loaded
+  useEffect(() => {
+    if (temporada && !filtroInicializado.current) {
+      filtroInicializado.current = true
+      setFiltroInicio(temporada.data_inicio)
+      setFiltroFim(temporada.data_fim)
+    }
+  }, [temporada])
+
+  // Re-fetch when filter changes (after initialization)
+  useEffect(() => {
+    if (!filtroInicializado.current) return
+    if (!filtroInicio && !filtroFim) return
+    load(filtroInicio, filtroFim)
+  }, [filtroInicio, filtroFim]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAddMensalista() {
     if (!selectedJogadorId) return
@@ -142,21 +165,6 @@ export default function TemporadaDetailPage() {
     load()
   }
 
-  useEffect(() => { load() }, [load])
-
-  useEffect(() => {
-    if (temporada && !filtroInicializado.current) {
-      filtroInicializado.current = true
-      setFiltroInicio(temporada.data_inicio)
-      setFiltroFim(temporada.data_fim)
-    }
-  }, [temporada])
-
-  function handleFiltroChange(inicio: string, fim: string) {
-    setFiltroInicio(inicio)
-    setFiltroFim(fim)
-  }
-
   function limparFiltro() {
     if (!temporada) return
     setFiltroInicio(temporada.data_inicio)
@@ -176,10 +184,6 @@ export default function TemporadaDetailPage() {
   }
 
   function fmtDate(date: string) {
-    return format(parseISO(date), "dd/MM/yyyy", { locale: ptBR })
-  }
-
-  function fmtPartidaDate(date: string) {
     return format(parseISO(date), "dd/MM/yyyy", { locale: ptBR })
   }
 
@@ -216,52 +220,64 @@ export default function TemporadaDetailPage() {
   const mensalistasFiltrados = filtroMes === null
     ? mensalistasOrdenados
     : mensalistasOrdenados.filter(m => {
-        const mesesTemporada = temporada ? getMesesTemporada(temporada.data_inicio, temporada.data_fim) : []
+        const mesesTemporada = getMesesTemporada(temporada.data_inicio, temporada.data_fim)
         return (m.meses ?? mesesTemporada).includes(filtroMes)
       })
 
+  const abas: { id: Aba; label: string }[] = [
+    { id: 'classificacao', label: 'Classificação' },
+    { id: 'artilheiros', label: 'Artilheiros' },
+    { id: 'partidas', label: 'Partidas' },
+    { id: 'mensalistas', label: 'Mensalistas' },
+  ]
+
+  const filtroAtivo = temporada && (filtroInicio !== temporada.data_inicio || filtroFim !== temporada.data_fim)
+
   return (
-    <div className="p-4 sm:p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href="/temporadas" className="text-gray-400 hover:text-gray-700 transition-colors">
+      <div
+        className="rounded-xl px-5 py-4 flex items-center justify-between gap-4"
+        style={{ background: 'linear-gradient(135deg, #006b3d, #00894e)' }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/temporadas" className="text-white/70 hover:text-white transition-colors shrink-0">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
             </svg>
           </Link>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-gray-800 text-2xl font-bold">{temporada.nome}</h1>
+              <h1 className="text-white text-xl sm:text-2xl font-bold truncate">{temporada.nome}</h1>
               {temporada.ativa && (
-                <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs text-white border border-white/50 px-2 py-0.5 rounded-full font-medium shrink-0">
                   Ativa
                 </span>
               )}
             </div>
-            <p className="text-gray-500 text-sm mt-0.5">
+            <p className="text-white/70 text-sm mt-0.5">
               {fmtDate(temporada.data_inicio)} — {fmtDate(temporada.data_fim)}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Link
             href={`/temporadas/${id}/regras`}
-            className="bg-white hover:bg-gray-100 text-gray-700 border border-[#e2e8f0] px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shrink-0"
+            className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            Regras
+            <span className="hidden sm:inline">Regras</span>
           </Link>
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-white hover:bg-gray-100 text-gray-700 border border-[#e2e8f0] px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shrink-0"
+            className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            Editar
+            <span className="hidden sm:inline">Editar</span>
           </button>
         </div>
       </div>
@@ -283,7 +299,7 @@ export default function TemporadaDetailPage() {
                 value={filtroInicio}
                 min={temporada.data_inicio}
                 max={filtroFim || temporada.data_fim}
-                onChange={e => handleFiltroChange(e.target.value, filtroFim)}
+                onChange={e => setFiltroInicio(e.target.value)}
                 className="bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
               />
             </div>
@@ -294,11 +310,11 @@ export default function TemporadaDetailPage() {
                 value={filtroFim}
                 min={filtroInicio || temporada.data_inicio}
                 max={temporada.data_fim}
-                onChange={e => handleFiltroChange(filtroInicio, e.target.value)}
+                onChange={e => setFiltroFim(e.target.value)}
                 className="bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
               />
             </div>
-            {(filtroInicio !== temporada.data_inicio || filtroFim !== temporada.data_fim) && (
+            {filtroAtivo && (
               <button
                 onClick={limparFiltro}
                 className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 border border-[#d1d9e0] hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
@@ -310,7 +326,7 @@ export default function TemporadaDetailPage() {
               </button>
             )}
           </div>
-          {(filtroInicio !== temporada.data_inicio || filtroFim !== temporada.data_fim) && (
+          {filtroAtivo && (
             <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full shrink-0">
               Filtro ativo
             </span>
@@ -318,18 +334,28 @@ export default function TemporadaDetailPage() {
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* Column 1: Classification + Mensalistas */}
-        <div className="space-y-6">
-          {/* Classification */}
-          <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#e9ecf1] flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <h2 className="text-gray-800 font-semibold">Tabela de Classificação</h2>
-            </div>
+      {/* Tab navigation */}
+      <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+        <div className="flex overflow-x-auto border-b border-[#e9ecf1]">
+          {abas.map(aba => (
+            <button
+              key={aba.id}
+              onClick={() => setAbaAtiva(aba.id)}
+              className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
+                abaAtiva === aba.id
+                  ? 'border-green-600 text-green-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {aba.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div>
+          {/* Classificação */}
+          {abaAtiva === 'classificacao' && (
             <div className="p-2">
               <ClassificacaoTable
                 entries={classificacao}
@@ -337,24 +363,35 @@ export default function TemporadaDetailPage() {
                 onSelectJogador={(jid) => { setJogadorDetalheNome(null); setJogadorDetalheId(jid) }}
               />
             </div>
-          </div>
+          )}
+
+          {/* Artilheiros */}
+          {abaAtiva === 'artilheiros' && (
+            <div className="p-2">
+              <ArtilheirosTable entries={classificacao} />
+            </div>
+          )}
+
+          {/* Partidas */}
+          {abaAtiva === 'partidas' && (
+            <>
+              <div className="px-5 py-3 border-b border-[#e9ecf1] flex items-center justify-between">
+                <span className="text-gray-500 text-sm">{partidas.length} partida(s)</span>
+              </div>
+              <PartidasList partidas={partidas} />
+            </>
+          )}
 
           {/* Mensalistas */}
-          {(() => {
+          {abaAtiva === 'mensalistas' && (() => {
             const mesesTemporada = getMesesTemporada(temporada.data_inicio, temporada.data_fim)
             const mesesComAno = getMesesTemporadaComAno(temporada.data_inicio, temporada.data_fim)
             const mesParaAno = mesesComAno.reduce((acc, { mes, ano }) => { acc[mes] = ano; return acc }, {} as Record<number, number>)
             return (
-              <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-[#e9ecf1]">
+              <>
+                <div className="px-5 py-3 border-b border-[#e9ecf1]">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.52M9 20H4v-2a4 4 0 015.916-3.52M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zm-18 0a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <h2 className="text-gray-800 font-semibold">Mensalistas</h2>
-                      <span className="text-gray-500 text-sm">({mensalistas.length})</span>
-                    </div>
+                    <span className="text-gray-500 text-sm">({mensalistas.length})</span>
                     <button
                       onClick={() => { setSelectedJogadorId(''); setSelectedMeses(null); setAddMensalistaOpen(true) }}
                       className="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
@@ -460,69 +497,9 @@ export default function TemporadaDetailPage() {
                     })}
                   </div>
                 )}
-              </div>
+              </>
             )
           })()}
-        </div>
-
-        {/* Column 2: Artilheiros + Matches */}
-        <div className="space-y-6">
-          {/* Top Scorers */}
-          <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#e9ecf1] flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <h2 className="text-gray-800 font-semibold">Artilheiros</h2>
-            </div>
-            <div className="p-2">
-              <ArtilheirosTable entries={classificacao} />
-            </div>
-          </div>
-
-          {/* Matches */}
-          <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#e9ecf1] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
-                  <path strokeWidth={1.5} d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                </svg>
-                <h2 className="text-gray-800 font-semibold">Partidas da Temporada</h2>
-              </div>
-              <span className="text-gray-500 text-sm">{partidas.length} partida(s)</span>
-            </div>
-            {partidas.length === 0 ? (
-              <div className="py-10 text-center text-gray-500 text-sm">
-                Nenhuma partida nesta temporada.
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                {partidas.map(p => (
-                  <Link
-                    key={p.id}
-                    href={`/partidas/${p.id}`}
-                    className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
-                  >
-                    <div>
-                      <p className="text-gray-800 text-sm font-medium">{fmtPartidaDate(p.data)}</p>
-                      {p.local && <p className="text-gray-500 text-xs mt-0.5">{p.local}</p>}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {p.placar_time_a !== null && p.placar_time_b !== null && (
-                        <span className="text-gray-800 font-bold text-sm">
-                          {p.nome_time_a} {p.placar_time_a} × {p.placar_time_b} {p.nome_time_b}
-                        </span>
-                      )}
-                      <span className={`text-xs border px-2 py-0.5 rounded-full ${STATUS_COLOR[p.status]}`}>
-                        {STATUS_LABEL[p.status]}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -625,6 +602,8 @@ export default function TemporadaDetailPage() {
             temporadaId={id}
             jogadorId={jogadorDetalheId}
             onNomeLoaded={(nome) => setJogadorDetalheNome(nome)}
+            filtroInicio={filtroInicio || undefined}
+            filtroFim={filtroFim || undefined}
           />
         )}
       </Modal>

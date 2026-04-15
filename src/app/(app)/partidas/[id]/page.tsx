@@ -51,6 +51,8 @@ export default function PartidaDetailPage() {
   const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null)
   const [editDiaristaForm, setEditDiaristaForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string; isento: boolean }>({ valor: '', forma: null, obs: '', isento: false })
   const [savingDiarista, setSavingDiarista] = useState<Set<string>>(new Set())
+  const [sendingPush, setSendingPush] = useState(false)
+  const [pushFeedback, setPushFeedback] = useState('')
 
   const loadDiaristas = useCallback(async () => {
     const res = await fetch(`/api/partidas/${id}/pagamentos-diaristas`)
@@ -106,6 +108,26 @@ export default function PartidaDetailPage() {
       setDeleting(false)
       setShowDeleteModal(false)
     }
+  }
+
+  async function handleNotificar() {
+    if (!partida) return
+    setSendingPush(true)
+    setPushFeedback('')
+    const dateStr = format(parseISO(partida.data), "d 'de' MMMM", { locale: ptBR })
+    const res = await fetch('/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        titulo: '⚽ Lista aberta!',
+        corpo: `A lista para a partida de ${dateStr} está aberta. Confirme sua presença!`,
+        url: `/partidas/${id}`,
+      }),
+    })
+    const data = await res.json()
+    setPushFeedback(data.sent > 0 ? `Notificação enviada para ${data.sent} jogador(es)` : 'Nenhum jogador inscrito para notificações')
+    setSendingPush(false)
+    setTimeout(() => setPushFeedback(''), 4000)
   }
 
   // WhatsApp share
@@ -207,6 +229,17 @@ export default function PartidaDetailPage() {
             Excluir
           </button>
           <button
+            onClick={handleNotificar}
+            disabled={sendingPush}
+            className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            title="Enviar push para jogadores inscritos"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {sendingPush ? '...' : 'Notificar'}
+          </button>
+          <button
             onClick={handleShare}
             className="flex items-center gap-2 bg-[#25D366]/20 hover:bg-[#25D366]/30 text-[#25D366] px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             title="Compartilhar no WhatsApp"
@@ -224,6 +257,13 @@ export default function PartidaDetailPage() {
           </Link>
         </div>
       </div>
+
+      {/* Push feedback */}
+      {pushFeedback && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-blue-700 text-sm">
+          {pushFeedback}
+        </div>
+      )}
 
       {/* Status selector */}
       <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 mb-6">

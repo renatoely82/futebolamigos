@@ -10,11 +10,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   let partidasQuery = supabase
     .from('partidas')
-    .select('id, placar_time_a, placar_time_b, times_escolhidos')
+    .select('id, data, placar_time_a, placar_time_b, times_escolhidos')
     .eq('temporada_id', temporadaId)
     .eq('status', 'realizada')
     .not('placar_time_a', 'is', null)
     .not('placar_time_b', 'is', null)
+    .order('data', { ascending: true })
 
   if (dataInicio) partidasQuery = partidasQuery.gte('data', dataInicio)
   if (dataFim) partidasQuery = partidasQuery.lte('data', dataFim)
@@ -59,6 +60,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const stats = new Map<string, ClassificacaoEntry>()
+  // Track per-player results ordered by match date (partidas already ordered ascending)
+  const historicoMap = new Map<string, ('V' | 'E' | 'D')[]>()
 
   for (const pj of pjs) {
     const jogador = jogadorMap.get(pj.jogador_id)
@@ -79,7 +82,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         gols: 0,
         gols_contra: 0,
         aproveitamento: 0,
+        ultimos5: [],
       })
+      historicoMap.set(pj.jogador_id, [])
     }
 
     const entry = stats.get(pj.jogador_id)!
@@ -91,6 +96,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const pA = partida.placar_time_a as number
     const pB = partida.placar_time_b as number
 
+    let resultado: 'V' | 'E' | 'D' | null = null
+
     if (tc) {
       const inTimeA = tc.time_a?.includes(pj.jogador_id) ?? false
       const inTimeB = tc.time_b?.includes(pj.jogador_id) ?? false
@@ -99,25 +106,70 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         if (pA === pB) {
           entry.empates += 1
           entry.pontos += 1
+          resultado = 'E'
         } else {
           const won = (inTimeA && pA > pB) || (inTimeB && pB > pA)
           if (won) {
             entry.vitorias += 1
             entry.pontos += 3
+            resultado = 'V'
           } else {
             entry.derrotas += 1
+            resultado = 'D'
           }
         }
       }
     }
+
+    if (resultado) {
+      historicoMap.get(pj.jogador_id)!.push(resultado)
+    }
+  }
+
+  // pjs are processed in insertion order which may not be date-sorted per player;
+  // rebuild historico ordered by partida date
+  const partidaOrder = new Map(partidas.map((p, i) => [p.id, i]))
+  const historicoOrdenado = new Map<string, ('V' | 'E' | 'D')[]>()
+
+  // Collect (index, result) per player then sort
+  const historicoComIndex = new Map<string, { idx: number; resultado: 'V' | 'E' | 'D' }[]>()
+  for (const pj of pjs) {
+    const partida = partidaMap.get(pj.partida_id)
+    if (!partida) continue
+    const tc = partida.times_escolhidos as TeamSplit | null
+    const pA = partida.placar_time_a as number
+    const pB = partida.placar_time_b as number
+    if (!tc) continue
+    const inTimeA = tc.time_a?.includes(pj.jogador_id) ?? false
+    const inTimeB = tc.time_b?.includes(pj.jogador_id) ?? false
+    if (!inTimeA && !inTimeB) continue
+
+    let resultado: 'V' | 'E' | 'D'
+    if (pA === pB) {
+      resultado = 'E'
+    } else {
+      resultado = ((inTimeA && pA > pB) || (inTimeB && pB > pA)) ? 'V' : 'D'
+    }
+
+    if (!historicoComIndex.has(pj.jogador_id)) historicoComIndex.set(pj.jogador_id, [])
+    historicoComIndex.get(pj.jogador_id)!.push({ idx: partidaOrder.get(pj.partida_id) ?? 0, resultado })
+  }
+
+  for (const [jogadorId, items] of historicoComIndex) {
+    const sorted = items.sort((a, b) => a.idx - b.idx).map(x => x.resultado)
+    historicoOrdenado.set(jogadorId, sorted)
   }
 
   const result = Array.from(stats.values())
     .filter(e => e.jogos > 0)
-    .map(e => ({
-      ...e,
-      aproveitamento: Math.round((e.pontos / (e.jogos * 3)) * 1000) / 10,
-    }))
+    .map(e => {
+      const historico = historicoOrdenado.get(e.jogador_id) ?? []
+      return {
+        ...e,
+        aproveitamento: Math.round((e.pontos / (e.jogos * 3)) * 1000) / 10,
+        ultimos5: historico.slice(-5),
+      }
+    })
     .sort((a, b) => b.pontos - a.pontos || b.vitorias - a.vitorias || b.gols - a.gols)
 
   return Response.json(result)

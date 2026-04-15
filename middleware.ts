@@ -25,10 +25,17 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const { pathname } = request.nextUrl
+  const isLoginPage = pathname.startsWith('/login')
+  const isApiRoute = pathname.startsWith('/api')
+  const isPublicPage =
+    pathname.startsWith('/inscricao') ||
+    pathname.startsWith('/enquete') ||
+    pathname.startsWith('/api/public') ||
+    pathname.startsWith('/api/push/subscribe') ||
+    pathname.startsWith('/api/enquetes/') && (pathname.endsWith('/votar') || pathname.includes('/votar?'))
 
-  if (!user && !isLoginPage && !isApiRoute) {
+  if (!user && !isLoginPage && !isApiRoute && !isPublicPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

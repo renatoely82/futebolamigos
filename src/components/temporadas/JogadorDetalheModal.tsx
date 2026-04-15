@@ -11,6 +11,8 @@ interface Props {
   temporadaId: string
   jogadorId: string
   onNomeLoaded?: (nome: string) => void
+  filtroInicio?: string
+  filtroFim?: string
 }
 
 const RESULTADO_STYLE: Record<string, string> = {
@@ -19,7 +21,7 @@ const RESULTADO_STYLE: Record<string, string> = {
   D: 'bg-red-100 text-red-600 border-red-200',
 }
 
-export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoaded }: Props) {
+export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoaded, filtroInicio, filtroFim }: Props) {
   const [jogador, setJogador] = useState<Jogador | null>(null)
   const [partidas, setPartidas] = useState<JogadorPartidaEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,9 +31,13 @@ export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoad
     setJogador(null)
     setPartidas([])
     async function load() {
+      const params = new URLSearchParams()
+      if (filtroInicio) params.set('data_inicio', filtroInicio)
+      if (filtroFim) params.set('data_fim', filtroFim)
+      const query = params.toString() ? `?${params.toString()}` : ''
       const [jRes, pRes] = await Promise.all([
         fetch(`/api/jogadores/${jogadorId}`),
-        fetch(`/api/temporadas/${temporadaId}/jogadores/${jogadorId}`),
+        fetch(`/api/temporadas/${temporadaId}/jogadores/${jogadorId}${query}`),
       ])
       if (jRes.ok) {
         const j: Jogador = await jRes.json()
@@ -42,7 +48,7 @@ export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoad
       setLoading(false)
     }
     load()
-  }, [temporadaId, jogadorId, onNomeLoaded])
+  }, [temporadaId, jogadorId, onNomeLoaded, filtroInicio, filtroFim])
 
   if (loading) {
     return <div className="py-10 text-center text-gray-500 text-sm">Carregando...</div>

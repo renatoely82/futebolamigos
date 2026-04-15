@@ -52,6 +52,17 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    href: '/enquetes',
+    label: 'Enquetes',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+        <rect x="9" y="3" width="6" height="4" rx="1" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <path strokeWidth={1.5} strokeLinecap="round" d="M9 12h6M9 16h4" />
+      </svg>
+    ),
+  },
 ]
 
 export default function Sidebar() {

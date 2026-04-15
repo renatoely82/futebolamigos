@@ -132,6 +132,7 @@ export interface ClassificacaoEntry {
   gols: number
   gols_contra: number
   aproveitamento: number
+  ultimos5: ('V' | 'E' | 'D')[]
 }
 
 export interface Partida {

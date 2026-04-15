@@ -6,7 +6,11 @@ interface Props {
   entries: ClassificacaoEntry[]
 }
 
-const MEDALS = ['🥇', '🥈', '🥉']
+function initials(nome: string) {
+  const parts = nome.trim().split(' ')
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
 
 export default function ArtilheirosTable({ entries }: Props) {
   const artilheiros = [...entries]
@@ -22,46 +26,43 @@ export default function ArtilheirosTable({ entries }: Props) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
-            <th className="text-left py-2.5 px-3 w-10">#</th>
-            <th className="text-left py-2.5 px-3">Jogador</th>
-            <th className="text-center py-2.5 px-2">Posição</th>
-            <th className="text-center py-2.5 px-2 font-bold text-gray-800">Gols</th>
-            <th className="text-center py-2.5 px-2">Jogos</th>
-            <th className="text-center py-2.5 px-2">Média</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {artilheiros.map((entry, idx) => (
-            <tr
-              key={entry.jogador_id}
-              className={`transition-colors ${idx < 3 ? 'bg-green-50' : 'hover:bg-gray-50'}`}
-            >
-              <td className="py-3 px-3 text-center">
-                {idx < 3 ? (
-                  <span className="text-base">{MEDALS[idx]}</span>
-                ) : (
-                  <span className="text-gray-500">{idx + 1}</span>
-                )}
-              </td>
-              <td className="py-3 px-3">
-                <span className={`font-medium ${idx < 3 ? 'text-gray-800' : 'text-gray-700'}`}>
-                  {entry.nome}
-                </span>
-              </td>
-              <td className="py-3 px-2 text-center text-gray-500 text-xs">{entry.posicao_principal}</td>
-              <td className="py-3 px-2 text-center font-bold text-green-600 text-base">{entry.gols}</td>
-              <td className="py-3 px-2 text-center text-gray-600">{entry.jogos}</td>
-              <td className="py-3 px-2 text-center text-gray-500">
-                {(entry.gols / entry.jogos).toFixed(2)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="divide-y divide-gray-100">
+      {artilheiros.map((entry, idx) => (
+        <div
+          key={entry.jogador_id}
+          className="flex items-center gap-3 px-4 py-3 hover:bg-[#f8faf8] transition-colors rounded-lg"
+        >
+          {/* Rank */}
+          <span
+            className={`w-7 text-center font-extrabold text-lg shrink-0 ${
+              idx < 3 ? 'text-green-600' : 'text-gray-400'
+            }`}
+          >
+            {idx + 1}
+          </span>
+
+          {/* Avatar */}
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+            style={{ background: 'linear-gradient(135deg, #006b3d, #00894e)' }}
+          >
+            {initials(entry.nome)}
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-[15px] text-gray-800 truncate">{entry.nome}</p>
+            <p className="text-[12px] text-gray-400">
+              {entry.jogos} {entry.jogos === 1 ? 'jogo' : 'jogos'} · {(entry.gols / entry.jogos).toFixed(2)}/jogo
+            </p>
+          </div>
+
+          {/* Goals */}
+          <span className="text-[28px] font-black text-green-600 leading-none shrink-0">
+            {entry.gols}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
