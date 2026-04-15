@@ -3,8 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
 import type { NextRequest } from 'next/server'
 
+const vapidEmail = process.env.VAPID_EMAIL!
 webpush.setVapidDetails(
-  process.env.VAPID_EMAIL!,
+  vapidEmail.startsWith('mailto:') ? vapidEmail : `mailto:${vapidEmail}`,
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!
 )
