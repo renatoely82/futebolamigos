@@ -96,8 +96,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           const rankA = (a.pago || (a.valor_pago ?? 0) > 0) ? 1 : 0
           const rankB = (b.pago || (b.valor_pago ?? 0) > 0) ? 1 : 0
           if (rankA !== rankB) return rankA - rankB
-          const nomeA = (a.jogador as { nome: string } | null)?.nome ?? ''
-          const nomeB = (b.jogador as { nome: string } | null)?.nome ?? ''
+          const nomeA = (a.jogador as unknown as { nome: string } | null)?.nome ?? ''
+          const nomeB = (b.jogador as unknown as { nome: string } | null)?.nome ?? ''
           return nomeA.localeCompare(nomeB, 'pt-BR')
         })
 
