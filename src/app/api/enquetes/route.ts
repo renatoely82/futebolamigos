@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('enquetes')
-    .select('*, enquete_opcoes(*), enquete_votos(count)')
+    .select('*, enquete_opcoes(*), enquete_votos(count), enquete_tokens(*, jogadores(nome))')
     .order('criado_em', { ascending: false })
 
   if (error) return Response.json({ error: error.message }, { status: 500 })

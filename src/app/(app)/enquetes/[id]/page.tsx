@@ -31,12 +31,11 @@ export default function EnqueteAdminPage() {
 
   const load = useCallback(async () => {
     const [eRes, rRes] = await Promise.all([
-      fetch(`/api/enquetes`),
+      fetch(`/api/enquetes/${id}`),
       fetch(`/api/enquetes/${id}/resultados`),
     ])
     if (eRes.ok) {
-      const all = await eRes.json()
-      setEnquete(all.find((e: Enquete) => e.id === id) ?? null)
+      setEnquete(await eRes.json())
     }
     if (rRes.ok) setResultados(await rRes.json())
     setLoading(false)

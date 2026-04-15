@@ -9,14 +9,27 @@ const supabaseAdmin = createAdminClient(
 
 type Params = { params: Promise<{ id: string }> }
 
-// Public GET — requires valid token in query string
 export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params
   const token = request.nextUrl.searchParams.get('token')
 
-  if (!token) return Response.json({ error: 'Token obrigatório' }, { status: 400 })
+  // Admin access: authenticated user, no token required
+  if (!token) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return Response.json({ error: 'Token obrigatório' }, { status: 400 })
 
-  // Validate token
+    const { data: enquete, error } = await supabaseAdmin
+      .from('enquetes')
+      .select('*, enquete_opcoes(*), enquete_tokens(*, jogadores(nome))')
+      .eq('id', id)
+      .single()
+
+    if (error || !enquete) return Response.json({ error: 'Enquete não encontrada' }, { status: 404 })
+    return Response.json(enquete)
+  }
+
+  // Public access: requires valid token
   const { data: tokenRow } = await supabaseAdmin
     .from('enquete_tokens')
     .select('jogador_id, usado, jogadores(nome)')
