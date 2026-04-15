@@ -3,19 +3,20 @@ import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
 import type { NextRequest } from 'next/server'
 
-const vapidEmail = process.env.VAPID_EMAIL!
-webpush.setVapidDetails(
-  vapidEmail.startsWith('mailto:') ? vapidEmail : `mailto:${vapidEmail}`,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
-
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export async function POST(request: NextRequest) {
+  // ✅ Inicializa aqui — só executa em runtime, não no build
+  const vapidEmail = process.env.VAPID_EMAIL!
+  webpush.setVapidDetails(
+    vapidEmail.startsWith('mailto:') ? vapidEmail : `mailto:${vapidEmail}`,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  )
+
   // Auth check — only admin
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
