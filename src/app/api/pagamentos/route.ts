@@ -62,12 +62,20 @@ export async function GET(request: Request) {
       data_pagamento: pagamento?.data_pagamento ?? null,
       observacoes: pagamento?.observacoes ?? null,
       valor_pago: pagamento?.valor_pago ?? null,
+      credito: pagamento?.credito ?? null,
       forma_pagamento: pagamento?.forma_pagamento ?? null,
     }
   })
 
-  // Sort by player name
+  // Sort: pending/partial first, paid last; within same status sort by name
+  function statusRank(entry: typeof result[number]): number {
+    if (entry.pago) return 2
+    if ((entry.valor_pago ?? 0) > 0 || (entry.credito ?? 0) > 0) return 1
+    return 0
+  }
   result.sort((a, b) => {
+    const rankDiff = statusRank(a) - statusRank(b)
+    if (rankDiff !== 0) return rankDiff
     const nomeA = (a.jogador as { nome: string } | null)?.nome ?? ''
     const nomeB = (b.jogador as { nome: string } | null)?.nome ?? ''
     return nomeA.localeCompare(nomeB, 'pt-BR')
@@ -79,7 +87,7 @@ export async function GET(request: Request) {
 // POST /api/pagamentos — toggle/set payment
 export async function POST(request: Request) {
   const supabase = await createClient()
-  const { temporada_id, jogador_id, mes, ano, pago, data_pagamento, observacoes, valor_pago, forma_pagamento } = await request.json()
+  const { temporada_id, jogador_id, mes, ano, pago, data_pagamento, observacoes, valor_pago, credito, forma_pagamento } = await request.json()
 
   if (!temporada_id || !jogador_id || !mes || !ano) {
     return Response.json({ error: 'temporada_id, jogador_id, mes e ano são obrigatórios' }, { status: 400 })
@@ -97,6 +105,7 @@ export async function POST(request: Request) {
         data_pagamento: data_pagamento ?? null,
         observacoes: observacoes ?? null,
         valor_pago: valor_pago ?? null,
+        credito: credito ?? null,
         forma_pagamento: forma_pagamento ?? null,
         atualizado_em: new Date().toISOString(),
       },

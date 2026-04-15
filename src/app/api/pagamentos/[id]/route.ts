@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase-server'
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
   const { id } = await params
-  const { pago, data_pagamento, observacoes, valor_pago, forma_pagamento } = await request.json()
+  const { pago, data_pagamento, observacoes, valor_pago, credito, forma_pagamento } = await request.json()
 
   const { data, error } = await supabase
     .from('pagamentos_mensalistas')
@@ -13,6 +13,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       data_pagamento: data_pagamento ?? null,
       observacoes: observacoes ?? null,
       valor_pago: valor_pago ?? null,
+      credito: credito ?? null,
       forma_pagamento: forma_pagamento ?? null,
       atualizado_em: new Date().toISOString(),
     })

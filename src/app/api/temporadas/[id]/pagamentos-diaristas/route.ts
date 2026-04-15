@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 
 // GET /api/temporadas/[id]/pagamentos-diaristas?mes=X&ano=Y
 // Returns diarista payments for a season grouped by match, filtered by month.
-// Goalkeepers (Goleiro) are excluded — they don't pay.
+// Goalkeepers (Goleiro) are included but marked as isento=true — they don't pay.
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: temporada_id } = await params
   const supabase = await createClient()
@@ -67,19 +67,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const pagamentosMap = new Map((pagamentos ?? []).map(p => [`${p.partida_id}:${p.jogador_id}`, p]))
 
-  // Group by partida, exclude goalkeepers, only include matches that have diaristas
+  // Group by partida, include goalkeepers as isento, only include matches that have diaristas
   const result = partidas
     .map(partida => {
       const diaristas = (partida_jogadores ?? [])
         .filter(pj => {
           if (pj.partida_id !== partida.id) return false
-          const jogador = pj.jogador as { posicao_principal?: string } | null
-          if (jogador?.posicao_principal === 'Goleiro') return false
-          // Diarista = player in the match who is NOT a mensalista for this month
+          // Diarista = player in the match who is NOT a mensalista for this month (goalkeepers included, marked as isento)
           return !mensalistasNoMes.has(pj.jogador_id)
         })
         .map(pj => {
           const pagamento = pagamentosMap.get(`${partida.id}:${pj.jogador_id}`) ?? null
+          const jogador = pj.jogador as { posicao_principal?: string } | null
+          const isGoleiro = jogador?.posicao_principal === 'Goleiro'
           return {
             jogador_id: pj.jogador_id,
             jogador: pj.jogador,
@@ -89,7 +89,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             forma_pagamento: pagamento?.forma_pagamento ?? null,
             data_pagamento: pagamento?.data_pagamento ?? null,
             observacoes: pagamento?.observacoes ?? null,
+            isento: pagamento ? (pagamento.isento ?? isGoleiro) : isGoleiro,
           }
+        })
+        .sort((a, b) => {
+          const rankA = (a.pago || (a.valor_pago ?? 0) > 0) ? 1 : 0
+          const rankB = (b.pago || (b.valor_pago ?? 0) > 0) ? 1 : 0
+          if (rankA !== rankB) return rankA - rankB
+          const nomeA = (a.jogador as { nome: string } | null)?.nome ?? ''
+          const nomeB = (b.jogador as { nome: string } | null)?.nome ?? ''
+          return nomeA.localeCompare(nomeB, 'pt-BR')
         })
 
       return { partida, diaristas }

@@ -53,15 +53,13 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const pagamentosMap = new Map((pagamentos ?? []).map(p => [p.jogador_id, p]))
 
-  // Diaristas = players in the match who are NOT mensalistas for this month and not goalkeepers
-  const naoGoleiros = partida_jogadores.filter(pj => {
-    const jogador = pj.jogador as { posicao_principal?: string } | null
-    if (jogador?.posicao_principal === 'Goleiro') return false
-    return !mensalistasNoMes.has(pj.jogador_id)
-  })
+  // Diaristas = players in the match who are NOT mensalistas for this month (goalkeepers included, marked as isento)
+  const diaristasJogadores = partida_jogadores.filter(pj => !mensalistasNoMes.has(pj.jogador_id))
 
-  const result = naoGoleiros.map(pj => {
+  const result = diaristasJogadores.map(pj => {
     const pagamento = pagamentosMap.get(pj.jogador_id) ?? null
+    const jogador = pj.jogador as { posicao_principal?: string } | null
+    const isGoleiro = jogador?.posicao_principal === 'Goleiro'
     return {
       jogador_id: pj.jogador_id,
       jogador: pj.jogador,
@@ -71,6 +69,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       forma_pagamento: pagamento?.forma_pagamento ?? null,
       data_pagamento: pagamento?.data_pagamento ?? null,
       observacoes: pagamento?.observacoes ?? null,
+      isento: pagamento ? (pagamento.isento ?? isGoleiro) : isGoleiro,
     }
   })
 
@@ -84,7 +83,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const supabase = await createClient()
   const body = await request.json()
 
-  const { jogador_id, pago, valor_pago, forma_pagamento, data_pagamento, observacoes } = body
+  const { jogador_id, pago, valor_pago, forma_pagamento, data_pagamento, observacoes, isento } = body
 
   if (!jogador_id) return Response.json({ error: 'jogador_id é obrigatório' }, { status: 400 })
 
@@ -99,6 +98,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         forma_pagamento: forma_pagamento ?? null,
         data_pagamento: data_pagamento ?? null,
         observacoes: observacoes ?? null,
+        isento: isento ?? false,
         atualizado_em: new Date().toISOString(),
       },
       { onConflict: 'partida_id,jogador_id' }

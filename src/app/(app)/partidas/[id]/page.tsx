@@ -22,14 +22,13 @@ interface DiaristaEntry {
   forma_pagamento: FormaPagamento | null
   data_pagamento: string | null
   observacoes: string | null
+  isento: boolean
 }
 
 const FORMAS_DIARISTA: { value: FormaPagamento; label: string; color: string }[] = [
   { value: 'CASH', label: 'CASH', color: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200' },
   { value: 'BIZUM', label: 'BIZUM', color: 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200' },
   { value: 'PIX', label: 'PIX', color: 'bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-200' },
-  { value: 'LESÃO', label: 'LESÃO', color: 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200' },
-  { value: 'SAMBA', label: 'SAMBA', color: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200' },
 ]
 
 export default function PartidaDetailPage() {
@@ -50,7 +49,7 @@ export default function PartidaDetailPage() {
   // Diaristas payment state
   const [diaristas, setDiaristas] = useState<DiaristaEntry[]>([])
   const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null)
-  const [editDiaristaForm, setEditDiaristaForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string }>({ valor: '', forma: null, obs: '' })
+  const [editDiaristaForm, setEditDiaristaForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string; isento: boolean }>({ valor: '', forma: null, obs: '', isento: false })
   const [savingDiarista, setSavingDiarista] = useState<Set<string>>(new Set())
 
   const loadDiaristas = useCallback(async () => {
@@ -124,19 +123,26 @@ export default function PartidaDetailPage() {
   async function salvarPagamentoDiarista(entry: DiaristaEntry) {
     const key = entry.jogador_id
     setSavingDiarista(prev => new Set(prev).add(key))
-    const valorNum = editDiaristaForm.valor ? Number(editDiaristaForm.valor) : null
-    const isento = editDiaristaForm.forma === 'LESÃO' || editDiaristaForm.forma === 'SAMBA'
-    const pago = isento ? false : (valorNum !== null && valorNum > 0)
+    let valorNum: number | null
+    let pago: boolean
+    if (editDiaristaForm.isento) {
+      valorNum = 0
+      pago = true
+    } else {
+      valorNum = editDiaristaForm.valor ? Number(editDiaristaForm.valor) : null
+      pago = valorNum !== null && valorNum > 0
+    }
     await fetch(`/api/partidas/${id}/pagamentos-diaristas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         jogador_id: entry.jogador_id,
         pago,
-        valor_pago: isento ? null : valorNum,
-        forma_pagamento: editDiaristaForm.forma,
+        valor_pago: valorNum,
+        forma_pagamento: editDiaristaForm.isento ? null : editDiaristaForm.forma,
         data_pagamento: pago ? new Date().toISOString() : null,
         observacoes: editDiaristaForm.obs || null,
+        isento: editDiaristaForm.isento,
       }),
     })
     setSavingDiarista(prev => { const s = new Set(prev); s.delete(key); return s })
@@ -150,12 +156,13 @@ export default function PartidaDetailPage() {
       valor: entry.valor_pago !== null ? String(entry.valor_pago) : (valorDiaristaDefault !== null ? String(valorDiaristaDefault) : ''),
       forma: entry.forma_pagamento,
       obs: entry.observacoes ?? '',
+      isento: entry.isento,
     })
   }
 
   function getDiaristaStatus(entry: DiaristaEntry) {
-    if (entry.forma_pagamento === 'LESÃO' || entry.forma_pagamento === 'SAMBA') {
-      return { label: entry.forma_pagamento, classes: 'bg-gray-100 text-gray-500 border-gray-200' }
+    if (entry.isento && entry.pago) {
+      return { label: 'Isento', classes: 'bg-gray-100 text-gray-500 border-gray-200' }
     }
     if (entry.pago || (entry.valor_pago !== null && valorDiaristaDefault !== null && entry.valor_pago >= valorDiaristaDefault)) {
       return { label: 'Pago', classes: 'bg-green-100 text-green-700 border-green-200' }
@@ -366,7 +373,7 @@ export default function PartidaDetailPage() {
               <p className="text-gray-400 text-xs mt-0.5">
                 {diaristas.length === 0
                   ? 'Nenhum diarista nesta partida'
-                  : `${diaristas.filter(d => d.pago || d.forma_pagamento === 'LESÃO' || d.forma_pagamento === 'SAMBA').length}/${diaristas.length} resolvidos${valorDiaristaDefault !== null ? ` · Valor padrão: ${valorDiaristaDefault} €` : ''}`
+                  : `${diaristas.filter(d => d.pago).length}/${diaristas.length} resolvidos${valorDiaristaDefault !== null ? ` · Valor padrão: ${valorDiaristaDefault} €` : ''}${diaristas.filter(d => d.isento && d.pago).length > 0 ? ` · ${diaristas.filter(d => d.isento && d.pago).length} isento(s)` : ''}`
                 }
               </p>
             </div>
@@ -378,7 +385,6 @@ export default function PartidaDetailPage() {
                   const isSaving = savingDiarista.has(entry.jogador_id)
                   const isEditing = editandoDiaristaId === entry.jogador_id
                   const status = getDiaristaStatus(entry)
-                  const isento = entry.forma_pagamento === 'LESÃO' || entry.forma_pagamento === 'SAMBA'
 
                   return (
                     <div key={entry.jogador_id}>
@@ -388,12 +394,12 @@ export default function PartidaDetailPage() {
                             {entry.jogador?.nome ?? '—'}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            {entry.forma_pagamento && !isento && (
+                            {entry.forma_pagamento && (
                               <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${FORMAS_DIARISTA.find(f => f.value === entry.forma_pagamento)?.color ?? ''}`}>
                                 {entry.forma_pagamento}
                               </span>
                             )}
-                            {entry.valor_pago !== null && !isento && (
+                            {entry.valor_pago !== null && (
                               <span className="text-xs text-gray-500">
                                 {entry.valor_pago}{valorDiaristaDefault !== null ? ` / ${valorDiaristaDefault} €` : ' €'}
                               </span>
@@ -426,50 +432,79 @@ export default function PartidaDetailPage() {
 
                       {isEditing && (
                         <div className="px-4 pb-4 pt-1 bg-gray-50 space-y-3">
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1.5">Forma de pagamento</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {FORMAS_DIARISTA.map(f => (
-                                <button
-                                  key={f.value}
-                                  onClick={() => setEditDiaristaForm(prev => ({ ...prev, forma: prev.forma === f.value ? null : f.value }))}
-                                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                                    editDiaristaForm.forma === f.value
-                                      ? f.color + ' ring-2 ring-offset-1 ring-current'
-                                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                                  }`}
-                                >
-                                  {f.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          {editDiaristaForm.forma !== 'LESÃO' && editDiaristaForm.forma !== 'SAMBA' && (
-                            <div className="grid grid-cols-2 gap-2">
+                          {/* Isento checkbox */}
+                          <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
+                            <input
+                              type="checkbox"
+                              checked={editDiaristaForm.isento}
+                              onChange={e => setEditDiaristaForm(prev => ({ ...prev, isento: e.target.checked }))}
+                              className="w-4 h-4 rounded border-gray-300 accent-green-600"
+                            />
+                            <span className="text-xs text-gray-700 font-medium">Isento do pagamento</span>
+                          </label>
+
+                          {/* Payment fields — hidden when isento */}
+                          {!editDiaristaForm.isento && (
+                            <>
                               <div>
-                                <p className="text-xs text-gray-500 mb-1">Valor pago (€)</p>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.5"
-                                  value={editDiaristaForm.valor}
-                                  onChange={e => setEditDiaristaForm(prev => ({ ...prev, valor: e.target.value }))}
-                                  placeholder={valorDiaristaDefault !== null ? String(valorDiaristaDefault) : '0'}
-                                  className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
-                                />
+                                <p className="text-xs text-gray-500 mb-1.5">Forma de pagamento</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {FORMAS_DIARISTA.map(f => (
+                                    <button
+                                      key={f.value}
+                                      onClick={() => setEditDiaristaForm(prev => ({ ...prev, forma: prev.forma === f.value ? null : f.value }))}
+                                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                                        editDiaristaForm.forma === f.value
+                                          ? f.color + ' ring-2 ring-offset-1 ring-current'
+                                          : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      {f.label}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Observação</p>
-                                <input
-                                  type="text"
-                                  value={editDiaristaForm.obs}
-                                  onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
-                                  placeholder="opcional..."
-                                  className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
-                                />
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">Valor pago (€)</p>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.5"
+                                    value={editDiaristaForm.valor}
+                                    onChange={e => setEditDiaristaForm(prev => ({ ...prev, valor: e.target.value }))}
+                                    placeholder={valorDiaristaDefault !== null ? String(valorDiaristaDefault) : '0'}
+                                    className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                  />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">Observação</p>
+                                  <input
+                                    type="text"
+                                    value={editDiaristaForm.obs}
+                                    onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
+                                    placeholder="opcional..."
+                                    className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                  />
+                                </div>
                               </div>
+                            </>
+                          )}
+
+                          {/* Obs alone when isento */}
+                          {editDiaristaForm.isento && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Observação</p>
+                              <input
+                                type="text"
+                                value={editDiaristaForm.obs}
+                                onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
+                                placeholder="opcional..."
+                                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                              />
                             </div>
                           )}
+
                           <div className="flex gap-2">
                             <button
                               onClick={() => salvarPagamentoDiarista(entry)}

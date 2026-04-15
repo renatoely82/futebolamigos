@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { format, parseISO, eachMonthOfInterval } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import type { Temporada, FormaPagamento } from '@/lib/supabase'
+import type { Temporada, FormaPagamento, TemporadaValoresMes } from '@/lib/supabase'
 
 type Tab = 'mensalistas' | 'diaristas'
 
@@ -20,6 +20,7 @@ interface PagamentoEntry {
   data_pagamento: string | null
   observacoes: string | null
   valor_pago: number | null
+  credito: number | null
   forma_pagamento: FormaPagamento | null
 }
 
@@ -32,6 +33,7 @@ interface DiaristaEntry {
   forma_pagamento: FormaPagamento | null
   data_pagamento: string | null
   observacoes: string | null
+  isento: boolean
 }
 
 interface PartidaComDiaristas {
@@ -49,8 +51,6 @@ const FORMAS: { value: FormaPagamento; label: string; color: string }[] = [
   { value: 'CASH', label: 'CASH', color: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200' },
   { value: 'BIZUM', label: 'BIZUM', color: 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200' },
   { value: 'PIX', label: 'PIX', color: 'bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-200' },
-  { value: 'LESÃO', label: 'LESÃO', color: 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200' },
-  { value: 'SAMBA', label: 'SAMBA', color: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200' },
 ]
 
 function getFormaStyle(forma: FormaPagamento | null): string {
@@ -62,13 +62,11 @@ function getStatusInfo(entry: PagamentoEntry, valorEsperado: number | null): {
   label: string
   classes: string
 } {
-  if (entry.forma_pagamento === 'LESÃO' || entry.forma_pagamento === 'SAMBA') {
-    return { label: entry.forma_pagamento, classes: 'bg-gray-100 text-gray-500 border-gray-200' }
-  }
-  if (entry.pago || (entry.valor_pago !== null && valorEsperado !== null && entry.valor_pago >= valorEsperado)) {
+  const totalAbatido = (entry.valor_pago ?? 0) + (entry.credito ?? 0)
+  if (entry.pago || (valorEsperado !== null && totalAbatido >= valorEsperado)) {
     return { label: 'Pago', classes: 'bg-green-100 text-green-700 border-green-200' }
   }
-  if (entry.valor_pago !== null && entry.valor_pago > 0) {
+  if (totalAbatido > 0) {
     return { label: 'Parcial', classes: 'bg-yellow-100 text-yellow-700 border-yellow-200' }
   }
   return { label: 'Pendente', classes: 'bg-red-50 text-red-500 border-red-200' }
@@ -95,11 +93,14 @@ export default function PagamentosPage() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState<Set<string>>(new Set())
   const [editandoId, setEditandoId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string }>({
+  const [editForm, setEditForm] = useState<{ valor: string; credito: string; forma: FormaPagamento | null; obs: string }>({
     valor: '',
+    credito: '',
     forma: null,
     obs: '',
   })
+  // valores por mês
+  const [valoresMes, setValoresMes] = useState<TemporadaValoresMes | null>(null)
   // valor_mensalidade edit
   const [editandoMensalidade, setEditandoMensalidade] = useState(false)
   const [mensalidadeInput, setMensalidadeInput] = useState('')
@@ -112,8 +113,9 @@ export default function PagamentosPage() {
   const [diaristasPorPartida, setDiaristasPorPartida] = useState<PartidaComDiaristas[]>([])
   const [loadingDiaristas, setLoadingDiaristas] = useState(false)
   const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null) // "partidaId:jogadorId"
-  const [editDiaristaForm, setEditDiaristaForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string }>({ valor: '', forma: null, obs: '' })
+  const [editDiaristaForm, setEditDiaristaForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string; isento: boolean }>({ valor: '', forma: null, obs: '', isento: false })
   const [savingDiaristaKey, setSavingDiaristaKey] = useState<Set<string>>(new Set())
+  const [partidaFiltroId, setPartidaFiltroId] = useState('')
   const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
@@ -156,17 +158,31 @@ export default function PagamentosPage() {
 
   useEffect(() => { loadPagamentos() }, [loadPagamentos])
 
+  // Fetch month-specific valores when temporada+mes changes
+  useEffect(() => {
+    if (!temporadaId || !mesSelecionado) {
+      setValoresMes(null)
+      return
+    }
+    fetch(`/api/temporadas/${temporadaId}/valores-mes?mes=${mesSelecionado.mes}&ano=${mesSelecionado.ano}`)
+      .then(r => r.json())
+      .then((data: TemporadaValoresMes | null) => setValoresMes(data))
+      .catch(() => setValoresMes(null))
+  }, [temporadaId, mesSelecionado])
+
   const temporadaSelecionada = temporadas.find(t => t.id === temporadaId)
-  const valorEsperado = temporadaSelecionada?.valor_mensalidade ?? null
-  const valorDiaristaEsperado = temporadaSelecionada?.valor_diarista ?? null
+  // Month-specific valor takes priority, fallback to season default
+  const valorEsperado = valoresMes?.valor_mensalidade ?? temporadaSelecionada?.valor_mensalidade ?? null
+  const valorDiaristaEsperado = valoresMes?.valor_diarista ?? temporadaSelecionada?.valor_diarista ?? null
 
   async function salvarPagamento(entry: PagamentoEntry) {
     const key = entry.jogador_id
     setSaving(prev => new Set(prev).add(key))
 
     const valorNum = editForm.valor ? Number(editForm.valor) : null
-    const isento = editForm.forma === 'LESÃO' || editForm.forma === 'SAMBA'
-    const pago = isento ? false : (valorNum !== null && valorEsperado !== null ? valorNum >= valorEsperado : valorNum !== null && valorNum > 0)
+    const creditoNum = editForm.credito ? Number(editForm.credito) : null
+    const totalPago = (valorNum ?? 0) + (creditoNum ?? 0)
+    const pago = valorEsperado !== null ? totalPago >= valorEsperado : totalPago > 0
 
     const body = {
       temporada_id: temporadaId,
@@ -176,7 +192,8 @@ export default function PagamentosPage() {
       pago,
       data_pagamento: pago ? new Date().toISOString().split('T')[0] : (entry.data_pagamento ?? null),
       observacoes: editForm.obs || null,
-      valor_pago: isento ? null : valorNum,
+      valor_pago: valorNum,
+      credito: creditoNum,
       forma_pagamento: editForm.forma,
     }
 
@@ -217,36 +234,42 @@ export default function PagamentosPage() {
     setLoadingDiaristas(false)
   }, [temporadaId, mesSelecionado])
 
-  useEffect(() => { if (tab === 'diaristas') loadDiaristas() }, [tab, loadDiaristas])
+  useEffect(() => { loadDiaristas() }, [loadDiaristas])
+
+  // Reset partida filter only when season/month changes or user switches to mensalistas
+  useEffect(() => { setPartidaFiltroId('') }, [temporadaId, mesSelecionado])
+  useEffect(() => { if (tab === 'mensalistas') setPartidaFiltroId('') }, [tab])
 
   async function salvarMensalidade() {
-    if (!temporadaId) return
+    if (!temporadaId || !mesSelecionado) return
     setSalvandoMensalidade(true)
     const valor = mensalidadeInput ? Number(mensalidadeInput) : null
-    await fetch(`/api/temporadas/${temporadaId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ valor_mensalidade: valor }),
-    })
-    setTemporadas(prev =>
-      prev.map(t => t.id === temporadaId ? { ...t, valor_mensalidade: valor } : t)
+    const res = await fetch(
+      `/api/temporadas/${temporadaId}/valores-mes?mes=${mesSelecionado.mes}&ano=${mesSelecionado.ano}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor_mensalidade: valor }),
+      }
     )
+    if (res.ok) setValoresMes(await res.json())
     setSalvandoMensalidade(false)
     setEditandoMensalidade(false)
   }
 
   async function salvarValorDiarista() {
-    if (!temporadaId) return
+    if (!temporadaId || !mesSelecionado) return
     setSalvandoDiarista(true)
     const valor = diaristaInput ? Number(diaristaInput) : null
-    await fetch(`/api/temporadas/${temporadaId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ valor_diarista: valor }),
-    })
-    setTemporadas(prev =>
-      prev.map(t => t.id === temporadaId ? { ...t, valor_diarista: valor } : t)
+    const res = await fetch(
+      `/api/temporadas/${temporadaId}/valores-mes?mes=${mesSelecionado.mes}&ano=${mesSelecionado.ano}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor_diarista: valor }),
+      }
     )
+    if (res.ok) setValoresMes(await res.json())
     setSalvandoDiarista(false)
     setEditandoDiarista(false)
   }
@@ -254,19 +277,26 @@ export default function PagamentosPage() {
   async function salvarPagamentoDiarista(partidaId: string, entry: DiaristaEntry) {
     const key = `${partidaId}:${entry.jogador_id}`
     setSavingDiaristaKey(prev => new Set(prev).add(key))
-    const valorNum = editDiaristaForm.valor ? Number(editDiaristaForm.valor) : null
-    const isento = editDiaristaForm.forma === 'LESÃO' || editDiaristaForm.forma === 'SAMBA'
-    const pago = isento ? false : (valorNum !== null && valorNum > 0)
+    let valorNum: number | null
+    let pago: boolean
+    if (editDiaristaForm.isento) {
+      valorNum = 0
+      pago = true
+    } else {
+      valorNum = editDiaristaForm.valor ? Number(editDiaristaForm.valor) : null
+      pago = valorNum !== null && valorNum > 0
+    }
     await fetch(`/api/partidas/${partidaId}/pagamentos-diaristas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         jogador_id: entry.jogador_id,
         pago,
-        valor_pago: isento ? null : valorNum,
-        forma_pagamento: editDiaristaForm.forma,
+        valor_pago: valorNum,
+        forma_pagamento: editDiaristaForm.isento ? null : editDiaristaForm.forma,
         data_pagamento: pago ? new Date().toISOString() : null,
         observacoes: editDiaristaForm.obs || null,
+        isento: editDiaristaForm.isento,
       }),
     })
     setSavingDiaristaKey(prev => { const s = new Set(prev); s.delete(key); return s })
@@ -278,6 +308,7 @@ export default function PagamentosPage() {
     setEditandoId(entry.jogador_id)
     setEditForm({
       valor: entry.valor_pago !== null ? String(entry.valor_pago) : (valorEsperado !== null ? String(valorEsperado) : ''),
+      credito: entry.credito !== null ? String(entry.credito) : '',
       forma: entry.forma_pagamento,
       obs: entry.observacoes ?? '',
     })
@@ -285,26 +316,38 @@ export default function PagamentosPage() {
 
   function fecharEdicao() {
     setEditandoId(null)
-    setEditForm({ valor: '', forma: null, obs: '' })
+    setEditForm({ valor: '', credito: '', forma: null, obs: '' })
   }
 
   // Financial summary calculations
-  const isento = (e: PagamentoEntry) => e.forma_pagamento === 'LESÃO' || e.forma_pagamento === 'SAMBA'
-  const totalRecebido = pagamentos.reduce((sum, e) => sum + (isento(e) ? 0 : (e.valor_pago ?? 0)), 0)
-  const totalEsperado = valorEsperado !== null
-    ? pagamentos.filter(e => !isento(e)).length * valorEsperado
-    : null
+  const totalRecebido = pagamentos.reduce((sum, e) => sum + (e.valor_pago ?? 0), 0)
+  const totalEsperado = valorEsperado !== null ? pagamentos.length * valorEsperado : null
   const saldo = totalEsperado !== null ? totalRecebido - totalEsperado : null
   const totalCash = pagamentos.filter(e => e.forma_pagamento === 'CASH').reduce((s, e) => s + (e.valor_pago ?? 0), 0)
   const totalBizum = pagamentos.filter(e => e.forma_pagamento === 'BIZUM').reduce((s, e) => s + (e.valor_pago ?? 0), 0)
   const totalPix = pagamentos.filter(e => e.forma_pagamento === 'PIX').reduce((s, e) => s + (e.valor_pago ?? 0), 0)
   const pagosCount = pagamentos.filter(e => {
-    if (isento(e)) return false
     if (e.pago) return true
-    if (e.valor_pago !== null && valorEsperado !== null) return e.valor_pago >= valorEsperado
-    return false
+    const total = (e.valor_pago ?? 0) + (e.credito ?? 0)
+    return valorEsperado !== null ? total >= valorEsperado : false
   }).length
-  const totalAtivos = pagamentos.filter(e => !isento(e)).length
+  const totalAtivos = pagamentos.length
+
+  // Diaristas summary calculations
+  const allDiaristas = diaristasPorPartida.flatMap(p => p.diaristas)
+  const totalDiaristaRecebido = allDiaristas.reduce((sum, e) => sum + (e.valor_pago ?? 0), 0)
+  const diaristasPageCount = allDiaristas.filter(e => e.pago).length
+  const totalDiaristas = allDiaristas.length
+  const totalDiaristaIsentos = allDiaristas.filter(e => e.isento).length
+  const totalDiaristaEsperado = valorDiaristaEsperado !== null ? (totalDiaristas - totalDiaristaIsentos) * valorDiaristaEsperado : null
+  const totalDiaristaCash = allDiaristas.filter(e => e.forma_pagamento === 'CASH').reduce((s, e) => s + (e.valor_pago ?? 0), 0)
+  const totalDiaristaBizum = allDiaristas.filter(e => e.forma_pagamento === 'BIZUM').reduce((s, e) => s + (e.valor_pago ?? 0), 0)
+  const totalDiaristaPix = allDiaristas.filter(e => e.forma_pagamento === 'PIX').reduce((s, e) => s + (e.valor_pago ?? 0), 0)
+  // Combined totals
+  const totalCombinadoRecebido = totalRecebido + totalDiaristaRecebido
+  const totalCombinadoEsperado = totalEsperado !== null || totalDiaristaEsperado !== null
+    ? (totalEsperado ?? 0) + (totalDiaristaEsperado ?? 0)
+    : null
 
   const formatVal = (v: number) => v % 1 === 0 ? String(v) : v.toFixed(2)
 
@@ -378,8 +421,85 @@ export default function PagamentosPage() {
           </div>
         </div>
 
+        {/* Monthly summary */}
+        {temporadaId && mesSelecionado && (
+          <div className="border-t border-gray-100 pt-3 space-y-2.5">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Resumo do mês</p>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Mensalistas */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 font-medium mb-1.5">Mensalistas</p>
+                <p className="text-base font-bold text-gray-800">{formatVal(totalRecebido)} €</p>
+                <div className="mt-1 space-y-1">
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>{pagosCount}/{totalAtivos} pagos</span>
+                    {totalEsperado !== null && <span>esp. {formatVal(totalEsperado)} €</span>}
+                  </div>
+                  {totalAtivos > 0 && (
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${pagosCount === totalAtivos ? 'bg-green-500' : 'bg-yellow-400'}`}
+                        style={{ width: `${(pagosCount / totalAtivos) * 100}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Diaristas */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 font-medium mb-1.5">Diaristas</p>
+                <p className="text-base font-bold text-gray-800">{formatVal(totalDiaristaRecebido)} €</p>
+                <div className="mt-1 space-y-1">
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>{diaristasPageCount}/{totalDiaristas} pagos</span>
+                    {totalDiaristaEsperado !== null && <span>esp. {formatVal(totalDiaristaEsperado)} €</span>}
+                  </div>
+                  {totalDiaristas > 0 && (
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${diaristasPageCount === totalDiaristas ? 'bg-green-500' : 'bg-yellow-400'}`}
+                        style={{ width: `${(diaristasPageCount / totalDiaristas) * 100}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            {/* Combined total */}
+            <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2.5">
+              <span className="text-xs text-green-700 font-medium">Total recebido</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-bold text-green-700">{formatVal(totalCombinadoRecebido)} €</span>
+                {totalCombinadoEsperado !== null && (
+                  <span className="text-xs text-green-600">/ {formatVal(totalCombinadoEsperado)} €</span>
+                )}
+              </div>
+            </div>
+            {/* Method breakdown combined */}
+            {(totalCash + totalDiaristaCash > 0 || totalBizum + totalDiaristaBizum > 0 || totalPix + totalDiaristaPix > 0) && (
+              <div className="flex flex-wrap gap-1.5">
+                {totalCash + totalDiaristaCash > 0 && (
+                  <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                    CASH: {formatVal(totalCash + totalDiaristaCash)} €
+                  </span>
+                )}
+                {totalBizum + totalDiaristaBizum > 0 && (
+                  <span className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full font-medium">
+                    BIZUM: {formatVal(totalBizum + totalDiaristaBizum)} €
+                  </span>
+                )}
+                {totalPix + totalDiaristaPix > 0 && (
+                  <span className="text-xs bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full font-medium">
+                    PIX: {formatVal(totalPix + totalDiaristaPix)} €
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Valor config per tab */}
-        {temporadaId && tab === 'mensalistas' && (
+        {temporadaId && mesSelecionado && tab === 'mensalistas' && (
           <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
             <span className="text-xs text-gray-500">Mensalidade:</span>
             {editandoMensalidade ? (
@@ -413,6 +533,9 @@ export default function PagamentosPage() {
                 <span className="text-sm font-semibold text-gray-700">
                   {valorEsperado !== null ? `${formatVal(valorEsperado)} €` : '—'}
                 </span>
+                {valoresMes?.valor_mensalidade == null && valorEsperado !== null && (
+                  <span className="text-xs text-gray-400 italic">(padrão temporada)</span>
+                )}
                 <button
                   onClick={() => {
                     setMensalidadeInput(valorEsperado !== null ? String(valorEsperado) : '')
@@ -426,7 +549,7 @@ export default function PagamentosPage() {
             )}
           </div>
         )}
-        {temporadaId && tab === 'diaristas' && (
+        {temporadaId && mesSelecionado && tab === 'diaristas' && (
           <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
             <span className="text-xs text-gray-500">Valor diarista:</span>
             {editandoDiarista ? (
@@ -460,6 +583,9 @@ export default function PagamentosPage() {
                 <span className="text-sm font-semibold text-gray-700">
                   {valorDiaristaEsperado !== null ? `${formatVal(valorDiaristaEsperado)} €` : '—'}
                 </span>
+                {valoresMes?.valor_diarista == null && valorDiaristaEsperado !== null && (
+                  <span className="text-xs text-gray-400 italic">(padrão temporada)</span>
+                )}
                 <button
                   onClick={() => {
                     setDiaristaInput(valorDiaristaEsperado !== null ? String(valorDiaristaEsperado) : '')
@@ -558,7 +684,8 @@ export default function PagamentosPage() {
                 const isSaving = saving.has(entry.jogador_id)
                 const isEditing = editandoId === entry.jogador_id
                 const status = getStatusInfo(entry, valorEsperado)
-                const isentoEntry = isento(entry)
+                const totalAbatido = (entry.valor_pago ?? 0) + (entry.credito ?? 0)
+                const pendente = valorEsperado !== null ? valorEsperado - totalAbatido : null
 
                 return (
                   <div key={entry.jogador_id}>
@@ -569,14 +696,24 @@ export default function PagamentosPage() {
                           {entry.jogador?.nome ?? '—'}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          {entry.forma_pagamento && !isentoEntry && (
+                          {entry.forma_pagamento && (
                             <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${getFormaStyle(entry.forma_pagamento)}`}>
                               {entry.forma_pagamento}
                             </span>
                           )}
-                          {entry.valor_pago !== null && !isentoEntry && (
+                          {entry.credito !== null && entry.credito > 0 && (
+                            <span className="text-xs text-indigo-600 font-medium">
+                              crédito {formatVal(entry.credito)} €
+                            </span>
+                          )}
+                          {entry.valor_pago !== null && (
                             <span className="text-xs text-gray-500">
                               {formatVal(entry.valor_pago)}{valorEsperado !== null ? ` / ${formatVal(valorEsperado)} €` : ' €'}
+                            </span>
+                          )}
+                          {pendente !== null && pendente > 0 && (
+                            <span className="text-xs font-semibold text-red-500">
+                              pendente {formatVal(pendente)} €
                             </span>
                           )}
                           {entry.data_pagamento && entry.pago && (
@@ -638,33 +775,43 @@ export default function PagamentosPage() {
                           </div>
                         </div>
 
-                        {/* Valor + obs (only if not isento) */}
-                        {editForm.forma !== 'LESÃO' && editForm.forma !== 'SAMBA' && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Valor pago (€)</p>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.5"
-                                value={editForm.valor}
-                                onChange={e => setEditForm(prev => ({ ...prev, valor: e.target.value }))}
-                                placeholder={valorEsperado !== null ? String(valorEsperado) : '0'}
-                                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
-                              />
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Observação</p>
-                              <input
-                                type="text"
-                                value={editForm.obs}
-                                onChange={e => setEditForm(prev => ({ ...prev, obs: e.target.value }))}
-                                placeholder="opcional..."
-                                className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
-                              />
-                            </div>
+                        {/* Crédito + Valor + Obs */}
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Crédito (€)</p>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              value={editForm.credito}
+                              onChange={e => setEditForm(prev => ({ ...prev, credito: e.target.value }))}
+                              placeholder="0"
+                              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-indigo-400"
+                            />
                           </div>
-                        )}
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Valor pago (€)</p>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              value={editForm.valor}
+                              onChange={e => setEditForm(prev => ({ ...prev, valor: e.target.value }))}
+                              placeholder={valorEsperado !== null ? String(valorEsperado) : '0'}
+                              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Observação</p>
+                            <input
+                              type="text"
+                              value={editForm.obs}
+                              onChange={e => setEditForm(prev => ({ ...prev, obs: e.target.value }))}
+                              placeholder="opcional..."
+                              className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                            />
+                          </div>
+                        </div>
 
                         <div className="flex gap-2">
                           <button
@@ -712,14 +859,37 @@ export default function PagamentosPage() {
         ) : diaristasPorPartida.length === 0 ? (
           <div className="bg-white border border-[#e2e8f0] rounded-xl py-16 text-center">
             <p className="text-gray-500 text-sm">Nenhuma partida com diaristas neste mês.</p>
-            <p className="text-gray-400 text-xs mt-1">Goleiros são excluídos automaticamente.</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {diaristasPorPartida.map(({ partida, diaristas }) => {
-              const pagosNaPartida = diaristas.filter(d =>
-                d.pago || d.forma_pagamento === 'LESÃO' || d.forma_pagamento === 'SAMBA'
-              ).length
+            {/* Filtro de partida */}
+            {diaristasPorPartida.length > 1 && (
+              <div className="bg-white border border-[#e2e8f0] rounded-xl px-4 py-3">
+                <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Filtrar partida</label>
+                <select
+                  value={partidaFiltroId}
+                  onChange={e => setPartidaFiltroId(e.target.value)}
+                  className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500 transition-colors"
+                >
+                  <option value="">Todas as partidas</option>
+                  {diaristasPorPartida.map(({ partida, diaristas }) => {
+                    const isPartidaPaga = diaristas.length > 0 && diaristas.every(d =>
+                      d.pago || (d.valor_pago !== null && valorDiaristaEsperado !== null && d.valor_pago >= valorDiaristaEsperado)
+                    )
+                    return (
+                      <option key={partida.id} value={partida.id}>
+                        {format(parseISO(partida.data), "d 'de' MMMM", { locale: ptBR })}
+                        {partida.local ? ` · ${partida.local}` : ''}
+                        {' · '}
+                        {isPartidaPaga ? '✓ Paga' : '⏳ Pendente'}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+            )}
+            {(partidaFiltroId ? diaristasPorPartida.filter(p => p.partida.id === partidaFiltroId) : diaristasPorPartida).map(({ partida, diaristas }) => {
+              const pagosNaPartida = diaristas.filter(d => d.pago).length
               const totalRecebidoPartida = diaristas.reduce((s, d) => s + (d.valor_pago ?? 0), 0)
 
               return (
@@ -747,9 +917,10 @@ export default function PagamentosPage() {
                       const key = `${partida.id}:${entry.jogador_id}`
                       const isSaving = savingDiaristaKey.has(key)
                       const isEditing = editandoDiaristaId === key
-                      const isento = entry.forma_pagamento === 'LESÃO' || entry.forma_pagamento === 'SAMBA'
                       const diaristaStatus = (() => {
-                        if (isento) return { label: entry.forma_pagamento as string, classes: 'bg-gray-100 text-gray-500 border-gray-200' }
+                        if (entry.isento && entry.pago) {
+                          return { label: 'Isento', classes: 'bg-gray-100 text-gray-500 border-gray-200' }
+                        }
                         if (entry.pago || (entry.valor_pago !== null && valorDiaristaEsperado !== null && entry.valor_pago >= valorDiaristaEsperado)) {
                           return { label: 'Pago', classes: 'bg-green-100 text-green-700 border-green-200' }
                         }
@@ -765,12 +936,12 @@ export default function PagamentosPage() {
                             <div className="flex-1 min-w-0">
                               <p className="text-gray-800 text-sm font-medium truncate">{entry.jogador?.nome ?? '—'}</p>
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                {entry.forma_pagamento && !isento && (
+                                {entry.forma_pagamento && (
                                   <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${getFormaStyle(entry.forma_pagamento)}`}>
                                     {entry.forma_pagamento}
                                   </span>
                                 )}
-                                {entry.valor_pago !== null && !isento && (
+                                {entry.valor_pago !== null && (
                                   <span className="text-xs text-gray-500">
                                     {formatVal(entry.valor_pago)}{valorDiaristaEsperado !== null ? ` / ${formatVal(valorDiaristaEsperado)} €` : ' €'}
                                   </span>
@@ -789,6 +960,7 @@ export default function PagamentosPage() {
                                     valor: entry.valor_pago !== null ? String(entry.valor_pago) : (valorDiaristaEsperado !== null ? String(valorDiaristaEsperado) : ''),
                                     forma: entry.forma_pagamento,
                                     obs: entry.observacoes ?? '',
+                                    isento: entry.isento,
                                   })
                                 }}
                                 disabled={isSaving}
@@ -811,50 +983,79 @@ export default function PagamentosPage() {
 
                           {isEditing && (
                             <div className="px-4 pb-4 pt-1 bg-gray-50 space-y-3">
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1.5">Forma de pagamento</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {FORMAS.map(f => (
-                                    <button
-                                      key={f.value}
-                                      onClick={() => setEditDiaristaForm(prev => ({ ...prev, forma: prev.forma === f.value ? null : f.value }))}
-                                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                                        editDiaristaForm.forma === f.value
-                                          ? f.color + ' ring-2 ring-offset-1 ring-current'
-                                          : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                                      }`}
-                                    >
-                                      {f.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                              {editDiaristaForm.forma !== 'LESÃO' && editDiaristaForm.forma !== 'SAMBA' && (
-                                <div className="grid grid-cols-2 gap-2">
+                              {/* Isento checkbox */}
+                              <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
+                                <input
+                                  type="checkbox"
+                                  checked={editDiaristaForm.isento}
+                                  onChange={e => setEditDiaristaForm(prev => ({ ...prev, isento: e.target.checked }))}
+                                  className="w-4 h-4 rounded border-gray-300 accent-green-600"
+                                />
+                                <span className="text-xs text-gray-700 font-medium">Isento do pagamento</span>
+                              </label>
+
+                              {/* Payment fields — hidden when isento */}
+                              {!editDiaristaForm.isento && (
+                                <>
                                   <div>
-                                    <p className="text-xs text-gray-500 mb-1">Valor pago (€)</p>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      step="0.5"
-                                      value={editDiaristaForm.valor}
-                                      onChange={e => setEditDiaristaForm(prev => ({ ...prev, valor: e.target.value }))}
-                                      placeholder={valorDiaristaEsperado !== null ? String(valorDiaristaEsperado) : '0'}
-                                      className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
-                                    />
+                                    <p className="text-xs text-gray-500 mb-1.5">Forma de pagamento</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {FORMAS.map(f => (
+                                        <button
+                                          key={f.value}
+                                          onClick={() => setEditDiaristaForm(prev => ({ ...prev, forma: prev.forma === f.value ? null : f.value }))}
+                                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                                            editDiaristaForm.forma === f.value
+                                              ? f.color + ' ring-2 ring-offset-1 ring-current'
+                                              : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          {f.label}
+                                        </button>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Observação</p>
-                                    <input
-                                      type="text"
-                                      value={editDiaristaForm.obs}
-                                      onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
-                                      placeholder="opcional..."
-                                      className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
-                                    />
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">Valor pago (€)</p>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.5"
+                                        value={editDiaristaForm.valor}
+                                        onChange={e => setEditDiaristaForm(prev => ({ ...prev, valor: e.target.value }))}
+                                        placeholder={valorDiaristaEsperado !== null ? String(valorDiaristaEsperado) : '0'}
+                                        className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">Observação</p>
+                                      <input
+                                        type="text"
+                                        value={editDiaristaForm.obs}
+                                        onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
+                                        placeholder="opcional..."
+                                        className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                      />
+                                    </div>
                                   </div>
+                                </>
+                              )}
+
+                              {/* Obs alone when isento */}
+                              {editDiaristaForm.isento && (
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">Observação</p>
+                                  <input
+                                    type="text"
+                                    value={editDiaristaForm.obs}
+                                    onChange={e => setEditDiaristaForm(prev => ({ ...prev, obs: e.target.value }))}
+                                    placeholder="opcional..."
+                                    className="w-full bg-white border border-[#d1d9e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                                  />
                                 </div>
                               )}
+
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => salvarPagamentoDiarista(partida.id, entry)}
