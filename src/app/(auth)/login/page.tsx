@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 
 export default function LoginPage() {
@@ -9,6 +9,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+
+  useEffect(() => {
+    // Clear any stale/invalid tokens so Supabase doesn't try to refresh them
+    createClient().auth.signOut({ scope: 'local' })
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

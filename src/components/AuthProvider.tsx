@@ -16,10 +16,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       }
     })
 
-    // Handle invalid refresh token on mount
-    supabase.auth.getSession().catch(() => {
-      supabase.auth.signOut()
-      router.push('/login')
+    // Handle invalid/expired refresh token on mount
+    supabase.auth.getSession().then(({ error }) => {
+      if (error?.message?.includes('Refresh Token')) {
+        supabase.auth.signOut({ scope: 'local' })
+        router.push('/login')
+      }
     })
 
     return () => subscription.unsubscribe()

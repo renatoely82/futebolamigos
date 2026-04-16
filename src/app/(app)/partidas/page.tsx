@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import type { Temporada } from '@/lib/supabase'
 import TemporadaFilter from '@/components/partidas/TemporadaFilter'
+import DateRangeFilter from '@/components/partidas/DateRangeFilter'
 import PartidaCardList from '@/components/partidas/PartidaCardList'
 import type { PartidaComCount } from '@/components/partidas/types'
 
@@ -12,7 +13,7 @@ export default async function PartidasPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { temporada: temporadaParam } = await searchParams
+  const { temporada: temporadaParam, data_inicio: dataInicioParam, data_fim: dataFimParam } = await searchParams
   const supabase = await createClient()
 
   // Fetch all temporadas
@@ -32,6 +33,15 @@ export default async function PartidasPage({
     temporadaSelecionadaId = ativa?.id ?? null
   }
 
+  // Explicit date params from URL
+  const dataInicioExplicita = typeof dataInicioParam === 'string' ? dataInicioParam : undefined
+  const dataFimExplicita = typeof dataFimParam === 'string' ? dataFimParam : undefined
+
+  // Default to temporada dates when no explicit param
+  const temporadaSelecionada = listaTemporadas.find(t => t.id === temporadaSelecionadaId) ?? null
+  const dataInicio = dataInicioExplicita ?? temporadaSelecionada?.data_inicio
+  const dataFim = dataFimExplicita ?? temporadaSelecionada?.data_fim
+
   let query = supabase
     .from('partidas')
     .select('*, partida_jogadores(count)')
@@ -40,6 +50,8 @@ export default async function PartidasPage({
   if (temporadaSelecionadaId) {
     query = query.eq('temporada_id', temporadaSelecionadaId)
   }
+  if (dataInicio) query = query.gte('data', dataInicio)
+  if (dataFim) query = query.lte('data', dataFim)
 
   const { data: rawPartidas } = await query
   const partidas: PartidaComCount[] = (rawPartidas ?? []).map(p => ({
@@ -47,11 +59,9 @@ export default async function PartidasPage({
     player_count: (p.partida_jogadores as { count: number }[])?.[0]?.count ?? 0,
   }))
 
-  const temporadaSelecionada = listaTemporadas.find(t => t.id === temporadaSelecionadaId) ?? null
-
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-gray-800 text-2xl font-bold">Partidas</h1>
           <p className="text-gray-500 text-sm mt-0.5">
@@ -76,6 +86,12 @@ export default async function PartidasPage({
             <span className="hidden sm:inline">Nova Partida</span>
           </Link>
         </div>
+      </div>
+      <div className="mb-6">
+        <DateRangeFilter
+          defaultInicio={temporadaSelecionada?.data_inicio}
+          defaultFim={temporadaSelecionada?.data_fim}
+        />
       </div>
 
       {partidas.length === 0 ? (

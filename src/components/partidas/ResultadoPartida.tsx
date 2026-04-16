@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Partida, PartidaJogadorComDetalhes, GolComDetalhes } from '@/lib/supabase'
+import { POSICOES } from '@/lib/supabase'
 import { getTeamColor } from '@/lib/team-colors'
 
 interface Props {
@@ -92,15 +93,15 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   const teamAIds = new Set(partida.times_escolhidos?.time_a ?? [])
   const teamBIds = new Set(partida.times_escolhidos?.time_b ?? [])
 
-  const playersA = availablePlayers
-    .filter(p => teamAIds.has(p.jogador_id))
-    .sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR'))
-  const playersB = availablePlayers
-    .filter(p => teamBIds.has(p.jogador_id))
-    .sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR'))
-  const unassigned = availablePlayers
-    .filter(p => !teamAIds.has(p.jogador_id) && !teamBIds.has(p.jogador_id))
-    .sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR'))
+  const byPosition = (a: typeof availablePlayers[number], b: typeof availablePlayers[number]) => {
+    const posDiff = POSICOES.indexOf(a.jogador.posicao_principal) - POSICOES.indexOf(b.jogador.posicao_principal)
+    if (posDiff !== 0) return posDiff
+    return a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')
+  }
+
+  const playersA = availablePlayers.filter(p => teamAIds.has(p.jogador_id)).sort(byPosition)
+  const playersB = availablePlayers.filter(p => teamBIds.has(p.jogador_id)).sort(byPosition)
+  const unassigned = availablePlayers.filter(p => !teamAIds.has(p.jogador_id) && !teamBIds.has(p.jogador_id)).sort(byPosition)
 
   const hasTeams = partida.times_escolhidos != null
   const colorA = getTeamColor(partida.nome_time_a, 'text-green-600')
@@ -207,7 +208,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">{availablePlayers.sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')).map(renderGoalRow)}</div>
+              <div className="space-y-2">{availablePlayers.sort(byPosition).map(renderGoalRow)}</div>
             )}
             {unassigned.length > 0 && (
               <div className="mt-3">
@@ -322,7 +323,7 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {availablePlayers.sort((a, b) => a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')).map(pj => {
+                  {availablePlayers.sort(byPosition).map(pj => {
                     const totalNormal = gols.filter(g => g.jogador_id === pj.jogador_id && !g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
                     const totalContra = gols.filter(g => g.jogador_id === pj.jogador_id && g.gol_contra).reduce((s, g) => s + g.quantidade, 0)
                     return (

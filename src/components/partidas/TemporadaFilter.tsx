@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { Temporada } from '@/lib/supabase'
 
 interface Props {
@@ -10,14 +10,18 @@ interface Props {
 
 export default function TemporadaFilter({ temporadas, temporadaSelecionadaId }: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.target.value
+    const params = new URLSearchParams(searchParams.toString())
     if (value === '') {
-      router.replace('/partidas')
+      params.delete('temporada')
     } else {
-      router.replace(`/partidas?temporada=${value}`)
+      params.set('temporada', value)
     }
+    const qs = params.toString()
+    router.replace(qs ? `/partidas?${qs}` : '/partidas')
   }
 
   return (
