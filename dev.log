@@ -1028,3 +1028,4 @@ Check the render method of `TimesPage`. See https://react.dev/link/warning-keys 
  GET /icon-192.png 404 in 237ms (next.js: 36ms, application-code: 201ms)
  GET /temporadas 200 in 160ms (next.js: 4ms, application-code: 155ms)
  GET /icon-192.png 404 in 279ms (next.js: 9ms, application-code: 270ms)
+ GET /api/temporadas 200 in 474ms (next.js: 170ms, application-code: 304ms)
