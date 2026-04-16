@@ -13,6 +13,73 @@ import { getTeamColor } from '@/lib/team-colors'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+
+function CalendarioInline({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const today = new Date()
+  const selected = value ? new Date(value + 'T12:00:00') : null
+  const [viewYear, setViewYear] = useState(selected?.getFullYear() ?? today.getFullYear())
+  const [viewMonth, setViewMonth] = useState(selected?.getMonth() ?? today.getMonth())
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay()
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
+    else setViewMonth(m => m - 1)
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
+    else setViewMonth(m => m + 1)
+  }
+  function selectDay(day: number) {
+    const d = new Date(viewYear, viewMonth, day)
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    onChange(iso)
+  }
+
+  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({length: daysInMonth}, (_, i) => i + 1)]
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  return (
+    <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 select-none">
+      <div className="flex items-center justify-between mb-3">
+        <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span className="text-gray-800 font-semibold text-sm">{MESES[viewMonth]} {viewYear}</span>
+        <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div className="grid grid-cols-7 mb-1">
+        {DIAS_SEMANA.map(d => (
+          <div key={d} className="text-center text-xs text-gray-500 font-medium py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-0.5">
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />
+          const isSelected = selected && selected.getFullYear() === viewYear && selected.getMonth() === viewMonth && selected.getDate() === day
+          const isToday = today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === day
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => selectDay(day)}
+              className={`text-sm rounded-lg py-2 w-full transition-colors font-medium
+                ${isSelected ? 'bg-green-500 text-white' : isToday ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 interface DiaristaEntry {
   jogador_id: string
   jogador: { id: string; nome: string; posicao_principal: string } | null
@@ -46,6 +113,8 @@ export default function PartidaDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [editingTemporada, setEditingTemporada] = useState(false)
   const [temporadaSaving, setTemporadaSaving] = useState(false)
+  const [editingData, setEditingData] = useState(false)
+  const [dataSaving, setDataSaving] = useState(false)
   // Diaristas payment state
   const [diaristas, setDiaristas] = useState<DiaristaEntry[]>([])
   const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null)
@@ -99,6 +168,18 @@ export default function PartidaDetailPage() {
     setPartida(p => p ? { ...p, temporada_id: temporadaId || null } : p)
     setTemporadaSaving(false)
     setEditingTemporada(false)
+  }
+
+  async function handleDataChange(novaData: string) {
+    setDataSaving(true)
+    await fetch(`/api/partidas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: novaData }),
+    })
+    setPartida(p => p ? { ...p, data: novaData } : p)
+    setDataSaving(false)
+    setEditingData(false)
   }
 
   async function handleDelete() {
@@ -231,9 +312,38 @@ export default function PartidaDetailPage() {
             </svg>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="text-gray-800 text-xl sm:text-2xl font-bold leading-snug">
-              {format(parseISO(partida.data), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-gray-800 text-xl sm:text-2xl font-bold leading-snug">
+                {format(parseISO(partida.data), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </h1>
+              <button
+                onClick={() => setEditingData(e => !e)}
+                className="text-gray-400 hover:text-green-600 transition-colors shrink-0"
+                title="Alterar data"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                    d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z" />
+                </svg>
+              </button>
+            </div>
+            {editingData && (
+              <div className="mt-3">
+                {dataSaving ? (
+                  <p className="text-sm text-gray-400">Salvando...</p>
+                ) : (
+                  <>
+                    <CalendarioInline value={partida.data} onChange={handleDataChange} />
+                    <button
+                      onClick={() => setEditingData(false)}
+                      className="mt-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <StatusBadge status={partida.status} />
               {partida.local && <p className="text-gray-500 text-sm">{partida.local}</p>}
