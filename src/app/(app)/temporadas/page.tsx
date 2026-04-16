@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { Temporada } from '@/lib/supabase'
@@ -9,10 +10,14 @@ import Modal from '@/components/ui/Modal'
 import TemporadaForm, { type TemporadaFormData } from '@/components/temporadas/TemporadaForm'
 
 export default function TemporadasPage() {
+  const router = useRouter()
   const [temporadas, setTemporadas] = useState<Temporada[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Temporada | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [copying, setCopying] = useState<Temporada | null>(null)
+  const [copyLoading, setCopyLoading] = useState(false)
+  const [copyDatas, setCopyDatas] = useState({ data_inicio: '', data_fim: '' })
 
   const load = useCallback(async () => {
     const res = await fetch('/api/temporadas')
@@ -44,6 +49,49 @@ export default function TemporadasPage() {
       return
     }
     load()
+  }
+
+  function addOneYear(date: string) {
+    const d = new Date(date)
+    d.setFullYear(d.getFullYear() + 1)
+    return d.toISOString().slice(0, 10)
+  }
+
+  function openCopyModal(t: Temporada) {
+    setCopyDatas({
+      data_inicio: addOneYear(t.data_inicio),
+      data_fim: addOneYear(t.data_fim),
+    })
+    setCopying(t)
+  }
+
+  async function handleCopyConfirm() {
+    if (!copying) return
+    if (copyDatas.data_fim < copyDatas.data_inicio) {
+      alert('A data de fim deve ser posterior à data de início.')
+      return
+    }
+    setCopyLoading(true)
+    try {
+      const res = await fetch('/api/temporadas/copiar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origem_temporada_id: copying.id,
+          data_inicio: copyDatas.data_inicio,
+          data_fim: copyDatas.data_fim,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        alert(json.error || 'Erro ao copiar temporada.')
+        return
+      }
+      setCopying(null)
+      router.push(`/temporadas/${json.id}`)
+    } finally {
+      setCopyLoading(false)
+    }
   }
 
   function fmt(date: string) {
@@ -100,6 +148,15 @@ export default function TemporadasPage() {
 
               <div className="flex items-center gap-2 shrink-0">
                 <button
+                  onClick={() => openCopyModal(t)}
+                  className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Copiar temporada"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button
                   onClick={() => { setEditing(t); setModalOpen(true) }}
                   className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Editar"
@@ -134,6 +191,62 @@ export default function TemporadasPage() {
             onSave={handleSave}
             onCancel={() => { setModalOpen(false); setEditing(null) }}
           />
+        </Modal>
+      )}
+
+      {copying && (
+        <Modal
+          open={!!copying}
+          onClose={() => setCopying(null)}
+          title="Copiar Temporada"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700 text-sm">
+              Copiando <span className="font-semibold">{copying.nome}</span>. Informe as datas da nova temporada:
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Data de Início *</label>
+                <input
+                  type="date"
+                  required
+                  value={copyDatas.data_inicio}
+                  onChange={e => setCopyDatas(d => ({ ...d, data_inicio: e.target.value }))}
+                  className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Data de Fim *</label>
+                <input
+                  type="date"
+                  required
+                  value={copyDatas.data_fim}
+                  onChange={e => setCopyDatas(d => ({ ...d, data_fim: e.target.value }))}
+                  className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+                />
+              </div>
+            </div>
+            <ul className="text-xs text-gray-400 space-y-0.5 list-disc list-inside">
+              <li>Regras serão copiadas da temporada origem</li>
+              <li>Mensalistas ativos no último mês serão copiados com meses ajustados ao novo período</li>
+              <li>A nova temporada será criada como inativa</li>
+            </ul>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={handleCopyConfirm}
+                disabled={copyLoading || !copyDatas.data_inicio || !copyDatas.data_fim}
+                className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+              >
+                {copyLoading ? 'Copiando...' : 'Copiar'}
+              </button>
+              <button
+                onClick={() => setCopying(null)}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

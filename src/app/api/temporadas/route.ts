@@ -6,6 +6,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('temporadas')
     .select('*')
+    .order('ativa', { ascending: false })
     .order('data_inicio', { ascending: false })
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
