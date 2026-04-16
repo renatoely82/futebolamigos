@@ -298,7 +298,7 @@ export default function TimesPage() {
           </button>
 
           {showPosicoes && (
-            <ul className="divide-y divide-[#f0f0f0]">
+            <div className="grid grid-cols-[max-content_auto]">
               {[...convocados]
                 .sort((a, b) => {
                   const posA = POSICOES.indexOf(a.posicao_convocacao ?? a.jogador.posicao_principal)
@@ -306,17 +306,20 @@ export default function TimesPage() {
                   if (posA !== posB) return posA - posB
                   return a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')
                 })
-                .map(pj => {
+                .map((pj, i, arr) => {
                   const effective = pj.posicao_convocacao ?? pj.jogador.posicao_principal
                   const registered = new Set([
                     pj.jogador.posicao_principal,
                     pj.jogador.posicao_secundaria_1,
                     pj.jogador.posicao_secundaria_2,
                   ].filter((p): p is Posicao => p !== null))
+                  const borderClass = i < arr.length - 1 ? 'border-b border-[#f0f0f0]' : ''
                   return (
-                    <li key={pj.jogador_id} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="flex-1 text-sm text-gray-700 truncate">{pj.jogador.nome}</span>
-                      <div className="flex items-center gap-1 shrink-0">
+                    <>
+                      <span key={`nome-${pj.jogador_id}`} className={`text-sm text-gray-700 flex items-center pl-4 pr-2 py-2.5 ${borderClass}`}>
+                        {pj.jogador.nome}
+                      </span>
+                      <div key={`pos-${pj.jogador_id}`} className={`flex items-center gap-1 pr-4 py-2.5 ${borderClass}`}>
                         {POSICOES.map(pos => (
                           <button
                             key={pos}
@@ -333,10 +336,10 @@ export default function TimesPage() {
                           </button>
                         ))}
                       </div>
-                    </li>
+                    </>
                   )
                 })}
-            </ul>
+            </div>
           )}
         </div>
       )}
