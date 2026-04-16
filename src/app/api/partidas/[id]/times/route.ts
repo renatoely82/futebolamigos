@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { generateTeamProposals } from '@/lib/team-balancer'
-import type { Jogador } from '@/lib/supabase'
+import type { Jogador, Posicao } from '@/lib/supabase'
 
 export async function GET(
   _req: Request,
@@ -68,14 +68,18 @@ export async function POST(
   // Get confirmed players for this match with full jogador details
   const { data: partidaJogadores, error: pjError } = await supabase
     .from('partida_jogadores')
-    .select('jogador:jogadores(*)')
+    .select('posicao_convocacao, jogador:jogadores(*)')
     .eq('partida_id', id)
     .eq('confirmado', true)
 
   if (pjError) return Response.json({ error: pjError.message }, { status: 500 })
 
   const players: Jogador[] = (partidaJogadores ?? [])
-    .map(pj => pj.jogador as unknown as Jogador)
+    .map(pj => {
+      const j = pj.jogador as unknown as Jogador
+      const override = (pj as unknown as { posicao_convocacao: Posicao | null }).posicao_convocacao
+      return override ? { ...j, posicao_principal: override } : j
+    })
     .filter(Boolean)
 
   if (players.length < 2) {

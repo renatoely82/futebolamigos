@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { Jogador, PartidaJogadorComDetalhes, Partida, PropostaTimeComJogadores } from '@/lib/supabase'
-import { POSICAO_CORES } from '@/lib/supabase'
+import type { Jogador, Posicao, PartidaJogadorComDetalhes, Partida, PropostaTimeComJogadores } from '@/lib/supabase'
+import { POSICAO_CORES, POSICOES } from '@/lib/supabase'
 import TeamProposalCard from '@/components/partidas/TeamProposalCard'
 import TeamEditor from '@/components/partidas/TeamEditor'
 import { format, parseISO } from 'date-fns'
@@ -34,6 +34,8 @@ export default function TimesPage() {
   const [editBanco, setEditBanco] = useState<Jogador[]>([])
   const [partidaAnterior, setPartidaAnterior] = useState<PartidaAnteriorTimes | null>(null)
   const [showPartidaAnterior, setShowPartidaAnterior] = useState(false)
+  const [convocados, setConvocados] = useState<PartidaJogadorComDetalhes[]>([])
+  const [showPosicoes, setShowPosicoes] = useState(true)
 
   const loadPartida = useCallback(async () => {
     const res = await fetch(`/api/partidas/${id}`)
@@ -48,14 +50,39 @@ export default function TimesPage() {
     }
   }, [id])
 
+  const loadConvocados = useCallback(async () => {
+    const res = await fetch(`/api/partidas/${id}/jogadores`)
+    if (res.ok) {
+      const data: PartidaJogadorComDetalhes[] = await res.json()
+      setConvocados(data.filter(pj => pj.confirmado))
+    }
+  }, [id])
+
   useEffect(() => {
     loadPartida()
     loadPartidaAnterior()
-  }, [loadPartida, loadPartidaAnterior])
+    loadConvocados()
+  }, [loadPartida, loadPartidaAnterior, loadConvocados])
+
+  async function handlePosicaoChange(jogadorId: string, posicao: Posicao) {
+    const prev = convocados
+    setConvocados(list =>
+      list.map(pj =>
+        pj.jogador_id === jogadorId ? { ...pj, posicao_convocacao: posicao } : pj
+      )
+    )
+    const res = await fetch(`/api/partidas/${id}/jogadores`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jogador_id: jogadorId, posicao_convocacao: posicao }),
+    })
+    if (!res.ok) setConvocados(prev)
+  }
 
   async function generateTeams() {
     setEditMode(false)
     setGenerating(true)
+    setShowPosicoes(false)
     setError('')
     try {
       const res = await fetch(`/api/partidas/${id}/times`, { method: 'POST' })
@@ -251,6 +278,65 @@ export default function TimesPage() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {!isRealizada && convocados.length > 0 && (
+        <div className="mb-5 border border-[#e0e0e0] rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowPosicoes(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+          >
+            <span className="text-sm font-semibold text-gray-600">Posições para o Sorteio</span>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${showPosicoes ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showPosicoes && (
+            <ul className="divide-y divide-[#f0f0f0]">
+              {[...convocados]
+                .sort((a, b) => {
+                  const posA = POSICOES.indexOf(a.posicao_convocacao ?? a.jogador.posicao_principal)
+                  const posB = POSICOES.indexOf(b.posicao_convocacao ?? b.jogador.posicao_principal)
+                  if (posA !== posB) return posA - posB
+                  return a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')
+                })
+                .map(pj => {
+                  const effective = pj.posicao_convocacao ?? pj.jogador.posicao_principal
+                  const registered = new Set([
+                    pj.jogador.posicao_principal,
+                    pj.jogador.posicao_secundaria_1,
+                    pj.jogador.posicao_secundaria_2,
+                  ].filter((p): p is Posicao => p !== null))
+                  return (
+                    <li key={pj.jogador_id} className="flex items-center gap-3 px-4 py-2.5">
+                      <span className="flex-1 text-sm text-gray-700 truncate">{pj.jogador.nome}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {POSICOES.map(pos => (
+                          <button
+                            key={pos}
+                            onClick={() => pos !== effective && handlePosicaoChange(pj.jogador_id, pos)}
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded transition-opacity ${POSICAO_CORES[pos]} ${
+                              pos === effective
+                                ? 'opacity-100'
+                                : registered.has(pos)
+                                ? 'opacity-50 hover:opacity-80'
+                                : 'opacity-20 hover:opacity-50'
+                            }`}
+                          >
+                            {pos.substring(0, 3).toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </li>
+                  )
+                })}
+            </ul>
           )}
         </div>
       )}

@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
+import type { Posicao } from '@/lib/supabase'
+import { POSICOES } from '@/lib/supabase'
 
 export async function GET(
   _req: Request,
@@ -51,6 +53,35 @@ export async function POST(
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json(data, { status: 201 })
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = await createClient()
+
+  if (await checkPartidaRealizada(supabase, id)) {
+    return Response.json({ error: 'Partida já realizada.' }, { status: 403 })
+  }
+
+  const { jogador_id, posicao_convocacao } = await request.json()
+
+  if (posicao_convocacao !== null && !POSICOES.includes(posicao_convocacao as Posicao)) {
+    return Response.json({ error: 'Posição inválida.' }, { status: 400 })
+  }
+
+  const { data, error } = await supabase
+    .from('partida_jogadores')
+    .update({ posicao_convocacao: posicao_convocacao ?? null })
+    .eq('partida_id', id)
+    .eq('jogador_id', jogador_id)
+    .select()
+    .single()
+
+  if (error) return Response.json({ error: error.message }, { status: 500 })
+  return Response.json(data)
 }
 
 export async function DELETE(

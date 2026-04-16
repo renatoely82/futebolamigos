@@ -171,6 +171,7 @@ export interface PartidaJogador {
   jogador_id: string
   confirmado: boolean
   adicionado_manualmente: boolean
+  posicao_convocacao: Posicao | null
   criado_em: string
 }
 
