@@ -32,7 +32,8 @@ function EscalacaoInline({
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
 
-  async function toggle() {
+  async function toggle(e: React.MouseEvent) {
+    e.stopPropagation()
     if (open) { setOpen(false); return }
     setOpen(true)
     if (times) return
@@ -70,7 +71,7 @@ function EscalacaoInline({
   return (
     <div>
       <button
-        onClick={toggle}
+        onClick={(e) => toggle(e)}
         className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
           open
             ? 'bg-green-100 text-green-700'
@@ -185,7 +186,8 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
         return (
           <div
             key={p.id}
-            className="bg-white border border-[#e0e0e0] rounded-xl p-4 hover:border-[#c8c8c8] transition-colors flex flex-col gap-3"
+            onClick={() => router.push(`/partidas/${p.id}`)}
+            className="bg-white border border-[#e0e0e0] rounded-xl p-4 hover:border-[#c8c8c8] transition-colors flex flex-col gap-3 cursor-pointer"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
@@ -202,7 +204,7 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
                 </span>
               </div>
               <button
-                onClick={() => setConfirmId(p.id)}
+                onClick={(e) => { e.stopPropagation(); setConfirmId(p.id) }}
                 className="text-gray-300 hover:text-red-400 transition-colors p-1 rounded shrink-0"
                 title="Excluir partida"
               >
@@ -228,15 +230,10 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
                 <span>{count} jogadores</span>
               </div>
               <div className="flex gap-2 shrink-0">
-                <Link
-                  href={`/partidas/${p.id}`}
-                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg text-sm transition-colors"
-                >
-                  Detalhes
-                </Link>
                 {temTimes ? null : (
                   <Link
                     href={`/partidas/${p.id}/times`}
+                    onClick={(e) => e.stopPropagation()}
                     className="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg text-sm transition-colors"
                   >
                     Times

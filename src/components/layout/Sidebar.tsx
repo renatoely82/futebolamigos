@@ -84,13 +84,9 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="p-4 border-b border-[#e0e0e0]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-            </div>
+            <img src="/Barcelombra_transparente.png" alt="Barcelombra Fútbol" className="w-8 h-8 object-contain shrink-0" />
             <span className="font-bold text-gray-800 text-sm leading-tight">
-              Futebol<br />Amigos
+              Barcelombra<br />Fútbol
             </span>
           </div>
         </div>

@@ -34,13 +34,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-2xl mb-4">
-            <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" />
-              <path fill="white" fillOpacity="0.3" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z" />
-            </svg>
-          </div>
-          <h1 className="text-gray-800 text-2xl font-bold">Futebol Amigos</h1>
+          <img src="/Barcelombra_transparente.png" alt="Barcelombra Fútbol" className="w-24 h-24 object-contain mb-0 mx-auto" />
+          <h1 className="text-gray-800 text-2xl font-bold">Barcelombra Fútbol</h1>
           <p className="text-gray-500 text-sm mt-1">Entre com sua conta</p>
         </div>
 

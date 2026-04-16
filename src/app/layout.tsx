@@ -7,7 +7,7 @@ import PwaRegistrar from '@/components/PwaRegistrar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Futebol Amigos',
+  title: 'Barcelombra Fútbol',
   description: 'Gerencie seu futebol de domingo',
   manifest: '/manifest.json',
 }

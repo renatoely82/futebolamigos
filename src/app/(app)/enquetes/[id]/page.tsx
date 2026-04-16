@@ -71,7 +71,7 @@ export default function EnqueteAdminPage() {
 
   function shareWhatsApp(nome: string, token: string) {
     const url = `${baseUrl}/enquete/${id}?token=${token}`
-    const msg = `⚽ *Futebol Amigos* — Vote na enquete!\n\n*${enquete?.titulo}*\n\n${url}`
+    const msg = `⚽ *Barcelombra Fútbol* — Vote na enquete!\n\n*${enquete?.titulo}*\n\n${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
   }
 

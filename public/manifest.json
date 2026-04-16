@@ -1,6 +1,6 @@
 {
-  "name": "Futebol Amigos",
-  "short_name": "FutebolAmigos",
+  "name": "Barcelombra Fútbol",
+  "short_name": "Barcelombra",
   "description": "Gestão de partidas e jogadores",
   "start_url": "/partidas",
   "display": "standalone",
