@@ -109,6 +109,7 @@ export default function TimesPage() {
     setEditTimeB(teamB)
     setEditBanco(banco)
     setProposals([])
+    setShowPosicoes(false)
     setEditMode(true)
     setLoading(false)
   }
@@ -233,6 +234,16 @@ export default function TimesPage() {
           </div>
         )}
       </div>
+
+      {!editMode && proposals.length === 0 && !generating && !isRealizada && selectedTeams && (
+        <div className="text-center py-8 mb-2">
+          <div className="text-6xl mb-4">⚽</div>
+          <p className="text-gray-500 text-lg font-medium">Times já definidos</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Clique em &quot;Alterar&quot; para editar os times, ou &quot;Gerar Times&quot; para novas propostas.
+          </p>
+        </div>
+      )}
 
       {partidaAnterior && (
         <div className="mb-5 border border-[#e0e0e0] rounded-xl overflow-hidden">
@@ -362,31 +373,20 @@ export default function TimesPage() {
         />
       )}
 
-      {!editMode && proposals.length === 0 && !generating && !isRealizada && (
+      {!editMode && proposals.length === 0 && !generating && !isRealizada && !selectedTeams && (
         <div className="text-center py-20">
           <div className="text-6xl mb-4">⚽</div>
-          {selectedTeams ? (
-            <>
-              <p className="text-gray-500 text-lg font-medium">Times já definidos</p>
-              <p className="text-gray-400 text-sm mt-2 mb-6">
-                Clique em &quot;Alterar&quot; para editar os times, ou &quot;Gerar Times&quot; para novas propostas.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-gray-500 text-lg font-medium">Pronto para sortear os times?</p>
-              <p className="text-gray-400 text-sm mt-2 mb-6">
-                Clique em &quot;Gerar Times&quot; para ver 3 propostas balanceadas por posição e nível.
-              </p>
-              <button
-                onClick={generateTeams}
-                disabled={generating}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-              >
-                Gerar Times
-              </button>
-            </>
-          )}
+          <p className="text-gray-500 text-lg font-medium">Pronto para sortear os times?</p>
+          <p className="text-gray-400 text-sm mt-2 mb-6">
+            Clique em &quot;Gerar Times&quot; para ver 3 propostas balanceadas por posição e nível.
+          </p>
+          <button
+            onClick={generateTeams}
+            disabled={generating}
+            className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+          >
+            Gerar Times
+          </button>
         </div>
       )}
 
