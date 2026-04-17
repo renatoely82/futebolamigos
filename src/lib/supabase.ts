@@ -1,6 +1,6 @@
 export type Posicao = 'Goleiro' | 'Zagueiro' | 'Lateral' | 'Volante' | 'Meia' | 'Atacante'
 export type StatusPartida = 'agendada' | 'realizada' | 'cancelada'
-export type Nivel = 1 | 2 | 3 | 4 | 5
+export type Nivel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 
 export const POSICOES: Posicao[] = ['Goleiro', 'Zagueiro', 'Lateral', 'Volante', 'Meia', 'Atacante']
 

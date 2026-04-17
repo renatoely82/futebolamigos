@@ -27,7 +27,7 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
             )}
           </div>
           <div className="flex items-center gap-1 mt-2">
-            {[1, 2, 3, 4, 5].map(n => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
               <div
                 key={n}
                 className={`w-3 h-3 rounded-sm ${n <= jogador.nivel ? 'bg-green-500' : 'bg-gray-200'}`}

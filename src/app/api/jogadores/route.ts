@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       posicao_principal: body.posicao_principal,
       posicao_secundaria_1: body.posicao_secundaria_1 || null,
       posicao_secundaria_2: body.posicao_secundaria_2 || null,
-      nivel: body.nivel ?? 3,
+      nivel: body.nivel ?? 5,
       telefone: body.telefone || null,
       aniversario: body.aniversario || null,
       observacoes: body.observacoes || null,

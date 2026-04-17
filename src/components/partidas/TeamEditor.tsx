@@ -25,8 +25,8 @@ function PlayerContent({ jogador }: { jogador: Jogador }) {
       <div className="flex items-center gap-1.5">
         <PositionBadge posicao={jogador.posicao_principal} />
         <div className="flex gap-0.5 ml-auto">
-          {[1, 2, 3, 4, 5].map(n => (
-            <div key={n} className={`w-2 h-2 rounded-sm ${n <= jogador.nivel ? 'bg-green-500' : 'bg-gray-200'}`} />
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+            <div key={n} className={`w-1.5 h-1.5 rounded-sm ${n <= jogador.nivel ? 'bg-green-500' : 'bg-gray-200'}`} />
           ))}
         </div>
       </div>

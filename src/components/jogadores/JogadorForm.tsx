@@ -29,7 +29,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
     posicao_principal: initial?.posicao_principal ?? 'Atacante',
     posicao_secundaria_1: initial?.posicao_secundaria_1 ?? null,
     posicao_secundaria_2: initial?.posicao_secundaria_2 ?? null,
-    nivel: initial?.nivel ?? 3,
+    nivel: initial?.nivel ?? 5,
     telefone: initial?.telefone ?? '',
     aniversario: initial?.aniversario ?? '',
     observacoes: initial?.observacoes ?? '',
@@ -106,8 +106,8 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
       {/* Nível */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-2">Nível</label>
-        <div className="flex gap-2">
-          {([1, 2, 3, 4, 5] as Nivel[]).map(n => (
+        <div className="flex flex-wrap gap-2">
+          {([1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as Nivel[]).map(n => (
             <button
               key={n}
               type="button"
@@ -122,7 +122,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
             </button>
           ))}
           <span className="ml-2 text-gray-500 text-sm self-center">
-            {['', 'Fraco', 'Abaixo da média', 'Médio', 'Bom', 'Craque'][form.nivel]}
+            {['', 'Fraquíssimo', 'Fraco', 'Abaixo da média', 'Regular', 'Médio', 'Acima da média', 'Bom', 'Muito bom', 'Ótimo', 'Craque'][form.nivel]}
           </span>
         </div>
       </div>
