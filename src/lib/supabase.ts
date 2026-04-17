@@ -148,8 +148,17 @@ export interface Partida {
   placar_time_a: number | null
   placar_time_b: number | null
   temporada_id: string | null
+  votacao_enquete_id: string | null
   criado_em: string
   atualizado_em: string
+}
+
+export interface VotacaoStatus {
+  enquete_id: string
+  partida_id: string
+  ativa: boolean
+  propostas_com_votos: { proposta_numero: 1 | 2 | 3; opcao_id: string; votos: number }[]
+  tokens: { jogador_id: string; token: string; usado: boolean; jogadores: { nome: string } | null }[]
 }
 
 export interface Gol {
