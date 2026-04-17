@@ -13,11 +13,29 @@ const COLOR_MAP: Record<string, string> = {
   marrom: 'text-amber-800',
 }
 
+const EMOJI_MAP: Record<string, string> = {
+  amarelo: '🟡',
+  azul: '🔵',
+  vermelho: '🔴',
+  verde: '🟢',
+  preto: '⚫',
+  branco: '⚪',
+  laranja: '🟠',
+  roxo: '🟣',
+  rosa: '🩷',
+  cinza: '🩶',
+  ciano: '🩵',
+  marrom: '🟤',
+}
+
+function normalize(nome: string): string {
+  return nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+}
+
 export function getTeamColor(nome: string, fallback = 'text-gray-700'): string {
-  const normalized = nome
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-  return COLOR_MAP[normalized] ?? fallback
+  return COLOR_MAP[normalize(nome)] ?? fallback
+}
+
+export function getTeamEmoji(nome: string): string {
+  return EMOJI_MAP[normalize(nome)] ?? ''
 }

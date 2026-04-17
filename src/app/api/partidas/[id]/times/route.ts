@@ -19,7 +19,7 @@ export async function GET(
 
   let query = supabase
     .from('partidas')
-    .select('data, nome_time_a, nome_time_b, times_escolhidos')
+    .select('id, data, nome_time_a, nome_time_b, times_escolhidos')
     .lt('data', currentPartida.data)
     .not('times_escolhidos', 'is', null)
     .order('data', { ascending: false })
@@ -37,19 +37,32 @@ export async function GET(
     ...lastMatch.times_escolhidos.time_b,
   ]
 
-  const { data: jogadores } = await supabase
-    .from('jogadores')
-    .select('*')
-    .in('id', allIds)
+  const [{ data: jogadores }, { data: convocacoes }] = await Promise.all([
+    supabase.from('jogadores').select('*').in('id', allIds),
+    supabase
+      .from('partida_jogadores')
+      .select('jogador_id, posicao_convocacao')
+      .eq('partida_id', lastMatch.id),
+  ])
 
   const jogadoresMap = new Map((jogadores ?? []).map((j: Jogador) => [j.id, j]))
+  const convocacaoMap = new Map(
+    (convocacoes ?? []).map((c: { jogador_id: string; posicao_convocacao: Posicao | null }) => [c.jogador_id, c.posicao_convocacao])
+  )
+
+  function withOverride(pid: string) {
+    const j = jogadoresMap.get(pid)
+    if (!j) return undefined
+    const override = convocacaoMap.get(pid)
+    return override ? { ...j, posicao_principal: override } : j
+  }
 
   return Response.json({
     data: lastMatch.data,
     nome_time_a: lastMatch.nome_time_a,
     nome_time_b: lastMatch.nome_time_b,
-    time_a: lastMatch.times_escolhidos.time_a.map((id: string) => jogadoresMap.get(id)).filter(Boolean),
-    time_b: lastMatch.times_escolhidos.time_b.map((id: string) => jogadoresMap.get(id)).filter(Boolean),
+    time_a: lastMatch.times_escolhidos.time_a.map(withOverride).filter(Boolean),
+    time_b: lastMatch.times_escolhidos.time_b.map(withOverride).filter(Boolean),
   })
 }
 

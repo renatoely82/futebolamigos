@@ -9,7 +9,7 @@ import ResultadoPartida from '@/components/partidas/ResultadoPartida'
 import Modal from '@/components/ui/Modal'
 import { StatusBadge, PositionBadge } from '@/components/ui/Badge'
 import { sortByPosition } from '@/lib/team-balancer'
-import { getTeamColor } from '@/lib/team-colors'
+import { getTeamColor, getTeamEmoji } from '@/lib/team-colors'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -260,7 +260,13 @@ export default function PartidaDetailPage() {
       .filter(Boolean) as string[]
     const timeALines = timeAPlayers.map((n, i) => `${i + 1}- ${n}`).join('\n')
     const timeBLines = timeBPlayers.map((n, i) => `${i + 1}- ${n}`).join('\n')
-    return `${partida.nome_time_a ?? 'Time A'}:\n${timeALines}\n\n${partida.nome_time_b ?? 'Time B'}:\n${timeBLines}`
+    const nomeA = partida.nome_time_a ?? 'Time A'
+    const nomeB = partida.nome_time_b ?? 'Time B'
+    const emojiA = getTeamEmoji(nomeA)
+    const emojiB = getTeamEmoji(nomeB)
+    const labelA = emojiA ? `${emojiA} ${nomeA}` : nomeA
+    const labelB = emojiB ? `${emojiB} ${nomeB}` : nomeB
+    return `${labelA}:\n${timeALines}\n\n${labelB}:\n${timeBLines}`
   }
 
   function handleTimes() {
@@ -545,7 +551,11 @@ export default function PartidaDetailPage() {
               <div className="space-y-1.5">
                 {sortByPosition(
                   partida.times_escolhidos.time_a
-                    .map(id => players.find(p => p.jogador_id === id)?.jogador)
+                    .map(id => {
+                      const pj = players.find(p => p.jogador_id === id)
+                      if (!pj) return undefined
+                      return pj.posicao_convocacao ? { ...pj.jogador, posicao_principal: pj.posicao_convocacao } : pj.jogador
+                    })
                     .filter(Boolean) as import('@/lib/supabase').Jogador[]
                 ).map(jogador => (
                   <div key={jogador.id} className="flex items-center gap-2">
@@ -560,7 +570,11 @@ export default function PartidaDetailPage() {
               <div className="space-y-1.5">
                 {sortByPosition(
                   partida.times_escolhidos.time_b
-                    .map(id => players.find(p => p.jogador_id === id)?.jogador)
+                    .map(id => {
+                      const pj = players.find(p => p.jogador_id === id)
+                      if (!pj) return undefined
+                      return pj.posicao_convocacao ? { ...pj.jogador, posicao_principal: pj.posicao_convocacao } : pj.jogador
+                    })
                     .filter(Boolean) as import('@/lib/supabase').Jogador[]
                 ).map(jogador => (
                   <div key={jogador.id} className="flex items-center gap-2">

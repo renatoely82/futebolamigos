@@ -100,7 +100,9 @@ export default function TimesPage() {
     const res = await fetch(`/api/partidas/${id}/jogadores`)
     if (!res.ok) { setLoading(false); return }
     const rows: PartidaJogadorComDetalhes[] = await res.json()
-    const allPlayers = rows.map(r => r.jogador)
+    const allPlayers = rows.map(r =>
+      r.posicao_convocacao ? { ...r.jogador, posicao_principal: r.posicao_convocacao } : r.jogador
+    )
     const { time_a: idsA, time_b: idsB } = partida.times_escolhidos
     const teamA = allPlayers.filter(j => idsA.includes(j.id))
     const teamB = allPlayers.filter(j => idsB.includes(j.id))
