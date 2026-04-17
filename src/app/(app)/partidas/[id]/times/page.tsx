@@ -35,7 +35,7 @@ export default function TimesPage() {
   const [partidaAnterior, setPartidaAnterior] = useState<PartidaAnteriorTimes | null>(null)
   const [showPartidaAnterior, setShowPartidaAnterior] = useState(false)
   const [convocados, setConvocados] = useState<PartidaJogadorComDetalhes[]>([])
-  const [showPosicoes, setShowPosicoes] = useState(true)
+  const [showPosicoes, setShowPosicoes] = useState(false)
 
   const loadPartida = useCallback(async () => {
     const res = await fetch(`/api/partidas/${id}`)
@@ -63,6 +63,12 @@ export default function TimesPage() {
     loadPartidaAnterior()
     loadConvocados()
   }, [loadPartida, loadPartidaAnterior, loadConvocados])
+
+  useEffect(() => {
+    if (partida && !partida.times_escolhidos) {
+      setShowPosicoes(true)
+    }
+  }, [partida])
 
   async function handlePosicaoChange(jogadorId: string, posicao: Posicao) {
     const prev = convocados
@@ -237,13 +243,44 @@ export default function TimesPage() {
         )}
       </div>
 
-      {!editMode && proposals.length === 0 && !generating && !isRealizada && selectedTeams && (
-        <div className="text-center py-8 mb-2">
-          <div className="text-6xl mb-4">⚽</div>
-          <p className="text-gray-500 text-lg font-medium">Times já definidos</p>
-          <p className="text-gray-400 text-sm mt-2">
-            Clique em &quot;Alterar&quot; para editar os times, ou &quot;Gerar Times&quot; para novas propostas.
-          </p>
+      {selectedTeams && !editMode && proposals.length === 0 && !generating && (
+        <div className="mb-5 border border-[#e0e0e0] rounded-xl overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-[#e0e0e0]">
+            <span className="text-sm font-semibold text-gray-600">Times Definidos</span>
+          </div>
+          <div className="px-4 py-3 grid grid-cols-2 gap-3">
+            {[
+              { nome: partida?.nome_time_a ?? 'Amarelo', ids: selectedTeams.time_a },
+              { nome: partida?.nome_time_b ?? 'Azul', ids: selectedTeams.time_b },
+            ].map((time) => {
+              const membros = convocados
+                .filter(pj => time.ids.includes(pj.jogador_id))
+                .sort((a, b) => {
+                  const posA = POSICOES.indexOf(a.posicao_convocacao ?? a.jogador.posicao_principal)
+                  const posB = POSICOES.indexOf(b.posicao_convocacao ?? b.jogador.posicao_principal)
+                  if (posA !== posB) return posA - posB
+                  return a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')
+                })
+              return (
+                <div key={time.nome}>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">{time.nome}</p>
+                  <ul className="space-y-1">
+                    {membros.map(pj => {
+                      const pos = pj.posicao_convocacao ?? pj.jogador.posicao_principal
+                      return (
+                        <li key={pj.jogador_id} className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${POSICAO_CORES[pos]} shrink-0`}>
+                            {pos.substring(0, 3).toUpperCase()}
+                          </span>
+                          <span className="text-sm text-gray-700 truncate">{pj.jogador.nome}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
