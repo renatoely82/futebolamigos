@@ -1,17 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { Partida, PartidaJogadorComDetalhes, GolComDetalhes } from '@/lib/supabase'
+import type { Partida, PartidaJogadorComDetalhes, GolComDetalhes, SubstituicaoComDetalhes } from '@/lib/supabase'
 import { POSICOES } from '@/lib/supabase'
 import { getTeamColor } from '@/lib/team-colors'
 
 interface Props {
   partida: Partida
   players: PartidaJogadorComDetalhes[]
+  substituicoes?: SubstituicaoComDetalhes[]
   onUpdate: () => void
 }
 
-export default function ResultadoPartida({ partida, players, onUpdate }: Props) {
+export default function ResultadoPartida({ partida, players, substituicoes = [], onUpdate }: Props) {
   const [gols, setGols] = useState<GolComDetalhes[]>([])
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -93,15 +94,29 @@ export default function ResultadoPartida({ partida, players, onUpdate }: Props) 
   const teamAIds = new Set(partida.times_escolhidos?.time_a ?? [])
   const teamBIds = new Set(partida.times_escolhidos?.time_b ?? [])
 
+  // Substituição: ausentes não recebem gols; substitutos herdam o time do ausente
+  const ausenteIds = new Set(substituicoes.map(s => s.jogador_ausente_id))
+  const substitutoTime = new Map<string, 'A' | 'B'>()
+  for (const s of substituicoes) {
+    if (teamAIds.has(s.jogador_ausente_id)) substitutoTime.set(s.jogador_substituto_id, 'A')
+    else if (teamBIds.has(s.jogador_ausente_id)) substitutoTime.set(s.jogador_substituto_id, 'B')
+  }
+
   const byPosition = (a: typeof availablePlayers[number], b: typeof availablePlayers[number]) => {
     const posDiff = POSICOES.indexOf(a.jogador.posicao_principal) - POSICOES.indexOf(b.jogador.posicao_principal)
     if (posDiff !== 0) return posDiff
     return a.jogador.nome.localeCompare(b.jogador.nome, 'pt-BR')
   }
 
-  const playersA = availablePlayers.filter(p => teamAIds.has(p.jogador_id)).sort(byPosition)
-  const playersB = availablePlayers.filter(p => teamBIds.has(p.jogador_id)).sort(byPosition)
-  const unassigned = availablePlayers.filter(p => !teamAIds.has(p.jogador_id) && !teamBIds.has(p.jogador_id)).sort(byPosition)
+  const playersA = availablePlayers
+    .filter(p => (teamAIds.has(p.jogador_id) && !ausenteIds.has(p.jogador_id)) || substitutoTime.get(p.jogador_id) === 'A')
+    .sort(byPosition)
+  const playersB = availablePlayers
+    .filter(p => (teamBIds.has(p.jogador_id) && !ausenteIds.has(p.jogador_id)) || substitutoTime.get(p.jogador_id) === 'B')
+    .sort(byPosition)
+  const unassigned = availablePlayers
+    .filter(p => !teamAIds.has(p.jogador_id) && !teamBIds.has(p.jogador_id) && substitutoTime.get(p.jogador_id) === undefined)
+    .sort(byPosition)
 
   const hasTeams = partida.times_escolhidos != null
   const colorA = getTeamColor(partida.nome_time_a, 'text-green-600')

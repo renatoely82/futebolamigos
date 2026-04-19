@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { Partida, Jogador, PartidaJogadorComDetalhes, Temporada, FormaPagamento } from '@/lib/supabase'
+import type { Partida, Jogador, PartidaJogadorComDetalhes, Temporada, FormaPagamento, SubstituicaoComDetalhes } from '@/lib/supabase'
 import JogadoresPartida from '@/components/partidas/JogadoresPartida'
 import ResultadoPartida from '@/components/partidas/ResultadoPartida'
+import SubstituicoesPartida from '@/components/partidas/SubstituicoesPartida'
 import Modal from '@/components/ui/Modal'
 import { StatusBadge, PositionBadge } from '@/components/ui/Badge'
 import { sortByPosition } from '@/lib/team-balancer'
@@ -120,6 +121,7 @@ export default function PartidaDetailPage() {
   const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null)
   const [editDiaristaForm, setEditDiaristaForm] = useState<{ valor: string; forma: FormaPagamento | null; obs: string; isento: boolean }>({ valor: '', forma: null, obs: '', isento: false })
   const [savingDiarista, setSavingDiarista] = useState<Set<string>>(new Set())
+  const [substituicoes, setSubstituicoes] = useState<SubstituicaoComDetalhes[]>([])
   const [sendingPush, setSendingPush] = useState(false)
   const [pushFeedback, setPushFeedback] = useState('')
   const [showConvocarModal, setShowConvocarModal] = useState(false)
@@ -132,16 +134,18 @@ export default function PartidaDetailPage() {
   }, [id])
 
   const loadPartida = useCallback(async () => {
-    const [pRes, pjRes, apRes, tRes] = await Promise.all([
+    const [pRes, pjRes, apRes, tRes, subRes] = await Promise.all([
       fetch(`/api/partidas/${id}`),
       fetch(`/api/partidas/${id}/jogadores`),
       fetch('/api/jogadores'),
       fetch('/api/temporadas'),
+      fetch(`/api/partidas/${id}/substituicoes`),
     ])
     if (pRes.ok) setPartida(await pRes.json())
     if (pjRes.ok) setPlayers(await pjRes.json())
     if (apRes.ok) setAllPlayers(await apRes.json())
     if (tRes.ok) setTemporadas(await tRes.json())
+    if (subRes.ok) setSubstituicoes(await subRes.json())
     setLoading(false)
     loadDiaristas()
   }, [id, loadDiaristas])
@@ -532,60 +536,74 @@ export default function PartidaDetailPage() {
       </div>
 
       {/* Times definidos */}
+      {partida.times_escolhidos && (() => {
+        const subByAusente = new Map(substituicoes.map(s => [s.jogador_ausente_id, s]))
+
+        function renderTimePlayers(ids: string[]) {
+          return sortByPosition(
+            ids
+              .map(pid => {
+                const pj = players.find(p => p.jogador_id === pid)
+                if (!pj) return undefined
+                return pj.posicao_convocacao ? { ...pj.jogador, posicao_principal: pj.posicao_convocacao } : pj.jogador
+              })
+              .filter(Boolean) as import('@/lib/supabase').Jogador[]
+          ).map(jogador => {
+            const sub = subByAusente.get(jogador.id)
+            return (
+              <div key={jogador.id}>
+                {sub ? (
+                  <div className="flex items-center gap-2">
+                    <PositionBadge posicao={sub.jogador_substituto.posicao_principal} />
+                    <span className="text-gray-800 text-sm">{sub.jogador_substituto.nome}</span>
+                    <span className="text-gray-400 text-xs line-through ml-0.5">{jogador.nome}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <PositionBadge posicao={jogador.posicao_principal} />
+                    <span className="text-gray-800 text-sm">{jogador.nome}</span>
+                  </div>
+                )}
+              </div>
+            )
+          })
+        }
+
+        return (
+          <div className="bg-white border border-green-500/30 rounded-xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-gray-800 font-semibold">Times Definidos</h2>
+              {partida.status !== 'realizada' && (
+                <Link
+                  href={`/partidas/${id}/times`}
+                  className="text-green-600 text-sm hover:text-green-700 transition-colors"
+                >
+                  Alterar →
+                </Link>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <h3 className={`font-semibold text-sm mb-2 ${getTeamColor(partida.nome_time_a, 'text-green-600')}`}>{partida.nome_time_a}</h3>
+                <div className="space-y-1.5">{renderTimePlayers(partida.times_escolhidos!.time_a)}</div>
+              </div>
+              <div>
+                <h3 className={`font-semibold text-sm mb-2 ${getTeamColor(partida.nome_time_b, 'text-blue-600')}`}>{partida.nome_time_b}</h3>
+                <div className="space-y-1.5">{renderTimePlayers(partida.times_escolhidos!.time_b)}</div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Substituições */}
       {partida.times_escolhidos && (
-        <div className="bg-white border border-green-500/30 rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-gray-800 font-semibold">Times Definidos</h2>
-            {partida.status !== 'realizada' && (
-              <Link
-                href={`/partidas/${id}/times`}
-                className="text-green-600 text-sm hover:text-green-700 transition-colors"
-              >
-                Alterar →
-              </Link>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <h3 className={`font-semibold text-sm mb-2 ${getTeamColor(partida.nome_time_a, 'text-green-600')}`}>{partida.nome_time_a}</h3>
-              <div className="space-y-1.5">
-                {sortByPosition(
-                  partida.times_escolhidos.time_a
-                    .map(id => {
-                      const pj = players.find(p => p.jogador_id === id)
-                      if (!pj) return undefined
-                      return pj.posicao_convocacao ? { ...pj.jogador, posicao_principal: pj.posicao_convocacao } : pj.jogador
-                    })
-                    .filter(Boolean) as import('@/lib/supabase').Jogador[]
-                ).map(jogador => (
-                  <div key={jogador.id} className="flex items-center gap-2">
-                    <PositionBadge posicao={jogador.posicao_principal} />
-                    <span className="text-gray-800 text-sm">{jogador.nome}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className={`font-semibold text-sm mb-2 ${getTeamColor(partida.nome_time_b, 'text-blue-600')}`}>{partida.nome_time_b}</h3>
-              <div className="space-y-1.5">
-                {sortByPosition(
-                  partida.times_escolhidos.time_b
-                    .map(id => {
-                      const pj = players.find(p => p.jogador_id === id)
-                      if (!pj) return undefined
-                      return pj.posicao_convocacao ? { ...pj.jogador, posicao_principal: pj.posicao_convocacao } : pj.jogador
-                    })
-                    .filter(Boolean) as import('@/lib/supabase').Jogador[]
-                ).map(jogador => (
-                  <div key={jogador.id} className="flex items-center gap-2">
-                    <PositionBadge posicao={jogador.posicao_principal} />
-                    <span className="text-gray-800 text-sm">{jogador.nome}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <SubstituicoesPartida
+          partida={partida}
+          players={players}
+          allPlayers={allPlayers}
+          onUpdate={loadPartida}
+        />
       )}
 
       {/* Resultado */}
@@ -593,6 +611,7 @@ export default function PartidaDetailPage() {
         <ResultadoPartida
           partida={partida}
           players={players}
+          substituicoes={substituicoes}
           onUpdate={loadPartida}
         />
       )}

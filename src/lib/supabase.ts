@@ -199,6 +199,20 @@ export interface PartidaJogadorComDetalhes extends PartidaJogador {
   jogador: Jogador
 }
 
+export interface Substituicao {
+  id: string
+  partida_id: string
+  jogador_ausente_id: string
+  jogador_substituto_id: string
+  motivo: string | null
+  criado_em: string
+}
+
+export interface SubstituicaoComDetalhes extends Substituicao {
+  jogador_ausente: Jogador
+  jogador_substituto: Jogador
+}
+
 export interface TeamSplit {
   time_a: string[]
   time_b: string[]
@@ -274,6 +288,11 @@ export type Database = {
         Row: TemporadaValoresMes
         Insert: Omit<TemporadaValoresMes, 'id' | 'criado_em' | 'atualizado_em'>
         Update: Partial<Omit<TemporadaValoresMes, 'id' | 'criado_em' | 'atualizado_em'>>
+      }
+      substituicoes: {
+        Row: Substituicao
+        Insert: Omit<Substituicao, 'id' | 'criado_em'>
+        Update: Partial<Omit<Substituicao, 'id' | 'criado_em'>>
       }
     }
   }

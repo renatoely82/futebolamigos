@@ -26,7 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const partidaIds = partidas.map(p => p.id)
 
-  const [pjsRes, golsRes, jogadoresRes] = await Promise.all([
+  const [pjsRes, golsRes, jogadoresRes, subsRes] = await Promise.all([
     supabase
       .from('partida_jogadores')
       .select('partida_id, jogador_id')
@@ -39,11 +39,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       .from('jogadores')
       .select('id, nome, posicao_principal')
       .eq('ativo', true),
+    supabase
+      .from('substituicoes')
+      .select('partida_id, jogador_ausente_id, jogador_substituto_id')
+      .in('partida_id', partidaIds),
   ])
 
   const pjs = pjsRes.data ?? []
   const gols = golsRes.data ?? []
   const jogadores = jogadoresRes.data ?? []
+  const subs = subsRes.data ?? []
+
+  const subsMap = new Map<string, { ausentes: Map<string, string>; substitutos: Set<string> }>()
+  for (const s of subs) {
+    if (!subsMap.has(s.partida_id)) {
+      subsMap.set(s.partida_id, { ausentes: new Map(), substitutos: new Set() })
+    }
+    const entry = subsMap.get(s.partida_id)!
+    entry.ausentes.set(s.jogador_ausente_id, s.jogador_substituto_id)
+    entry.substitutos.add(s.jogador_substituto_id)
+  }
 
   const jogadorMap = new Map(jogadores.map(j => [j.id, j]))
   const partidaMap = new Map(partidas.map(p => [p.id, p]))
@@ -99,8 +114,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     let resultado: 'V' | 'E' | 'D' | null = null
 
     if (tc) {
-      const inTimeA = tc.time_a?.includes(pj.jogador_id) ?? false
-      const inTimeB = tc.time_b?.includes(pj.jogador_id) ?? false
+      const partidaSubs = subsMap.get(pj.partida_id)
+      const isAusente = partidaSubs?.ausentes.has(pj.jogador_id) ?? false
+      const isSubstituto = partidaSubs?.substitutos.has(pj.jogador_id) ?? false
+
+      let inTimeA = isAusente ? false : (tc.time_a?.includes(pj.jogador_id) ?? false)
+      let inTimeB = isAusente ? false : (tc.time_b?.includes(pj.jogador_id) ?? false)
+
+      if (isSubstituto && partidaSubs) {
+        for (const [ausenteId, substitutoId] of partidaSubs.ausentes) {
+          if (substitutoId === pj.jogador_id) {
+            inTimeA = tc.time_a?.includes(ausenteId) ?? false
+            inTimeB = tc.time_b?.includes(ausenteId) ?? false
+            break
+          }
+        }
+      }
 
       if (inTimeA || inTimeB) {
         if (pA === pB) {
@@ -140,8 +169,24 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const pA = partida.placar_time_a as number
     const pB = partida.placar_time_b as number
     if (!tc) continue
-    const inTimeA = tc.time_a?.includes(pj.jogador_id) ?? false
-    const inTimeB = tc.time_b?.includes(pj.jogador_id) ?? false
+
+    const partidaSubs2 = subsMap.get(pj.partida_id)
+    const isAusente2 = partidaSubs2?.ausentes.has(pj.jogador_id) ?? false
+    const isSubstituto2 = partidaSubs2?.substitutos.has(pj.jogador_id) ?? false
+
+    let inTimeA = isAusente2 ? false : (tc.time_a?.includes(pj.jogador_id) ?? false)
+    let inTimeB = isAusente2 ? false : (tc.time_b?.includes(pj.jogador_id) ?? false)
+
+    if (isSubstituto2 && partidaSubs2) {
+      for (const [ausenteId, substitutoId] of partidaSubs2.ausentes) {
+        if (substitutoId === pj.jogador_id) {
+          inTimeA = tc.time_a?.includes(ausenteId) ?? false
+          inTimeB = tc.time_b?.includes(ausenteId) ?? false
+          break
+        }
+      }
+    }
+
     if (!inTimeA && !inTimeB) continue
 
     let resultado: 'V' | 'E' | 'D'
