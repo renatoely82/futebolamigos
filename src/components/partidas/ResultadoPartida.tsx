@@ -149,7 +149,7 @@ export default function ResultadoPartida({ partida, players, substituicoes = [],
         </div>
         {/* Gols contra */}
         <div className="flex items-center gap-1">
-          <span className="text-orange-500 text-xs w-6 text-right font-medium">GC</span>
+          <span className="text-xs">⚽↩️</span>
           <button
             onClick={() => setPlayerGoals(pj.jogador_id, 'contra', entry.contra - 1)}
             disabled={entry.contra === 0}
@@ -305,7 +305,7 @@ export default function ResultadoPartida({ partida, players, substituicoes = [],
                                 <span className="text-xs font-semibold text-gray-500">⚽ {totalNormal}</span>
                               )}
                               {totalContra > 0 && (
-                                <span className="text-xs font-semibold text-red-400">GC {totalContra}</span>
+                                <span className="text-xs font-semibold text-red-400">⚽↩️ {totalContra}</span>
                               )}
                             </span>
                           </div>
@@ -327,7 +327,7 @@ export default function ResultadoPartida({ partida, players, substituicoes = [],
                                 <span className="text-xs font-semibold text-gray-500">⚽ {totalNormal}</span>
                               )}
                               {totalContra > 0 && (
-                                <span className="text-xs font-semibold text-red-400">GC {totalContra}</span>
+                                <span className="text-xs font-semibold text-red-400">⚽↩️ {totalContra}</span>
                               )}
                             </span>
                           </div>

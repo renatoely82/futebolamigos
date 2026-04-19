@@ -95,7 +95,7 @@ function PartidaExpandida({ partida }: ExpandedProps) {
         <span className="text-gray-800 text-sm flex-1 truncate">{pj.jogador.nome}</span>
         <span className="flex items-center gap-1 shrink-0">
           {totalNormal > 0 && <span className="text-xs font-semibold text-gray-500">⚽ {totalNormal}</span>}
-          {totalContra > 0 && <span className="text-xs font-semibold text-red-400">GC {totalContra}</span>}
+          {totalContra > 0 && <span className="text-xs font-semibold text-red-400">⚽↩️ {totalContra}</span>}
         </span>
       </div>
     )
@@ -178,7 +178,7 @@ export default function PartidasList({ partidas }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
       {partidas.map(p => {
         const hasScore = p.placar_time_a !== null && p.placar_time_b !== null
         const isExpanded = expandedId === p.id

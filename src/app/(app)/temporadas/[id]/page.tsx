@@ -71,6 +71,7 @@ export default function TemporadaDetailPage() {
   const [filtroFim, setFiltroFim] = useState('')
   const [filtroMes, setFiltroMes] = useState<number | null>(null)
   const [abaAtiva, setAbaAtiva] = useState<Aba>('classificacao')
+  const [buscaJogador, setBuscaJogador] = useState('')
   const filtroInicializado = useRef(false)
 
   const load = useCallback(async (inicio?: string, fim?: string) => {
@@ -235,6 +236,12 @@ export default function TemporadaDetailPage() {
 
   const filtroAtivo = temporada && (filtroInicio !== temporada.data_inicio || filtroFim !== temporada.data_fim)
 
+  const posicoes = new Map(classificacao.map((e, idx) => [e.jogador_id, idx + 1]))
+
+  const classificacaoFiltrada = buscaJogador.trim()
+    ? classificacao.filter(e => e.nome.toLowerCase().includes(buscaJogador.toLowerCase()))
+    : classificacao
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* Header */}
@@ -367,19 +374,72 @@ export default function TemporadaDetailPage() {
         <div>
           {/* Classificação */}
           {abaAtiva === 'classificacao' && (
-            <div className="p-2">
-              <ClassificacaoTable
-                entries={classificacao}
-                temporadaId={id}
-                onSelectJogador={(jid) => { setJogadorDetalheNome(null); setJogadorDetalheId(jid) }}
-              />
+            <div>
+              <div className="px-4 pt-3 pb-2">
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Pesquisar jogador..."
+                    value={buscaJogador}
+                    onChange={e => setBuscaJogador(e.target.value)}
+                    className="w-full bg-gray-50 border border-[#e0e0e0] rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+                  />
+                  {buscaJogador && (
+                    <button
+                      onClick={() => setBuscaJogador('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="p-2 pt-0">
+                <ClassificacaoTable
+                  entries={classificacaoFiltrada}
+                  temporadaId={id}
+                  posicoes={posicoes}
+                  onSelectJogador={(jid) => { setJogadorDetalheNome(null); setJogadorDetalheId(jid) }}
+                />
+              </div>
             </div>
           )}
 
           {/* Artilheiros */}
           {abaAtiva === 'artilheiros' && (
-            <div className="p-2">
-              <ArtilheirosTable entries={classificacao} />
+            <div>
+              <div className="px-4 pt-3 pb-2">
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Pesquisar jogador..."
+                    value={buscaJogador}
+                    onChange={e => setBuscaJogador(e.target.value)}
+                    className="w-full bg-gray-50 border border-[#e0e0e0] rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+                  />
+                  {buscaJogador && (
+                    <button
+                      onClick={() => setBuscaJogador('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="p-2 pt-0">
+                <ArtilheirosTable entries={classificacaoFiltrada} />
+              </div>
             </div>
           )}
 

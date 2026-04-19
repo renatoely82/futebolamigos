@@ -111,7 +111,7 @@ function EscalacaoInline({
                               )}
                               {g.contra > 0 && (
                                 <span className="text-xs font-semibold text-red-400">
-                                  GC {g.contra}
+                                  ⚽↩️ {g.contra}
                                 </span>
                               )}
                             </span>

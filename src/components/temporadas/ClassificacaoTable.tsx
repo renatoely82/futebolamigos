@@ -6,6 +6,7 @@ import type { ClassificacaoEntry } from '@/lib/supabase'
 interface Props {
   entries: ClassificacaoEntry[]
   temporadaId: string
+  posicoes?: Map<string, number>
   onSelectJogador?: (jogadorId: string) => void
 }
 
@@ -36,7 +37,7 @@ function FormDot({ result }: { result: 'V' | 'E' | 'D' | null }) {
   )
 }
 
-export default function ClassificacaoTable({ entries, temporadaId, onSelectJogador }: Props) {
+export default function ClassificacaoTable({ entries, temporadaId, posicoes, onSelectJogador }: Props) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -65,7 +66,8 @@ export default function ClassificacaoTable({ entries, temporadaId, onSelectJogad
         </thead>
         <tbody className="divide-y divide-gray-50">
           {entries.map((entry, idx) => {
-            const isTop3 = idx < 3
+            const posicao = posicoes?.get(entry.jogador_id) ?? idx + 1
+            const isTop3 = posicao <= 3
             const initials = getInitials(entry.nome)
             const slots = Array.from({ length: 5 }, (_, i) => entry.ultimos5[i] ?? null)
 
@@ -93,7 +95,7 @@ export default function ClassificacaoTable({ entries, temporadaId, onSelectJogad
                 {/* Position */}
                 <td className="py-3 px-2 text-center">
                   <span className={`text-sm font-bold ${isTop3 ? 'text-green-700' : 'text-gray-400'}`}>
-                    {idx + 1}
+                    {posicao}
                   </span>
                 </td>
 
