@@ -17,6 +17,8 @@ import type { Jogador, PropostaTimeComJogadores } from '@/lib/supabase'
 import { PositionBadge } from '@/components/ui/Badge'
 import { sortByPosition } from '@/lib/team-balancer'
 import { getTeamColor } from '@/lib/team-colors'
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
+import PlayerMoveBottomSheet from './PlayerMoveBottomSheet'
 
 interface TeamProposalCardProps {
   proposta: PropostaTimeComJogadores
@@ -72,6 +74,25 @@ function DraggablePlayer({ jogador, propNum, sourceTeam }: {
   )
 }
 
+function TappablePlayer({ jogador, selected, onTap }: {
+  jogador: Jogador
+  selected: boolean
+  onTap: () => void
+}) {
+  return (
+    <div
+      onClick={onTap}
+      className={`py-1.5 border-b border-gray-100 last:border-0 select-none transition-all rounded-lg px-1 -mx-1 ${
+        selected
+          ? 'bg-green-50 border-l-2 border-l-green-500 pl-2'
+          : 'active:bg-gray-50'
+      }`}
+    >
+      <PlayerContent jogador={jogador} />
+    </div>
+  )
+}
+
 function DroppableTeam({ id, label, score, players, propNum, isDropTarget }: {
   id: 'time-a' | 'time-b'
   label: string
@@ -104,6 +125,40 @@ function DroppableTeam({ id, label, score, players, propNum, isDropTarget }: {
   )
 }
 
+function TappableTeam({ id, label, score, players, selectedPlayerId, onTap }: {
+  id: 'time-a' | 'time-b'
+  label: string
+  score: number
+  players: Jogador[]
+  selectedPlayerId: string | null
+  selectedTeam: 'time-a' | 'time-b' | null
+  onTap: (jogador: Jogador) => void
+}) {
+  const color = getTeamColor(label, id === 'time-a' ? 'text-green-600' : 'text-blue-600')
+
+  return (
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className={`${color} font-semibold text-sm`}>{label}</span>
+        <span className="text-gray-500 text-xs">Força: {score}</span>
+      </div>
+      {sortByPosition(players).map(j => (
+        <TappablePlayer
+          key={j.id}
+          jogador={j}
+          selected={selectedPlayerId === j.id}
+          onTap={() => onTap(j)}
+        />
+      ))}
+      {players.length === 0 && (
+        <div className="text-gray-400 text-xs text-center py-4 border border-dashed border-gray-300 rounded-lg">
+          Toque em um jogador para mover
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function TeamProposalCard({
   proposta,
   onSelect,
@@ -115,6 +170,11 @@ export default function TeamProposalCard({
 }: TeamProposalCardProps) {
   const [draggingSourceTeam, setDraggingSourceTeam] = useState<'time-a' | 'time-b' | null>(null)
   const [activePlayer, setActivePlayer] = useState<Jogador | null>(null)
+
+  // Mobile tap-to-select state
+  const isTouch = useIsTouchDevice()
+  const [selectedPlayer, setSelectedPlayer] = useState<Jogador | null>(null)
+  const [selectedTeam, setSelectedTeam] = useState<'time-a' | 'time-b' | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -160,6 +220,41 @@ export default function TeamProposalCard({
     onTeamsChange(sortByPosition(newTimeA), sortByPosition(newTimeB))
   }
 
+  function handleTap(jogador: Jogador, team: 'time-a' | 'time-b') {
+    if (selectedPlayer?.id === jogador.id && selectedTeam === team) {
+      setSelectedPlayer(null)
+      setSelectedTeam(null)
+    } else {
+      setSelectedPlayer(jogador)
+      setSelectedTeam(team)
+    }
+  }
+
+  function handleMoveFromSheet(targetTeamId: string) {
+    if (!selectedPlayer || !selectedTeam || !onTeamsChange) return
+    const target = targetTeamId as 'time-a' | 'time-b'
+
+    let newTimeA = [...proposta.time_a]
+    let newTimeB = [...proposta.time_b]
+
+    if (selectedTeam === 'time-a') {
+      newTimeA = newTimeA.filter(j => j.id !== selectedPlayer.id)
+      newTimeB = [...newTimeB, selectedPlayer]
+    } else {
+      newTimeB = newTimeB.filter(j => j.id !== selectedPlayer.id)
+      newTimeA = [...newTimeA, selectedPlayer]
+    }
+
+    onTeamsChange(sortByPosition(newTimeA), sortByPosition(newTimeB))
+    setSelectedPlayer(null)
+    setSelectedTeam(null)
+  }
+
+  const zoneColors: Record<'time-a' | 'time-b', string> = {
+    'time-a': getTeamColor(nomeTimeA, 'text-green-600'),
+    'time-b': getTeamColor(nomeTimeB, 'text-blue-600'),
+  }
+
   return (
     <div className={`bg-white border rounded-xl overflow-hidden transition-all ${
       selected ? 'border-green-500 ring-1 ring-green-500/50' : 'border-[#e0e0e0] hover:border-[#c8c8c8]'
@@ -168,7 +263,9 @@ export default function TeamProposalCard({
         <div className="flex items-center gap-2">
           <span className="text-gray-800 font-semibold">Proposta {proposta.proposta_numero}</span>
           {onTeamsChange && (
-            <span className="text-gray-500 text-xs">• arraste para trocar</span>
+            <span className="text-gray-500 text-xs">
+              {isTouch ? '• toque para trocar' : '• arraste para trocar'}
+            </span>
           )}
         </div>
         {selected && (
@@ -176,37 +273,77 @@ export default function TeamProposalCard({
         )}
       </div>
 
-      <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-2 divide-x divide-gray-100">
-          <DroppableTeam
-            id="time-a"
-            label={nomeTimeA}
-            score={scoreA}
-            players={proposta.time_a}
-            propNum={proposta.proposta_numero}
-            isDropTarget={draggingSourceTeam === 'time-b'}
-          />
-          <DroppableTeam
-            id="time-b"
-            label={nomeTimeB}
-            score={scoreB}
-            players={proposta.time_b}
-            propNum={proposta.proposta_numero}
-            isDropTarget={draggingSourceTeam === 'time-a'}
-          />
-        </div>
-        <DragOverlay>
-          {activePlayer && (
-            <div className="bg-white border border-green-500/60 rounded-lg p-2.5 shadow-2xl cursor-grabbing min-w-[140px]">
-              <PlayerContent jogador={activePlayer} />
-            </div>
+      {isTouch ? (
+        <>
+          <div className="grid grid-cols-2 divide-x divide-gray-100">
+            <TappableTeam
+              id="time-a"
+              label={nomeTimeA}
+              score={scoreA}
+              players={proposta.time_a}
+              selectedPlayerId={selectedTeam === 'time-a' ? selectedPlayer?.id ?? null : null}
+              selectedTeam={selectedTeam}
+              onTap={j => handleTap(j, 'time-a')}
+            />
+            <TappableTeam
+              id="time-b"
+              label={nomeTimeB}
+              score={scoreB}
+              players={proposta.time_b}
+              selectedPlayerId={selectedTeam === 'time-b' ? selectedPlayer?.id ?? null : null}
+              selectedTeam={selectedTeam}
+              onTap={j => handleTap(j, 'time-b')}
+            />
+          </div>
+
+          {selectedPlayer && selectedTeam && onTeamsChange && (
+            <PlayerMoveBottomSheet
+              jogador={selectedPlayer}
+              zones={[
+                { id: 'time-a', label: nomeTimeA, color: zoneColors['time-a'], disabled: selectedTeam === 'time-a' },
+                { id: 'time-b', label: nomeTimeB, color: zoneColors['time-b'], disabled: selectedTeam === 'time-b' },
+              ]}
+              onMove={handleMoveFromSheet}
+              onClose={() => {
+                setSelectedPlayer(null)
+                setSelectedTeam(null)
+              }}
+            />
           )}
-        </DragOverlay>
-      </DndContext>
+        </>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-2 divide-x divide-gray-100">
+            <DroppableTeam
+              id="time-a"
+              label={nomeTimeA}
+              score={scoreA}
+              players={proposta.time_a}
+              propNum={proposta.proposta_numero}
+              isDropTarget={draggingSourceTeam === 'time-b'}
+            />
+            <DroppableTeam
+              id="time-b"
+              label={nomeTimeB}
+              score={scoreB}
+              players={proposta.time_b}
+              propNum={proposta.proposta_numero}
+              isDropTarget={draggingSourceTeam === 'time-a'}
+            />
+          </div>
+          <DragOverlay>
+            {activePlayer && (
+              <div className="bg-white border border-green-500/60 rounded-lg p-2.5 shadow-2xl cursor-grabbing min-w-[140px]">
+                <PlayerContent jogador={activePlayer} />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      )}
 
       <div className="p-4 border-t border-gray-100">
         <button

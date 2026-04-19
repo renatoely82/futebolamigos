@@ -18,6 +18,8 @@ import type { Jogador } from '@/lib/supabase'
 import { PositionBadge } from '@/components/ui/Badge'
 import { sortByPosition } from '@/lib/team-balancer'
 import { getTeamColor } from '@/lib/team-colors'
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
+import PlayerMoveBottomSheet from './PlayerMoveBottomSheet'
 
 function PlayerContent({ jogador }: { jogador: Jogador }) {
   return (
@@ -58,6 +60,26 @@ function DraggablePlayer({ jogador, sourceZone }: {
       className={`py-1.5 border-b border-gray-100 last:border-0 cursor-grab active:cursor-grabbing select-none transition-opacity ${isDragging ? 'opacity-30' : ''}`}
       {...listeners}
       {...attributes}
+    >
+      <PlayerContent jogador={jogador} />
+    </div>
+  )
+}
+
+function TappablePlayer({ jogador, sourceZone, selected, onTap }: {
+  jogador: Jogador
+  sourceZone: ZoneId
+  selected: boolean
+  onTap: (jogador: Jogador, zone: ZoneId) => void
+}) {
+  return (
+    <div
+      onClick={() => onTap(jogador, sourceZone)}
+      className={`py-1.5 border-b border-gray-100 last:border-0 select-none transition-all rounded-lg px-1 -mx-1 ${
+        selected
+          ? 'bg-green-50 border-l-2 border-l-green-500 pl-2'
+          : 'active:bg-gray-50'
+      }`}
     >
       <PlayerContent jogador={jogador} />
     </div>
@@ -105,6 +127,49 @@ function DroppableZone({ id, label, color, players, isOver, saving }: {
   )
 }
 
+function TappableZone({ id, label, color, players, saving, selectedPlayer, selectedZone, onTap }: {
+  id: ZoneId
+  label: string
+  color: string
+  players: Jogador[]
+  saving: boolean
+  selectedPlayer: Jogador | null
+  selectedZone: ZoneId | null
+  onTap: (jogador: Jogador, zone: ZoneId) => void
+}) {
+  const score = players.reduce((s, j) => s + j.nivel, 0)
+
+  return (
+    <div className="p-4 rounded-xl border border-[#e0e0e0] bg-white">
+      <div className="flex items-center justify-between mb-3">
+        <span className={`${color} font-semibold text-sm`}>{label}</span>
+        {id !== 'banco' && (
+          <span className="text-gray-500 text-xs">
+            {saving ? '...' : `Força: ${score}`} · {players.length} jogadores
+          </span>
+        )}
+        {id === 'banco' && (
+          <span className="text-gray-500 text-xs">{players.length} disponíveis</span>
+        )}
+      </div>
+      {sortByPosition(players).map(j => (
+        <TappablePlayer
+          key={j.id}
+          jogador={j}
+          sourceZone={id}
+          selected={selectedPlayer?.id === j.id && selectedZone === id}
+          onTap={onTap}
+        />
+      ))}
+      {players.length === 0 && (
+        <div className="text-gray-400 text-xs text-center py-4 border border-dashed border-gray-300 rounded-lg">
+          Toque em um jogador para mover
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface TeamEditorProps {
   initialTimeA: Jogador[]
   initialTimeB: Jogador[]
@@ -129,6 +194,11 @@ export default function TeamEditor({
   const [overZone, setOverZone] = useState<ZoneId | null>(null)
   const [saving, setSaving] = useState(false)
 
+  // Mobile tap-to-select state
+  const isTouch = useIsTouchDevice()
+  const [selectedPlayer, setSelectedPlayer] = useState<Jogador | null>(null)
+  const [selectedZone, setSelectedZone] = useState<ZoneId | null>(null)
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
@@ -144,6 +214,23 @@ export default function TeamEditor({
     if (id === 'time-a') setTimeA(sortByPosition(players))
     else if (id === 'time-b') setTimeB(sortByPosition(players))
     else setBanco(sortByPosition(players))
+  }
+
+  async function movePlayer(jogador: Jogador, fromZone: ZoneId, toZone: ZoneId) {
+    if (fromZone === toZone) return
+
+    const newSource = getZone(fromZone).filter(j => j.id !== jogador.id)
+    const newTarget = [...getZone(toZone), jogador]
+
+    setZone(fromZone, newSource)
+    setZone(toZone, newTarget)
+
+    const finalA = fromZone === 'time-a' ? newSource : toZone === 'time-a' ? newTarget : timeA
+    const finalB = fromZone === 'time-b' ? newSource : toZone === 'time-b' ? newTarget : timeB
+
+    setSaving(true)
+    await onSave(finalA, finalB)
+    setSaving(false)
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -164,24 +251,110 @@ export default function TeamEditor({
 
     const sourceZone = active.data.current?.sourceZone as ZoneId
     const targetZone = over.id as ZoneId
-    if (sourceZone === targetZone) return
-
     const jogador = active.data.current?.jogador as Jogador
     if (!jogador) return
 
-    const newSource = getZone(sourceZone).filter(j => j.id !== jogador.id)
-    const newTarget = [...getZone(targetZone), jogador]
+    await movePlayer(jogador, sourceZone, targetZone)
+  }
 
-    setZone(sourceZone, newSource)
-    setZone(targetZone, newTarget)
+  // Mobile: tap a player to open bottom sheet
+  function handleTap(jogador: Jogador, zone: ZoneId) {
+    if (selectedPlayer?.id === jogador.id && selectedZone === zone) {
+      // Deselect if tapping same player
+      setSelectedPlayer(null)
+      setSelectedZone(null)
+    } else {
+      setSelectedPlayer(jogador)
+      setSelectedZone(zone)
+    }
+  }
 
-    // Compute final time_a and time_b after state update
-    const finalA = sourceZone === 'time-a' ? newSource : targetZone === 'time-a' ? newTarget : timeA
-    const finalB = sourceZone === 'time-b' ? newSource : targetZone === 'time-b' ? newTarget : timeB
+  async function handleMoveFromSheet(targetZoneId: string) {
+    if (!selectedPlayer || !selectedZone) return
+    await movePlayer(selectedPlayer, selectedZone, targetZoneId as ZoneId)
+    setSelectedPlayer(null)
+    setSelectedZone(null)
+  }
 
-    setSaving(true)
-    await onSave(finalA, finalB)
-    setSaving(false)
+  const zoneLabels: Record<ZoneId, string> = {
+    'time-a': nomeTimeA,
+    'time-b': nomeTimeB,
+    'banco': 'Banco',
+  }
+
+  const zoneColors: Record<ZoneId, string> = {
+    'time-a': getTeamColor(nomeTimeA, 'text-green-600'),
+    'time-b': getTeamColor(nomeTimeB, 'text-blue-600'),
+    'banco': 'text-gray-500',
+  }
+
+  const allZones: ZoneId[] = ['time-a', 'time-b', 'banco']
+
+  if (isTouch) {
+    return (
+      <>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <TappableZone
+              id="time-a"
+              label={nomeTimeA}
+              color={zoneColors['time-a']}
+              players={timeA}
+              saving={saving}
+              selectedPlayer={selectedPlayer}
+              selectedZone={selectedZone}
+              onTap={handleTap}
+            />
+            <TappableZone
+              id="time-b"
+              label={nomeTimeB}
+              color={zoneColors['time-b']}
+              players={timeB}
+              saving={saving}
+              selectedPlayer={selectedPlayer}
+              selectedZone={selectedZone}
+              onTap={handleTap}
+            />
+          </div>
+
+          {banco.length > 0 && (
+            <TappableZone
+              id="banco"
+              label="Jogadores disponíveis"
+              color="text-gray-500"
+              players={banco}
+              saving={saving}
+              selectedPlayer={selectedPlayer}
+              selectedZone={selectedZone}
+              onTap={handleTap}
+            />
+          )}
+
+          {banco.length === 0 && (
+            <div className="text-center py-3 text-gray-400 text-xs border border-dashed border-gray-200 rounded-xl">
+              Todos os jogadores estão em um time
+            </div>
+          )}
+        </div>
+
+        {selectedPlayer && selectedZone && (
+          <PlayerMoveBottomSheet
+            jogador={selectedPlayer}
+            zones={allZones.map(z => ({
+              id: z,
+              label: zoneLabels[z],
+              color: zoneColors[z],
+              disabled: z === selectedZone,
+            }))}
+            onMove={handleMoveFromSheet}
+            onClose={() => {
+              setSelectedPlayer(null)
+              setSelectedZone(null)
+            }}
+          />
+        )}
+      </>
+    )
   }
 
   return (
