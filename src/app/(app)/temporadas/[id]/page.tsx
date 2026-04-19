@@ -12,6 +12,7 @@ import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
 import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
 import JogadorDetalheModal from '@/components/temporadas/JogadorDetalheModal'
 import PartidasList from '@/components/temporadas/PartidasList'
+import DiretoraModal from '@/components/temporadas/DiretoraModal'
 
 interface MensalistaEntry {
   id: string
@@ -63,6 +64,7 @@ export default function TemporadaDetailPage() {
   const [pagamentosStatus, setPagamentosStatus] = useState<Map<string, boolean>>(new Map())
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [diretoraOpen, setDiretoraOpen] = useState(false)
   const [jogadorDetalheId, setJogadorDetalheId] = useState<string | null>(null)
   const [jogadorDetalheNome, setJogadorDetalheNome] = useState<string | null>(null)
   const [filtroInicio, setFiltroInicio] = useState('')
@@ -261,6 +263,15 @@ export default function TemporadaDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setDiretoraOpen(true)}
+            className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="hidden sm:inline">Diretoria</span>
+          </button>
           <Link
             href={`/temporadas/${id}/regras`}
             className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -607,6 +618,13 @@ export default function TemporadaDetailPage() {
           />
         )}
       </Modal>
+
+      <DiretoraModal
+        open={diretoraOpen}
+        onClose={() => setDiretoraOpen(false)}
+        temporadaId={id}
+        todosJogadores={todosJogadores}
+      />
     </div>
   )
 }

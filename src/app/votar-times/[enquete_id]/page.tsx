@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { POSICAO_CORES } from '@/lib/supabase'
 import type { Jogador, PropostaTimeComJogadores } from '@/lib/supabase'
+import { getTeamColor } from '@/lib/team-colors'
 
 type Opcao = { id: string; texto: string; ordem: number }
 type Enquete = {
@@ -24,6 +25,8 @@ export default function VotarTimesPage() {
   const [enquete, setEnquete] = useState<Enquete | null>(null)
   const [tokenRow, setTokenRow] = useState<TokenRow | null>(null)
   const [propostas, setPropostas] = useState<PropostaTimeComJogadores[]>([])
+  const [nomeTimeA, setNomeTimeA] = useState('Time A')
+  const [nomeTimeB, setNomeTimeB] = useState('Time B')
   const [stage, setStage] = useState<Stage>('loading')
   const [selected, setSelected] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -50,11 +53,16 @@ export default function VotarTimesPage() {
         if (!e.ativa) { setStage('encerrada'); return }
         if (t.usado) { setStage('ja_votou'); return }
 
-        // Load proposals if partida_id exists
+        // Load proposals and team names if partida_id exists
         if (e.partida_id) {
           fetch(`/api/partidas/${e.partida_id}/propostas`)
             .then(async pRes => {
-              if (pRes.ok) setPropostas(await pRes.json())
+              if (pRes.ok) {
+                const data = await pRes.json()
+                setPropostas(data.propostas ?? [])
+                if (data.nome_time_a) setNomeTimeA(data.nome_time_a)
+                if (data.nome_time_b) setNomeTimeB(data.nome_time_b)
+              }
             })
             .catch(() => {/* proposals optional, voting still works without visual cards */})
         }
@@ -185,11 +193,11 @@ export default function VotarTimesPage() {
                     {proposta ? (
                       <div className="grid grid-cols-2 divide-x divide-gray-100 bg-white px-3 py-3 gap-2">
                         {([
-                          { label: 'Time A', jogadores: proposta.time_a },
-                          { label: 'Time B', jogadores: proposta.time_b },
-                        ] as const).map(({ label, jogadores }) => (
+                          { label: nomeTimeA, jogadores: proposta.time_a, fallback: 'text-green-600' },
+                          { label: nomeTimeB, jogadores: proposta.time_b, fallback: 'text-blue-600' },
+                        ]).map(({ label, jogadores, fallback }) => (
                           <div key={label} className="px-1">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">{label}</p>
+                            <p className={`text-[10px] font-bold uppercase tracking-wide mb-1.5 ${getTeamColor(label, fallback)}`}>{label}</p>
                             <ul className="space-y-1">
                               {jogadores.map((j: Jogador) => (
                                 <li key={j.id} className="flex items-center gap-1">

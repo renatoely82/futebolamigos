@@ -12,11 +12,18 @@ export async function GET(
 ) {
   const { id } = await params
 
-  const { data: propostas, error } = await supabaseAdmin
-    .from('propostas_times')
-    .select('id, proposta_numero, time_a, time_b, selecionada')
-    .eq('partida_id', id)
-    .order('proposta_numero')
+  const [{ data: propostas, error }, { data: partida }] = await Promise.all([
+    supabaseAdmin
+      .from('propostas_times')
+      .select('id, proposta_numero, time_a, time_b, selecionada')
+      .eq('partida_id', id)
+      .order('proposta_numero'),
+    supabaseAdmin
+      .from('partidas')
+      .select('nome_time_a, nome_time_b')
+      .eq('id', id)
+      .single(),
+  ])
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
   if (!propostas?.length) return Response.json([])
@@ -47,13 +54,17 @@ export async function GET(
     return override ? { ...j, posicao_principal: override } : j
   }
 
-  const result = propostas.map(p => ({
-    id: p.id,
-    proposta_numero: p.proposta_numero,
-    selecionada: p.selecionada,
-    time_a: p.time_a.map(resolvePlayer).filter(Boolean) as Jogador[],
-    time_b: p.time_b.map(resolvePlayer).filter(Boolean) as Jogador[],
-  }))
+  const result = {
+    nome_time_a: partida?.nome_time_a ?? 'Time A',
+    nome_time_b: partida?.nome_time_b ?? 'Time B',
+    propostas: propostas.map(p => ({
+      id: p.id,
+      proposta_numero: p.proposta_numero,
+      selecionada: p.selecionada,
+      time_a: p.time_a.map(resolvePlayer).filter(Boolean) as Jogador[],
+      time_b: p.time_b.map(resolvePlayer).filter(Boolean) as Jogador[],
+    })),
+  }
 
   return Response.json(result)
 }

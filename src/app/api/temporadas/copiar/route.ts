@@ -92,5 +92,20 @@ export async function POST(request: Request) {
     )
   }
 
+  // 5. Copia diretoria da temporada origem
+  const { data: diretoria } = await supabase
+    .from('temporada_diretoria')
+    .select('jogador_id')
+    .eq('temporada_id', origem_temporada_id)
+
+  if (diretoria && diretoria.length > 0) {
+    await supabase.from('temporada_diretoria').insert(
+      diretoria.map(d => ({
+        temporada_id: novaTemporada.id,
+        jogador_id: d.jogador_id,
+      }))
+    )
+  }
+
   return Response.json({ id: novaTemporada.id }, { status: 201 })
 }

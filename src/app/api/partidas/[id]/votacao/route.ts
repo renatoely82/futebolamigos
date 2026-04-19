@@ -69,7 +69,7 @@ export async function POST(_: NextRequest, { params }: Params) {
   // Check no active voting exists
   const { data: partida } = await supabaseAdmin
     .from('partidas')
-    .select('data, votacao_enquete_id')
+    .select('data, votacao_enquete_id, temporada_id')
     .eq('id', id)
     .single()
 
@@ -111,15 +111,31 @@ export async function POST(_: NextRequest, { params }: Params) {
   ]
   await supabaseAdmin.from('enquete_opcoes').insert(opcoesData)
 
-  // Generate tokens for all active players
-  const { data: jogadores } = await supabaseAdmin
-    .from('jogadores')
-    .select('id')
-    .eq('ativo', true)
+  // Generate tokens: use diretoria if defined, otherwise all active players
+  let jogadorIds: string[] = []
 
-  if (jogadores?.length) {
-    const tokens = jogadores.map(j => ({ enquete_id: enquete.id, jogador_id: j.id }))
-    await supabaseAdmin.from('enquete_tokens').insert(tokens)
+  if (partida.temporada_id) {
+    const { data: diretoria } = await supabaseAdmin
+      .from('temporada_diretoria')
+      .select('jogador_id')
+      .eq('temporada_id', partida.temporada_id)
+    if (diretoria?.length) {
+      jogadorIds = diretoria.map(d => d.jogador_id)
+    }
+  }
+
+  if (jogadorIds.length === 0) {
+    const { data: jogadores } = await supabaseAdmin
+      .from('jogadores')
+      .select('id')
+      .eq('ativo', true)
+    jogadorIds = (jogadores ?? []).map(j => j.id)
+  }
+
+  if (jogadorIds.length > 0) {
+    await supabaseAdmin.from('enquete_tokens').insert(
+      jogadorIds.map(jid => ({ enquete_id: enquete.id, jogador_id: jid }))
+    )
   }
 
   // Link enquete to partida

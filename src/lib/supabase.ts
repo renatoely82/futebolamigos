@@ -45,6 +45,17 @@ export interface TemporadaMensalista {
   criado_em: string
 }
 
+export interface TemporadaDiretoria {
+  id: string
+  temporada_id: string
+  jogador_id: string
+  criado_em: string
+}
+
+export interface TemporadaDiretoriaComJogador extends TemporadaDiretoria {
+  jogador: Jogador
+}
+
 export type FormaPagamento = 'CASH' | 'BIZUM' | 'PIX'
 
 export interface PagamentoMensalista {

@@ -39,6 +39,9 @@ export default function TimesPage() {
   const [votacao, setVotacao] = useState<VotacaoStatus | null>(null)
   const [votacaoLoading, setVotacaoLoading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [todosJogadores, setTodosJogadores] = useState<Jogador[]>([])
+  const [addVotanteId, setAddVotanteId] = useState('')
+  const [addingVotante, setAddingVotante] = useState(false)
 
   const loadPartida = useCallback(async () => {
     const res = await fetch(`/api/partidas/${id}`)
@@ -74,6 +77,7 @@ export default function TimesPage() {
     loadPartidaAnterior()
     loadConvocados()
     loadVotacao()
+    fetch('/api/jogadores').then(r => r.ok ? r.json() : []).then(setTodosJogadores)
   }, [loadPartida, loadPartidaAnterior, loadConvocados, loadVotacao])
 
   // Poll voting counts every 30s when voting is open
@@ -200,6 +204,19 @@ export default function TimesPage() {
     await fetch(`/api/partidas/${id}/votacao`, { method: 'DELETE' })
     await loadVotacao()
     setVotacaoLoading(false)
+  }
+
+  async function adicionarVotante() {
+    if (!addVotanteId || !votacao) return
+    setAddingVotante(true)
+    await fetch(`/api/enquetes/${votacao.enquete_id}/tokens`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jogador_id: addVotanteId }),
+    })
+    setAddVotanteId('')
+    await loadVotacao()
+    setAddingVotante(false)
   }
 
   async function aplicarVencedora() {
@@ -623,6 +640,36 @@ export default function TimesPage() {
                         </div>
                       ))}
                   </div>
+
+                  {/* Add voter */}
+                  {votacao.ativa && (() => {
+                    const jaVotantes = new Set((votacao.tokens ?? []).map(t => t.jogador_id))
+                    const disponiveis = todosJogadores.filter(j => j.ativo && !jaVotantes.has(j.id))
+                    if (disponiveis.length === 0) return null
+                    return (
+                      <div className="px-4 py-3 border-t border-[#f0f0f0] flex items-center gap-2">
+                        <select
+                          value={addVotanteId}
+                          onChange={e => setAddVotanteId(e.target.value)}
+                          className="flex-1 text-sm border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-gray-400"
+                        >
+                          <option value="">Adicionar votante...</option>
+                          {disponiveis
+                            .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+                            .map(j => (
+                              <option key={j.id} value={j.id}>{j.nome}</option>
+                            ))}
+                        </select>
+                        <button
+                          onClick={adicionarVotante}
+                          disabled={!addVotanteId || addingVotante}
+                          className="px-3 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 disabled:opacity-40 text-gray-700 rounded-lg transition-colors shrink-0"
+                        >
+                          {addingVotante ? '...' : 'Adicionar'}
+                        </button>
+                      </div>
+                    )
+                  })()}
 
                   {/* Apply winner */}
                   {proposals.length > 0 && (
