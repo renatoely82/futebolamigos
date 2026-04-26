@@ -32,6 +32,7 @@ export interface Jogador {
   telefone: string | null
   aniversario: string | null
   observacoes: string | null
+  email: string | null
   ativo: boolean
   portal_token: string
   criado_em: string

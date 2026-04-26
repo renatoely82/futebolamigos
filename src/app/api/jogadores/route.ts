@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       posicao_secundaria_1: body.posicao_secundaria_1 || null,
       posicao_secundaria_2: body.posicao_secundaria_2 || null,
       nivel: body.nivel ?? 5,
+      email: body.email || null,
       telefone: body.telefone || null,
       aniversario: body.aniversario || null,
       observacoes: body.observacoes || null,

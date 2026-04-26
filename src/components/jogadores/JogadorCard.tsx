@@ -8,9 +8,10 @@ interface JogadorCardProps {
   jogador: Jogador
   onEdit: () => void
   onDelete: () => void
+  onConvidar?: () => void
 }
 
-export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardProps) {
+export default function JogadorCard({ jogador, onEdit, onDelete, onConvidar }: JogadorCardProps) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopyPortalLink() {
@@ -50,6 +51,17 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
           )}
         </div>
         <div className="flex gap-1 shrink-0">
+          {onConvidar && jogador.email && (
+            <button
+              onClick={onConvidar}
+              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title={`Convidar ${jogador.nome}`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={handleCopyPortalLink}
             className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"

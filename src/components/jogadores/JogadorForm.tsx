@@ -16,6 +16,7 @@ export interface JogadorFormData {
   posicao_secundaria_1: Posicao | null
   posicao_secundaria_2: Posicao | null
   nivel: Nivel
+  email: string
   telefone: string
   aniversario: string
   observacoes: string
@@ -30,6 +31,7 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
     posicao_secundaria_1: initial?.posicao_secundaria_1 ?? null,
     posicao_secundaria_2: initial?.posicao_secundaria_2 ?? null,
     nivel: initial?.nivel ?? 5,
+    email: initial?.email ?? '',
     telefone: initial?.telefone ?? '',
     aniversario: initial?.aniversario ?? '',
     observacoes: initial?.observacoes ?? '',
@@ -125,6 +127,19 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
             {['', 'Fraquíssimo', 'Fraco', 'Abaixo da média', 'Regular', 'Médio', 'Acima da média', 'Bom', 'Muito bom', 'Ótimo', 'Craque'][form.nivel]}
           </span>
         </div>
+      </div>
+
+      {/* Email */}
+      <div>
+        <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+        <input
+          type="email"
+          value={form.email}
+          onChange={e => set('email', e.target.value)}
+          className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+          placeholder="jogador@email.com"
+        />
+        <p className="text-xs text-gray-400 mt-1">Necessário para enviar convite de acesso à app</p>
       </div>
 
       {/* Telefone + Aniversário */}

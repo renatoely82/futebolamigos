@@ -19,6 +19,7 @@ export default function JogadoresPage() {
   const [busca, setBusca] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [inviting, setInviting] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const res = await fetch('/api/jogadores')
@@ -72,6 +73,22 @@ export default function JogadoresPage() {
     setDeleting(false)
     toast('Jogador removido.')
     load()
+  }
+
+  async function handleConvidar(j: Jogador) {
+    setInviting(j.id)
+    try {
+      const res = await fetch('/api/admin/convidar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jogador_id: j.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) toast(data.error ?? 'Erro ao convidar.')
+      else toast(data.message ?? 'Convite enviado!')
+    } finally {
+      setInviting(null)
+    }
   }
 
   function handleEdit(j: Jogador) {
@@ -190,6 +207,7 @@ export default function JogadoresPage() {
               jogador={j}
               onEdit={() => handleEdit(j)}
               onDelete={() => setConfirmDeleteId(j.id)}
+              onConvidar={inviting === j.id ? undefined : () => handleConvidar(j)}
             />
           ))}
         </div>
