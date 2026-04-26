@@ -89,8 +89,9 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
       p => p.status === 'realizada' && p.placar_time_a != null && p.placar_time_b != null
     )
 
-    // Mapa de gols por partida+jogador (usado em escalação e classificação)
+    // Mapas partilhados entre escalação e classificação
     const golsPorJogadorPartida = new Map<string, { normal: number; contra: number }>()
+    const subsMap = new Map<string, { ausentes: Map<string, string>; substitutos: Set<string> }>()
 
     if (realizadas.length > 0) {
       const realizadasIds = realizadas.map(p => p.id)
@@ -114,7 +115,6 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
         golsPorJogadorPartida.set(key, entry)
       }
 
-      const subsMap = new Map<string, { ausentes: Map<string, string>; substitutos: Set<string> }>()
       for (const s of subs) {
         if (!subsMap.has(s.partida_id)) subsMap.set(s.partida_id, { ausentes: new Map(), substitutos: new Set() })
         const e = subsMap.get(s.partida_id)!
@@ -225,19 +225,36 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
       confrontos = Array.from(confrontoMap.values()).sort((a, b) => b.jogos - a.jogos || a.time_a.localeCompare(b.time_a, 'pt-BR'))
     }
 
-    // Resolve escalação com gols para todas as partidas
+    // Resolve escalação final (com substituições aplicadas)
     partidas = todasPartidasRaw.map(p => {
       const tc = p.times_escolhidos as TeamSplit | null
       let escalacao: PortalPartida['escalacao'] = null
       if (tc) {
-        const resolve = (ids: string[]): PortalJogadorResumo[] =>
-          ids.flatMap(id => {
-            const j = jogadorMap.get(id)
-            if (!j) return []
-            const g = golsPorJogadorPartida.get(`${p.id}:${id}`)
-            return [{ id, nome: j.nome, posicao: j.posicao_principal, gols: g?.normal, gols_contra: g?.contra }]
-          })
-        escalacao = { time_a: resolve(tc.time_a ?? []), time_b: resolve(tc.time_b ?? []) }
+        const sub = subsMap.get(p.id)
+        const ausenteIds = new Set(sub?.ausentes.keys() ?? [])
+
+        const makeEntry = (id: string): PortalJogadorResumo | null => {
+          const j = jogadorMap.get(id)
+          if (!j) return null
+          const g = golsPorJogadorPartida.get(`${p.id}:${id}`)
+          return { id, nome: j.nome, posicao: j.posicao_principal, gols: g?.normal, gols_contra: g?.contra }
+        }
+
+        // Jogadores originais sem os ausentes
+        const timeABase = (tc.time_a ?? []).filter(id => !ausenteIds.has(id)).flatMap(id => makeEntry(id) ?? [])
+        const timeBBase = (tc.time_b ?? []).filter(id => !ausenteIds.has(id)).flatMap(id => makeEntry(id) ?? [])
+
+        // Substitutos adicionados ao time do ausente
+        if (sub) {
+          for (const [ausenteId, substitutoId] of sub.ausentes) {
+            const entry = makeEntry(substitutoId)
+            if (!entry) continue
+            if ((tc.time_a ?? []).includes(ausenteId)) timeABase.push(entry)
+            else if ((tc.time_b ?? []).includes(ausenteId)) timeBBase.push(entry)
+          }
+        }
+
+        escalacao = { time_a: timeABase, time_b: timeBBase }
       }
       return { ...p, escalacao }
     }) as PortalPartida[]
