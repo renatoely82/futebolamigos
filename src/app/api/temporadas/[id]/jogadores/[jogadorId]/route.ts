@@ -14,6 +14,11 @@ export interface JogadorPartidaEntry {
   resultado: 'V' | 'E' | 'D' | null
 }
 
+export interface JogadorTemporadaData {
+  partidas: JogadorPartidaEntry[]
+  totalPartidasTemporada: number
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string; jogadorId: string }> }
@@ -105,5 +110,9 @@ export async function GET(
     })
   }
 
-  return Response.json(result)
+  const response: JogadorTemporadaData = {
+    partidas: result,
+    totalPartidasTemporada: partidas.length,
+  }
+  return Response.json(response)
 }

@@ -212,7 +212,7 @@ export default function ResultadoPartida({ partida, players, substituicoes = [],
           <div className="mb-6">
             <h3 className="text-gray-500 text-sm font-medium mb-3">Artilheiros</h3>
             {hasTeams ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorA}`}>{partida.nome_time_a}</p>
                   <div className="space-y-2">{playersA.map(renderGoalRow)}</div>
@@ -290,7 +290,7 @@ export default function ResultadoPartida({ partida, players, substituicoes = [],
             <div>
               <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wide mb-3">Jogadores</h3>
               {hasTeams ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${colorA}`}>{partida.nome_time_a}</p>
                     <div className="space-y-1.5">

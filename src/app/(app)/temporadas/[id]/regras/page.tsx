@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import { useToast } from '@/components/ui/Toast'
 import type { Regra, CategoriaRegra, Temporada } from '@/lib/supabase'
 import Modal from '@/components/ui/Modal'
 
@@ -22,6 +24,7 @@ const CATEGORIA_CORES: Record<CategoriaRegra, string> = {
 
 export default function RegrasPage() {
   const { id } = useParams<{ id: string }>()
+  const { toast } = useToast()
   const [temporada, setTemporada] = useState<Temporada | null>(null)
   const [regras, setRegras] = useState<Regra[]>([])
   const [todasTemporadas, setTodasTemporadas] = useState<Temporada[]>([])
@@ -112,6 +115,7 @@ export default function RegrasPage() {
         }
       }
       setModalOpen(false)
+      toast(editando ? 'Regra atualizada.' : 'Regra criada.')
       load()
     } finally {
       setSaving(false)
@@ -189,21 +193,19 @@ export default function RegrasPage() {
     <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/temporadas/${id}`} className="text-gray-400 hover:text-gray-700 transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-gray-800 text-2xl font-bold">Regras</h1>
-            <p className="text-gray-500 text-sm mt-0.5">
-              {temporada.nome}
-              {totalRegras > 0 && (
-                <span className="ml-2 text-xs">· {totalAtivas}/{totalRegras} ativas</span>
-              )}
-            </p>
-          </div>
+        <div>
+          <Breadcrumbs items={[
+            { label: 'Temporadas', href: '/temporadas' },
+            { label: temporada.nome, href: `/temporadas/${id}` },
+            { label: 'Regras' },
+          ]} />
+          <h1 className="text-gray-800 text-2xl font-bold mt-1">Regras</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            {temporada.nome}
+            {totalRegras > 0 && (
+              <span className="ml-2 text-xs">· {totalAtivas}/{totalRegras} ativas</span>
+            )}
+          </p>
         </div>
 
         {/* Actions */}

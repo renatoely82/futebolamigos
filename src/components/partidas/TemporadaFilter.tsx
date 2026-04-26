@@ -28,7 +28,7 @@ export default function TemporadaFilter({ temporadas, temporadaSelecionadaId }: 
     <select
       value={temporadaSelecionadaId ?? ''}
       onChange={handleChange}
-      className="bg-white border border-[#e0e0e0] text-gray-800 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-green-500 cursor-pointer"
+      className="w-full bg-white border border-[#e0e0e0] text-gray-800 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-green-500 cursor-pointer"
     >
       <option value="">Todas as temporadas</option>
       {temporadas.map(t => (

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import AuthProvider from '@/components/AuthProvider'
 import PwaRegistrar from '@/components/PwaRegistrar'
+import { ToastProvider } from '@/components/ui/Toast'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="FutebolAmigos" />
       </head>
       <body className={`${inter.className} h-full`}>
-        <AuthProvider>{children}</AuthProvider>
+        <ToastProvider><AuthProvider>{children}</AuthProvider></ToastProvider>
         <PwaRegistrar />
       </body>
     </html>

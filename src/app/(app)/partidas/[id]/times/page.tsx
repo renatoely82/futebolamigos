@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Jogador, Posicao, PartidaJogadorComDetalhes, Partida, PropostaTimeComJogadores, VotacaoStatus } from '@/lib/supabase'
 import { POSICAO_CORES, POSICOES } from '@/lib/supabase'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import { useToast } from '@/components/ui/Toast'
 import TeamProposalCard from '@/components/partidas/TeamProposalCard'
 import TeamEditor from '@/components/partidas/TeamEditor'
 import { format, parseISO } from 'date-fns'
@@ -21,6 +23,7 @@ interface PartidaAnteriorTimes {
 export default function TimesPage() {
   const params = useParams()
   const router = useRouter()
+  const { toast } = useToast()
   const id = params.id as string
 
   const [partida, setPartida] = useState<Partida | null>(null)
@@ -109,6 +112,10 @@ export default function TimesPage() {
   }
 
   async function generateTeams() {
+    if (convocados.length < MIN_JOGADORES) {
+      setError(`Mínimo de ${MIN_JOGADORES} jogadores confirmados para gerar times. Há ${convocados.length} confirmado${convocados.length === 1 ? '' : 's'}.`)
+      return
+    }
     setEditMode(false)
     setGenerating(true)
     setShowPosicoes(false)
@@ -118,6 +125,7 @@ export default function TimesPage() {
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Erro ao gerar times.'); return }
       setProposals(data)
+      toast('Propostas de times geradas.')
     } finally {
       setGenerating(false)
     }
@@ -258,19 +266,21 @@ export default function TimesPage() {
     setEditTimeB(timeB)
   }
 
+  const MIN_JOGADORES = 4
   const selectedTeams = partida?.times_escolhidos
   const isRealizada = partida?.status === 'realizada'
+  const podeGerar = convocados.length >= MIN_JOGADORES
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex items-start gap-3 mb-6">
-        <Link href={`/partidas/${id}`} className="text-gray-400 hover:text-gray-700 transition-colors mt-1">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-          </svg>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-gray-800 text-2xl font-bold">
+      <div className="flex items-start justify-between gap-3 mb-6">
+        <div className="flex-1 min-w-0">
+          <Breadcrumbs items={[
+            { label: 'Partidas', href: '/partidas' },
+            { label: partida ? format(parseISO(partida.data), "d 'de' MMMM", { locale: ptBR }) : '...', href: `/partidas/${id}` },
+            { label: editMode ? 'Alterar Times' : 'Times' },
+          ]} />
+          <h1 className="text-gray-800 text-2xl font-bold mt-1">
             {editMode ? 'Alterar Times' : 'Propostas de Times'}
           </h1>
           {partida && (
@@ -302,16 +312,23 @@ export default function TimesPage() {
                 Concluir
               </button>
             ) : (
-              <button
-                onClick={generateTeams}
-                disabled={generating}
-                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-              >
-                <svg className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {generating ? 'Gerando...' : proposals.length > 0 ? 'Regerar' : 'Gerar Times'}
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  onClick={generateTeams}
+                  disabled={generating || !podeGerar}
+                  title={!podeGerar ? `Mínimo de ${MIN_JOGADORES} jogadores confirmados` : undefined}
+                  className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  <svg className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {generating ? 'Gerando...' : proposals.length > 0 ? 'Regerar' : 'Gerar Times'}
+                </button>
+                <span className={`text-xs font-medium ${podeGerar ? 'text-gray-400' : 'text-red-400'}`}>
+                  {convocados.length} confirmado{convocados.length !== 1 ? 's' : ''}
+                  {!podeGerar && ` (mín. ${MIN_JOGADORES})`}
+                </span>
+              </div>
             )}
           </div>
         )}
@@ -487,19 +504,34 @@ export default function TimesPage() {
       )}
 
       {!editMode && proposals.length === 0 && !generating && !isRealizada && !selectedTeams && (
-        <div className="text-center py-20">
+        <div className="text-center py-16">
           <div className="text-6xl mb-4">⚽</div>
-          <p className="text-gray-500 text-lg font-medium">Pronto para sortear os times?</p>
-          <p className="text-gray-400 text-sm mt-2 mb-6">
-            Clique em &quot;Gerar Times&quot; para ver 3 propostas balanceadas por posição e nível.
-          </p>
-          <button
-            onClick={generateTeams}
-            disabled={generating}
-            className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-          >
-            Gerar Times
-          </button>
+          {podeGerar ? (
+            <>
+              <p className="text-gray-500 text-lg font-medium">Pronto para sortear os times?</p>
+              <p className="text-gray-400 text-sm mt-2 mb-6">
+                {convocados.length} confirmados — clique em &quot;Gerar Times&quot; para ver 3 propostas balanceadas.
+              </p>
+              <button
+                onClick={generateTeams}
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+              >
+                Gerar Times
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-600 text-lg font-medium">Jogadores insuficientes</p>
+              <p className="text-gray-400 text-sm mt-2">
+                {convocados.length === 0
+                  ? 'Nenhum jogador confirmado ainda.'
+                  : `${convocados.length} confirmado${convocados.length !== 1 ? 's' : ''} — faltam ${MIN_JOGADORES - convocados.length} para gerar os times.`}
+              </p>
+              <p className="text-gray-400 text-sm mt-1">
+                Confirme jogadores na convocatória antes de gerar os times.
+              </p>
+            </>
+          )}
         </div>
       )}
 

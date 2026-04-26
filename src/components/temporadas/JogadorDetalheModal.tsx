@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { Jogador } from '@/lib/supabase'
-import type { JogadorPartidaEntry } from '@/app/api/temporadas/[id]/jogadores/[jogadorId]/route'
+import type { JogadorPartidaEntry, JogadorTemporadaData } from '@/app/api/temporadas/[id]/jogadores/[jogadorId]/route'
 
 interface Props {
   temporadaId: string
@@ -44,7 +44,10 @@ export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoad
         setJogador(j)
         onNomeLoaded?.(j.nome)
       }
-      if (pRes.ok) setPartidas(await pRes.json())
+      if (pRes.ok) {
+        const data: JogadorTemporadaData = await pRes.json()
+        setPartidas(data.partidas)
+      }
       setLoading(false)
     }
     load()

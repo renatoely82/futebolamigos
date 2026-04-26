@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Temporada } from '@/lib/supabase'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import { useToast } from '@/components/ui/Toast'
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
@@ -74,6 +76,7 @@ function CalendarioInline({ value, onChange }: { value: string; onChange: (v: st
 
 export default function NovaPartidaPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [temporadas, setTemporadas] = useState<Temporada[]>([])
@@ -119,6 +122,7 @@ export default function NovaPartidaPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Erro ao criar partida.'); return }
+      toast('Partida criada.')
       router.push(`/partidas/${data.id}`)
     } finally {
       setLoading(false)
@@ -127,12 +131,11 @@ export default function NovaPartidaPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/partidas" className="text-gray-400 hover:text-gray-700 transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-          </svg>
-        </Link>
+      <div className="mb-6 space-y-1">
+        <Breadcrumbs items={[
+          { label: 'Partidas', href: '/partidas' },
+          { label: 'Nova Partida' },
+        ]} />
         <h1 className="text-gray-800 text-2xl font-bold">Nova Partida</h1>
       </div>
 

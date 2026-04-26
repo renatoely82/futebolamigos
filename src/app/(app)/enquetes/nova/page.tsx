@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
 
 export default function NovaEnquetePage() {
   const router = useRouter()
@@ -55,12 +55,11 @@ export default function NovaEnquetePage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-lg mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/enquetes" className="text-gray-400 hover:text-gray-700 transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-          </svg>
-        </Link>
+      <div className="mb-6 space-y-1">
+        <Breadcrumbs items={[
+          { label: 'Enquetes', href: '/enquetes' },
+          { label: 'Nova Enquete' },
+        ]} />
         <h1 className="text-gray-800 text-2xl font-bold">Nova Enquete</h1>
       </div>
 

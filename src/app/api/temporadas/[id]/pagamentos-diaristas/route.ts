@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { singleJoin } from '@/lib/supabase'
 
 // GET /api/temporadas/[id]/pagamentos-diaristas?mes=X&ano=Y
 // Returns diarista payments for a season grouped by match, filtered by month.
@@ -78,7 +79,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         })
         .map(pj => {
           const pagamento = pagamentosMap.get(`${partida.id}:${pj.jogador_id}`) ?? null
-          const jogador = pj.jogador as { posicao_principal?: string } | null
+          const jogador = singleJoin<{ posicao_principal?: string }>(pj.jogador)
           const isGoleiro = jogador?.posicao_principal === 'Goleiro'
           return {
             jogador_id: pj.jogador_id,
@@ -96,8 +97,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           const rankA = (a.pago || (a.valor_pago ?? 0) > 0) ? 1 : 0
           const rankB = (b.pago || (b.valor_pago ?? 0) > 0) ? 1 : 0
           if (rankA !== rankB) return rankA - rankB
-          const nomeA = (a.jogador as unknown as { nome: string } | null)?.nome ?? ''
-          const nomeB = (b.jogador as unknown as { nome: string } | null)?.nome ?? ''
+          const nomeA = singleJoin<{ nome: string }>(a.jogador)?.nome ?? ''
+          const nomeB = singleJoin<{ nome: string }>(b.jogador)?.nome ?? ''
           return nomeA.localeCompare(nomeB, 'pt-BR')
         })
 

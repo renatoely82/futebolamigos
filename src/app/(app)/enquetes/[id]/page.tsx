@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
 
 type Opcao = { id: string; texto: string; ordem: number }
 type Token = { jogador_id: string; token: string; usado: boolean; jogadores: { nome: string } | null }
@@ -82,13 +83,12 @@ export default function EnqueteAdminPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-2xl mx-auto">
-      <div className="flex items-start gap-3 mb-6">
-        <Link href="/enquetes" className="text-gray-400 hover:text-gray-700 transition-colors mt-1">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-          </svg>
-        </Link>
-        <div className="flex-1 min-w-0">
+      <div className="mb-6">
+        <Breadcrumbs items={[
+          { label: 'Enquetes', href: '/enquetes' },
+          { label: enquete.titulo },
+        ]} />
+        <div className="flex-1 min-w-0 mt-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-gray-800 text-xl font-bold">{enquete.titulo}</h1>
             <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${enquete.ativa ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>

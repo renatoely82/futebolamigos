@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Partida, Jogador, PartidaJogadorComDetalhes, Temporada, FormaPagamento, SubstituicaoComDetalhes } from '@/lib/supabase'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import { useToast } from '@/components/ui/Toast'
+import { SkeletonLine, SkeletonBox } from '@/components/ui/Skeleton'
 import JogadoresPartida from '@/components/partidas/JogadoresPartida'
 import ResultadoPartida from '@/components/partidas/ResultadoPartida'
 import SubstituicoesPartida from '@/components/partidas/SubstituicoesPartida'
@@ -100,6 +103,7 @@ const FORMAS_DIARISTA: { value: FormaPagamento; label: string; color: string }[]
 ]
 
 export default function PartidaDetailPage() {
+  const { toast } = useToast()
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
@@ -168,6 +172,7 @@ export default function PartidaDetailPage() {
     })
     setPartida(p => p ? { ...p, status: newStatus as Partida['status'] } : p)
     setStatusSaving(false)
+    toast(`Status alterado para ${newStatus}.`)
   }
 
   async function handleTemporadaChange(temporadaId: string) {
@@ -192,6 +197,7 @@ export default function PartidaDetailPage() {
     setPartida(p => p ? { ...p, data: novaData } : p)
     setDataSaving(false)
     setEditingData(false)
+    toast('Data atualizada.')
   }
 
   async function handleDelete() {
@@ -220,9 +226,8 @@ export default function PartidaDetailPage() {
       }),
     })
     const data = await res.json()
-    setPushFeedback(data.sent > 0 ? `Notificação enviada para ${data.sent} jogador(es)` : 'Nenhum jogador inscrito para notificações')
+    toast(data.sent > 0 ? `Notificação enviada para ${data.sent} jogador(es)` : 'Nenhum jogador inscrito para notificações', data.sent > 0 ? 'success' : 'info')
     setSendingPush(false)
-    setTimeout(() => setPushFeedback(''), 4000)
   }
 
   // WhatsApp share
@@ -336,20 +341,48 @@ export default function PartidaDetailPage() {
     return { label: 'Pendente', classes: 'bg-red-50 text-red-500 border-red-200' }
   }
 
-  if (loading) return <div className="p-6 text-gray-500">Carregando...</div>
+  if (loading) return (
+    <div className="p-4 sm:p-6 space-y-6">
+      {/* Header */}
+      <div className="mb-6">
+        <SkeletonLine className="h-3 w-32 mb-3" />
+        <SkeletonLine className="h-7 w-64 mb-2" />
+        <div className="flex items-center gap-2">
+          <SkeletonLine className="h-5 w-20 rounded-full" />
+          <SkeletonLine className="h-4 w-28" />
+        </div>
+        <div className="flex gap-2 mt-3">
+          <SkeletonLine className="h-8 w-20 rounded-lg" />
+          <SkeletonLine className="h-8 w-24 rounded-lg" />
+          <SkeletonLine className="h-8 w-24 rounded-lg" />
+          <SkeletonLine className="h-8 w-24 rounded-lg ml-auto" />
+        </div>
+      </div>
+      {/* Status card */}
+      <SkeletonBox className="h-14" />
+      {/* Temporada card */}
+      <SkeletonBox className="h-14" />
+      {/* Players */}
+      <div className="bg-white border border-[#e0e0e0] rounded-xl p-6 space-y-3">
+        <SkeletonLine className="h-5 w-36 mb-4" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonLine key={i} className="h-10 rounded-lg" />
+        ))}
+      </div>
+    </div>
+  )
   if (!partida) return <div className="p-6 text-gray-500">Partida não encontrada.</div>
 
   return (
     <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6">
+        <Breadcrumbs items={[
+          { label: 'Partidas', href: '/partidas' },
+          { label: format(parseISO(partida.data), "d 'de' MMMM", { locale: ptBR }) },
+        ]} />
         {/* Title row */}
-        <div className="flex items-start gap-3 mb-3">
-          <Link href="/partidas" className="text-gray-400 hover:text-gray-700 transition-colors mt-1 shrink-0">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-            </svg>
-          </Link>
+        <div className="flex items-start gap-3 mt-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-gray-800 text-xl sm:text-2xl font-bold leading-snug">
@@ -459,10 +492,9 @@ export default function PartidaDetailPage() {
         </div>
       </div>
 
-      {/* Push feedback */}
-      {pushFeedback && (
+      {/* Push feedback — now handled by toast */}
+      {false && (
         <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-blue-700 text-sm">
-          {pushFeedback}
         </div>
       )}
 
@@ -582,7 +614,7 @@ export default function PartidaDetailPage() {
                 </Link>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <h3 className={`font-semibold text-sm mb-2 ${getTeamColor(partida.nome_time_a, 'text-green-600')}`}>{partida.nome_time_a}</h3>
                 <div className="space-y-1.5">{renderTimePlayers(partida.times_escolhidos!.time_a)}</div>

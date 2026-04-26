@@ -61,7 +61,7 @@ export default async function PartidasPage({
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-gray-800 text-2xl font-bold">Partidas</h1>
           <p className="text-gray-500 text-sm mt-0.5">
@@ -69,12 +69,14 @@ export default async function PartidasPage({
             {temporadaSelecionada ? ` · ${temporadaSelecionada.nome}` : ''}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           {listaTemporadas.length > 0 && (
-            <TemporadaFilter
-              temporadas={listaTemporadas}
-              temporadaSelecionadaId={temporadaSelecionadaId}
-            />
+            <div className="hidden sm:block">
+              <TemporadaFilter
+                temporadas={listaTemporadas}
+                temporadaSelecionadaId={temporadaSelecionadaId}
+              />
+            </div>
           )}
           <Link
             href="/partidas/nova"
@@ -87,6 +89,14 @@ export default async function PartidasPage({
           </Link>
         </div>
       </div>
+      {listaTemporadas.length > 0 && (
+        <div className="mb-3 sm:hidden">
+          <TemporadaFilter
+            temporadas={listaTemporadas}
+            temporadaSelecionadaId={temporadaSelecionadaId}
+          />
+        </div>
+      )}
       <div className="mb-6">
         <DateRangeFilter
           defaultInicio={temporadaSelecionada?.data_inicio}

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { singleJoin } from '@/lib/supabase'
 
 // GET /api/partidas/[id]/pagamentos-diaristas
 // Returns all manually-added players for the match with their payment status
@@ -58,7 +59,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const result = diaristasJogadores.map(pj => {
     const pagamento = pagamentosMap.get(pj.jogador_id) ?? null
-    const jogador = pj.jogador as { posicao_principal?: string } | null
+    const jogador = singleJoin<{ posicao_principal?: string }>(pj.jogador)
     const isGoleiro = jogador?.posicao_principal === 'Goleiro'
     return {
       jogador_id: pj.jogador_id,

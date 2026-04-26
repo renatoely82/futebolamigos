@@ -2,18 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { Jogador } from '@/lib/supabase'
+import { useToast } from '@/components/ui/Toast'
 import JogadorCard from '@/components/jogadores/JogadorCard'
 import JogadorForm, { type JogadorFormData } from '@/components/jogadores/JogadorForm'
 import Modal from '@/components/ui/Modal'
+import { SkeletonLine, SkeletonCircle } from '@/components/ui/Skeleton'
 import { format, addDays, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export default function JogadoresPage() {
+  const { toast } = useToast()
   const [jogadores, setJogadores] = useState<Jogador[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Jogador | null>(null)
   const [busca, setBusca] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     const res = await fetch('/api/jogadores')
@@ -54,13 +59,18 @@ export default function JogadoresPage() {
       if (!res.ok) { const e = await res.json(); throw new Error(e.error) }
     }
     setModalOpen(false)
+    toast(editing ? 'Jogador atualizado.' : 'Jogador criado.')
     setEditing(null)
     load()
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Remover jogador?')) return
-    await fetch(`/api/jogadores/${id}`, { method: 'DELETE' })
+  async function handleDelete() {
+    if (!confirmDeleteId) return
+    setDeleting(true)
+    await fetch(`/api/jogadores/${confirmDeleteId}`, { method: 'DELETE' })
+    setConfirmDeleteId(null)
+    setDeleting(false)
+    toast('Jogador removido.')
     load()
   }
 
@@ -136,7 +146,31 @@ export default function JogadoresPage() {
 
       {/* Player list */}
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Carregando...</div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white border border-[#e0e0e0] rounded-xl p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 space-y-2.5">
+                  <SkeletonLine className="h-4 w-36" />
+                  <div className="flex items-center gap-2">
+                    <SkeletonLine className="h-5 w-14 rounded-full" />
+                    <SkeletonLine className="h-4 w-20" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 10 }).map((_, j) => (
+                      <div key={j} className="w-3 h-3 rounded-sm bg-gray-200 animate-pulse" />
+                    ))}
+                    <SkeletonLine className="h-3 w-12 ml-1" />
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <SkeletonCircle className="w-8 h-8" />
+                  <SkeletonCircle className="w-8 h-8" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : jogadores.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-gray-500">Nenhum jogador cadastrado.</p>
@@ -155,7 +189,7 @@ export default function JogadoresPage() {
               key={j.id}
               jogador={j}
               onEdit={() => handleEdit(j)}
-              onDelete={() => handleDelete(j.id)}
+              onDelete={() => setConfirmDeleteId(j.id)}
             />
           ))}
         </div>
@@ -171,6 +205,36 @@ export default function JogadoresPage() {
           onSave={handleSave}
           onCancel={() => { setModalOpen(false); setEditing(null) }}
         />
+      </Modal>
+
+      <Modal
+        open={!!confirmDeleteId}
+        onClose={() => { if (!deleting) setConfirmDeleteId(null) }}
+        title="Remover Jogador"
+      >
+        <p className="text-gray-600 text-sm mb-6">
+          Tem certeza que deseja remover{' '}
+          <strong className="text-gray-800">
+            {jogadores.find(j => j.id === confirmDeleteId)?.nome ?? 'este jogador'}
+          </strong>?
+          {' '}Esta ação não pode ser desfeita.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            {deleting ? 'Removendo...' : 'Remover'}
+          </button>
+          <button
+            onClick={() => setConfirmDeleteId(null)}
+            disabled={deleting}
+            className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
       </Modal>
     </div>
   )

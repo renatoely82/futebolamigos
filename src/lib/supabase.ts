@@ -236,6 +236,16 @@ export interface PropostaTimeComJogadores {
   selecionada: boolean
 }
 
+/**
+ * Extrai um registro único de um join do Supabase.
+ * O Supabase pode inferir relações como array — este helper normaliza para objeto | null.
+ */
+export function singleJoin<T>(value: unknown): T | null {
+  if (value == null) return null
+  if (Array.isArray(value)) return (value[0] as T) ?? null
+  return value as T
+}
+
 export type Database = {
   public: {
     Tables: {

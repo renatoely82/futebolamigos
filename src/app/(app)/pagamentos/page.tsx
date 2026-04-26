@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { format, parseISO, eachMonthOfInterval } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { Temporada, FormaPagamento, TemporadaValoresMes } from '@/lib/supabase'
+import { useToast } from '@/components/ui/Toast'
 
 type Tab = 'mensalistas' | 'diaristas'
 
@@ -84,6 +85,7 @@ function getMesesDaTemporada(temporada: Temporada): MesOpcao[] {
 }
 
 export default function PagamentosPage() {
+  const { toast } = useToast()
   const [tab, setTab] = useState<Tab>('mensalistas')
   const [temporadas, setTemporadas] = useState<Temporada[]>([])
   const [temporadaId, setTemporadaId] = useState('')
@@ -215,8 +217,10 @@ export default function PagamentosPage() {
     if (!res.ok) {
       const json = await res.json().catch(() => ({}))
       setErro(json.error ?? `Erro ${res.status} ao salvar pagamento`)
+      toast('Erro ao salvar pagamento.', 'error')
     } else {
       setErro(null)
+      toast('Pagamento salvo.')
     }
 
     setSaving(prev => { const s = new Set(prev); s.delete(key); return s })
@@ -301,6 +305,7 @@ export default function PagamentosPage() {
     })
     setSavingDiaristaKey(prev => { const s = new Set(prev); s.delete(key); return s })
     setEditandoDiaristaId(null)
+    toast('Pagamento salvo.')
     loadDiaristas()
   }
 
@@ -776,7 +781,7 @@ export default function PagamentosPage() {
                         </div>
 
                         {/* Crédito + Valor + Obs */}
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Crédito (€)</p>
                             <input
@@ -801,7 +806,7 @@ export default function PagamentosPage() {
                               className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-gray-800 text-sm focus:outline-none focus:border-green-500"
                             />
                           </div>
-                          <div>
+                          <div className="col-span-2 sm:col-span-1">
                             <p className="text-xs text-gray-500 mb-1">Observação</p>
                             <input
                               type="text"

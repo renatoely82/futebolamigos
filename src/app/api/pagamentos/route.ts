@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { singleJoin } from '@/lib/supabase'
 
 // GET /api/pagamentos?temporada_id=...&mes=...&ano=...
 // Returns all mensalistas for a season with their payment status for the given month/year
@@ -34,8 +35,7 @@ export async function GET(request: Request) {
 
   // Filter only mensalistas active in this month
   const mesNum = Number(mes)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mensalistas = (mensalistasRaw ?? []).filter((m: any) => m.meses === null || m.meses.includes(mesNum))
+  const mensalistas = (mensalistasRaw ?? []).filter((m) => m.meses === null || (m.meses as number[]).includes(mesNum))
 
   // Get existing payment records for this season/month/year
   const { data: pagamentos, error: pError } = await supabase
@@ -50,10 +50,9 @@ export async function GET(request: Request) {
   const pagamentosMap = new Map(pagamentos?.map(p => [p.jogador_id, p]) ?? [])
 
   // Merge: for each mensalista, attach payment status
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = (mensalistas ?? []).map((m: any) => {
+  const result = (mensalistas ?? []).map((m) => {
     const pagamento = pagamentosMap.get(m.jogador_id)
-    const jogador = Array.isArray(m.jogador) ? (m.jogador[0] ?? null) : m.jogador
+    const jogador = singleJoin<{ id: string; nome: string }>(m.jogador)
     return {
       jogador_id: m.jogador_id,
       jogador,
@@ -76,8 +75,8 @@ export async function GET(request: Request) {
   result.sort((a, b) => {
     const rankDiff = statusRank(a) - statusRank(b)
     if (rankDiff !== 0) return rankDiff
-    const nomeA = (a.jogador as { nome: string } | null)?.nome ?? ''
-    const nomeB = (b.jogador as { nome: string } | null)?.nome ?? ''
+    const nomeA = singleJoin<{ nome: string }>(a.jogador)?.nome ?? ''
+    const nomeB = singleJoin<{ nome: string }>(b.jogador)?.nome ?? ''
     return nomeA.localeCompare(nomeB, 'pt-BR')
   })
 

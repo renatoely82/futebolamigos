@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { singleJoin } from '@/lib/supabase'
 import type { NextRequest } from 'next/server'
 
 const supabaseAdmin = createAdminClient(
@@ -37,7 +38,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     votos: (votos ?? []).filter(v => v.opcao_id === op.id).length,
     votantes: (votos ?? [])
       .filter(v => v.opcao_id === op.id)
-      .map(v => (v.jogadores as unknown as { nome: string } | null)?.nome ?? 'Desconhecido'),
+      .map(v => singleJoin<{ nome: string }>(v.jogadores)?.nome ?? 'Desconhecido'),
   }))
 
   return Response.json({ contagem, totalVotos, totalInscritos })

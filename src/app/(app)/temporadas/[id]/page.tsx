@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { Temporada, ClassificacaoEntry, Partida, Jogador } from '@/lib/supabase'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
 import Modal from '@/components/ui/Modal'
 import TemporadaForm, { type TemporadaFormData } from '@/components/temporadas/TemporadaForm'
 import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
@@ -13,6 +14,9 @@ import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
 import JogadorDetalheModal from '@/components/temporadas/JogadorDetalheModal'
 import PartidasList from '@/components/temporadas/PartidasList'
 import DiretoraModal from '@/components/temporadas/DiretoraModal'
+import ConfrontosTab from '@/components/temporadas/ConfrontosTab'
+import EvolucaoChart from '@/components/temporadas/EvolucaoChart'
+import { SkeletonLine, SkeletonBox, SkeletonCircle } from '@/components/ui/Skeleton'
 
 interface MensalistaEntry {
   id: string
@@ -21,7 +25,7 @@ interface MensalistaEntry {
   meses: number[] | null
 }
 
-type Aba = 'classificacao' | 'artilheiros' | 'partidas' | 'mensalistas'
+type Aba = 'classificacao' | 'artilheiros' | 'partidas' | 'mensalistas' | 'confrontos'
 
 const MESES_NOMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -70,6 +74,8 @@ export default function TemporadaDetailPage() {
   const [filtroInicio, setFiltroInicio] = useState('')
   const [filtroFim, setFiltroFim] = useState('')
   const [filtroMes, setFiltroMes] = useState<number | null>(null)
+  const [filtroAberto, setFiltroAberto] = useState(false)
+  const [classificacaoVista, setClassificacaoVista] = useState<'tabela' | 'grafico'>('tabela')
   const [abaAtiva, setAbaAtiva] = useState<Aba>('classificacao')
   const [buscaJogador, setBuscaJogador] = useState('')
   const filtroInicializado = useRef(false)
@@ -202,7 +208,52 @@ export default function TemporadaDetailPage() {
   }
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-500 py-20">Carregando...</div>
+    return (
+      <div className="p-4 sm:p-6 space-y-6">
+        {/* Header skeleton */}
+        <div className="bg-white border border-[#e0e0e0] rounded-xl p-5 sm:p-6">
+          <SkeletonLine className="h-3 w-32 mb-3" />
+          <SkeletonLine className="h-7 w-56 mb-2" />
+          <SkeletonLine className="h-4 w-40 mb-4" />
+          <div className="flex gap-2 flex-wrap">
+            <SkeletonLine className="h-8 w-24 rounded-lg" />
+            <SkeletonLine className="h-8 w-20 rounded-lg" />
+            <SkeletonLine className="h-8 w-28 rounded-lg" />
+          </div>
+        </div>
+        {/* Tabs skeleton */}
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonLine key={i} className="h-8 w-24 rounded-lg" />
+          ))}
+        </div>
+        {/* Classification table skeleton */}
+        <div className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
+          <div className="border-b border-gray-100 px-4 py-3">
+            <SkeletonLine className="h-4 w-32" />
+          </div>
+          <div className="divide-y divide-gray-50">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <SkeletonLine className="h-4 w-4 shrink-0" />
+                <SkeletonCircle className="w-8 h-8 shrink-0" />
+                <SkeletonLine className="h-4 flex-1 max-w-[120px]" />
+                <div className="ml-auto flex items-center gap-4">
+                  <SkeletonLine className="h-4 w-6" />
+                  <SkeletonLine className="h-4 w-6" />
+                  <SkeletonLine className="h-4 w-6" />
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <div key={j} className="w-4 h-4 rounded-full bg-gray-200 animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!temporada) {
@@ -230,6 +281,7 @@ export default function TemporadaDetailPage() {
   const abas: { id: Aba; label: string }[] = [
     { id: 'classificacao', label: 'Classificação' },
     { id: 'artilheiros', label: 'Artilheiros' },
+    { id: 'confrontos', label: 'Confrontos' },
     { id: 'partidas', label: 'Partidas' },
     { id: 'mensalistas', label: 'Mensalistas' },
   ]
@@ -246,108 +298,123 @@ export default function TemporadaDetailPage() {
     <div className="p-4 sm:p-6 space-y-4">
       {/* Header */}
       <div
-        className="rounded-xl px-5 py-4 flex items-center justify-between gap-4"
+        className="rounded-xl overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #006b3d, #00894e)' }}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <Link href="/temporadas" className="text-white/70 hover:text-white transition-colors shrink-0">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-            </svg>
-          </Link>
+        {/* Top row: info + actions */}
+        <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-white text-xl sm:text-2xl font-bold truncate">{temporada.nome}</h1>
-              {temporada.ativa && (
-                <span className="text-xs text-white border border-white/50 px-2 py-0.5 rounded-full font-medium shrink-0">
-                  Ativa
-                </span>
-              )}
+            <div className="[&_a]:text-white/70 [&_a:hover]:text-white [&_span]:text-white/70 [&_nav>span:last-child_span]:text-white">
+              <Breadcrumbs items={[
+                { label: 'Temporadas', href: '/temporadas' },
+                { label: temporada.nome },
+              ]} />
             </div>
-            <p className="text-white/70 text-sm mt-0.5">
-              {fmtDate(temporada.data_inicio)} — {fmtDate(temporada.data_fim)}
-            </p>
+            <div className="mt-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-white text-xl sm:text-2xl font-bold truncate">{temporada.nome}</h1>
+                {temporada.ativa && (
+                  <span className="text-xs text-white border border-white/50 px-2 py-0.5 rounded-full font-medium shrink-0">
+                    Ativa
+                  </span>
+                )}
+              </div>
+              <p className="text-white/70 text-sm mt-0.5">
+                {fmtDate(temporada.data_inicio)} — {fmtDate(temporada.data_fim)}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => setDiretoraOpen(true)}
+              title="Diretoria"
+              className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 p-2 rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <Link
+              href={`/temporadas/${id}/regras`}
+              title="Regras"
+              className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 p-2 rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </Link>
+            <button
+              onClick={() => setModalOpen(true)}
+              title="Editar"
+              className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 p-2 rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => setDiretoraOpen(true)}
-            className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="hidden sm:inline">Diretoria</span>
-          </button>
-          <Link
-            href={`/temporadas/${id}/regras`}
-            className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <span className="hidden sm:inline">Regras</span>
-          </Link>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            <span className="hidden sm:inline">Editar</span>
-          </button>
-        </div>
-      </div>
 
-      {/* Filtro por intervalo de data */}
-      <div className="bg-white border border-[#e0e0e0] rounded-xl px-4 py-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex items-center gap-2 text-gray-500 shrink-0">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {/* Bottom row: filter toggle */}
+        <div className="px-5 pb-4">
+          <button
+            onClick={() => setFiltroAberto(v => !v)}
+            className={`flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
+              filtroAberto
+                ? 'bg-white/20 text-white'
+                : filtroAtivo
+                  ? 'bg-white/15 text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
             </svg>
-            <span className="text-sm font-medium text-gray-700">Filtrar período</span>
-          </div>
-          <div className="flex flex-wrap items-end gap-3 flex-1">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-500">De</label>
-              <input
-                type="date"
-                value={filtroInicio}
-                min={temporada.data_inicio}
-                max={filtroFim || temporada.data_fim}
-                onChange={e => setFiltroInicio(e.target.value)}
-                className="bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-500">Até</label>
-              <input
-                type="date"
-                value={filtroFim}
-                min={filtroInicio || temporada.data_inicio}
-                max={temporada.data_fim}
-                onChange={e => setFiltroFim(e.target.value)}
-                className="bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
-              />
-            </div>
-            {filtroAtivo && (
-              <button
-                onClick={limparFiltro}
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 border border-[#e0e0e0] hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Restaurar
-              </button>
+            {filtroAtivo
+              ? `${fmtDate(filtroInicio)} — ${fmtDate(filtroFim)}`
+              : 'Filtrar período'}
+            {filtroAtivo && !filtroAberto && (
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
             )}
-          </div>
-          {filtroAtivo && (
-            <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full shrink-0">
-              Filtro ativo
-            </span>
+          </button>
+
+          {/* Collapsible filter panel */}
+          {filtroAberto && (
+            <div className="mt-3 flex flex-wrap items-end gap-3 bg-white/10 rounded-xl px-4 py-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-white/70">De</label>
+                <input
+                  type="date"
+                  value={filtroInicio}
+                  min={temporada.data_inicio}
+                  max={filtroFim || temporada.data_fim}
+                  onChange={e => setFiltroInicio(e.target.value)}
+                  className="bg-white/15 border border-white/25 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-white/60 [color-scheme:dark]"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-white/70">Até</label>
+                <input
+                  type="date"
+                  value={filtroFim}
+                  min={filtroInicio || temporada.data_inicio}
+                  max={temporada.data_fim}
+                  onChange={e => setFiltroFim(e.target.value)}
+                  className="bg-white/15 border border-white/25 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-white/60 [color-scheme:dark]"
+                />
+              </div>
+              {filtroAtivo && (
+                <button
+                  onClick={() => { limparFiltro(); setFiltroAberto(false) }}
+                  className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white border border-white/25 hover:border-white/50 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Restaurar
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -375,38 +442,73 @@ export default function TemporadaDetailPage() {
           {/* Classificação */}
           {abaAtiva === 'classificacao' && (
             <div>
-              <div className="px-4 pt-3 pb-2">
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Pesquisar jogador..."
-                    value={buscaJogador}
-                    onChange={e => setBuscaJogador(e.target.value)}
-                    className="w-full bg-gray-50 border border-[#e0e0e0] rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
-                  />
-                  {buscaJogador && (
-                    <button
-                      onClick={() => setBuscaJogador('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
+              {/* Sub-toggle: Tabela | Gráfico */}
+              <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+                <div className="flex rounded-lg border border-[#e0e0e0] overflow-hidden text-sm font-medium shrink-0">
+                  <button
+                    onClick={() => setClassificacaoVista('tabela')}
+                    className={`px-3 py-1.5 transition-colors ${
+                      classificacaoVista === 'tabela'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Tabela
+                  </button>
+                  <button
+                    onClick={() => setClassificacaoVista('grafico')}
+                    className={`px-3 py-1.5 border-l border-[#e0e0e0] transition-colors ${
+                      classificacaoVista === 'grafico'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Evolução
+                  </button>
                 </div>
+
+                {classificacaoVista === 'tabela' && (
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Pesquisar jogador..."
+                      value={buscaJogador}
+                      onChange={e => setBuscaJogador(e.target.value)}
+                      className="w-full bg-gray-50 border border-[#e0e0e0] rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
+                    />
+                    {buscaJogador && (
+                      <button
+                        onClick={() => setBuscaJogador('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeWidth={2} strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="p-2 pt-0">
-                <ClassificacaoTable
-                  entries={classificacaoFiltrada}
+
+              {classificacaoVista === 'tabela' ? (
+                <div className="p-2 pt-0">
+                  <ClassificacaoTable
+                    entries={classificacaoFiltrada}
+                    temporadaId={id}
+                    posicoes={posicoes}
+                    onSelectJogador={(jid) => { setJogadorDetalheNome(null); setJogadorDetalheId(jid) }}
+                  />
+                </div>
+              ) : (
+                <EvolucaoChart
                   temporadaId={id}
-                  posicoes={posicoes}
-                  onSelectJogador={(jid) => { setJogadorDetalheNome(null); setJogadorDetalheId(jid) }}
+                  dataInicio={filtroInicio || undefined}
+                  dataFim={filtroFim || undefined}
                 />
-              </div>
+              )}
             </div>
           )}
 
@@ -443,6 +545,15 @@ export default function TemporadaDetailPage() {
             </div>
           )}
 
+          {/* Confrontos */}
+          {abaAtiva === 'confrontos' && (
+            <ConfrontosTab
+              temporadaId={id}
+              dataInicio={filtroInicio || undefined}
+              dataFim={filtroFim || undefined}
+            />
+          )}
+
           {/* Partidas */}
           {abaAtiva === 'partidas' && (
             <>
@@ -461,8 +572,19 @@ export default function TemporadaDetailPage() {
             return (
               <>
                 <div className="px-5 py-3 border-b border-[#e0e0e0]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 text-sm">({mensalistas.length})</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-sm">({mensalistas.length})</span>
+                      <Link
+                        href={`/temporadas/${id}/relatorio`}
+                        className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-green-700 border border-[#e0e0e0] hover:border-green-300 px-2.5 py-1.5 rounded-lg transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Relatório
+                      </Link>
+                    </div>
                     <button
                       onClick={() => { setSelectedJogadorId(''); setSelectedMeses(null); setAddMensalistaOpen(true) }}
                       className="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"

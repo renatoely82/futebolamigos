@@ -16,6 +16,18 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const body = await request.json()
 
+  const nomeTrimmed = (body.nome ?? '').trim()
+  if (!nomeTrimmed) return Response.json({ error: 'Nome é obrigatório.' }, { status: 400 })
+
+  const { data: existing } = await supabase
+    .from('jogadores')
+    .select('id')
+    .ilike('nome', nomeTrimmed)
+    .eq('ativo', true)
+    .maybeSingle()
+
+  if (existing) return Response.json({ error: `Já existe um jogador chamado "${nomeTrimmed}".` }, { status: 409 })
+
   const { data, error } = await supabase
     .from('jogadores')
     .insert({

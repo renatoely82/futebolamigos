@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { generateTeamProposals } from '@/lib/team-balancer'
+import { singleJoin } from '@/lib/supabase'
 import type { Jogador, Posicao } from '@/lib/supabase'
 
 export async function GET(
@@ -89,14 +90,18 @@ export async function POST(
 
   const players: Jogador[] = (partidaJogadores ?? [])
     .map(pj => {
-      const j = pj.jogador as unknown as Jogador
-      const override = (pj as unknown as { posicao_convocacao: Posicao | null }).posicao_convocacao
+      const j = singleJoin<Jogador>(pj.jogador)
+      if (!j) return undefined
+      const override = pj.posicao_convocacao as Posicao | null
       return override ? { ...j, posicao_principal: override } : j
     })
-    .filter(Boolean)
+    .filter(Boolean) as Jogador[]
 
-  if (players.length < 2) {
-    return Response.json({ error: 'Precisa de pelo menos 2 jogadores.' }, { status: 400 })
+  if (players.length < 4) {
+    return Response.json(
+      { error: `Mínimo de 4 jogadores confirmados para gerar times. Há ${players.length} confirmado${players.length === 1 ? '' : 's'}.` },
+      { status: 400 }
+    )
   }
 
   // Use current match's chosen teams as reference if they exist,

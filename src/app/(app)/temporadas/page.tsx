@@ -6,16 +6,21 @@ import { useRouter } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { Temporada } from '@/lib/supabase'
+import { useToast } from '@/components/ui/Toast'
 import Modal from '@/components/ui/Modal'
 import TemporadaForm, { type TemporadaFormData } from '@/components/temporadas/TemporadaForm'
+import { SkeletonLine } from '@/components/ui/Skeleton'
 
 export default function TemporadasPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [temporadas, setTemporadas] = useState<Temporada[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Temporada | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [copying, setCopying] = useState<Temporada | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Temporada | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [copyLoading, setCopyLoading] = useState(false)
   const [copyDatas, setCopyDatas] = useState({ data_inicio: '', data_fim: '' })
 
@@ -37,17 +42,22 @@ export default function TemporadasPage() {
     if (!res.ok) throw new Error(json.error || 'Erro ao salvar.')
     setModalOpen(false)
     setEditing(null)
+    toast('Temporada atualizada.')
     load()
   }
 
-  async function handleDelete(t: Temporada) {
-    if (!confirm(`Excluir a temporada "${t.nome}"?`)) return
-    const res = await fetch(`/api/temporadas/${t.id}`, { method: 'DELETE' })
+  async function handleDelete() {
+    if (!confirmDelete) return
+    setDeleting(true)
+    const res = await fetch(`/api/temporadas/${confirmDelete.id}`, { method: 'DELETE' })
+    setDeleting(false)
+    setConfirmDelete(null)
     if (!res.ok) {
       const json = await res.json()
-      alert(json.error)
+      toast(json.error || 'Erro ao excluir temporada.', 'error')
       return
     }
+    toast('Temporada excluída.')
     load()
   }
 
@@ -68,7 +78,7 @@ export default function TemporadasPage() {
   async function handleCopyConfirm() {
     if (!copying) return
     if (copyDatas.data_fim < copyDatas.data_inicio) {
-      alert('A data de fim deve ser posterior à data de início.')
+      toast('A data de fim deve ser posterior à data de início.', 'error')
       return
     }
     setCopyLoading(true)
@@ -84,7 +94,7 @@ export default function TemporadasPage() {
       })
       const json = await res.json()
       if (!res.ok) {
-        alert(json.error || 'Erro ao copiar temporada.')
+        toast(json.error || 'Erro ao copiar temporada.', 'error')
         return
       }
       setCopying(null)
@@ -117,7 +127,24 @@ export default function TemporadasPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Carregando...</div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white border border-[#e0e0e0] rounded-xl p-4 flex items-center justify-between gap-4">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-3">
+                  <SkeletonLine className="h-5 w-40" />
+                  {i === 0 && <SkeletonLine className="h-5 w-12 rounded-full" />}
+                </div>
+                <SkeletonLine className="h-4 w-48" />
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <SkeletonLine className="w-8 h-8 rounded-lg" />
+                <SkeletonLine className="w-8 h-8 rounded-lg" />
+                <SkeletonLine className="w-8 h-8 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : temporadas.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-gray-500">Nenhuma temporada cadastrada.</p>
@@ -166,7 +193,7 @@ export default function TemporadasPage() {
                   </svg>
                 </button>
                 <button
-                  onClick={() => handleDelete(t)}
+                  onClick={() => setConfirmDelete(t)}
                   className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   title="Excluir"
                 >
@@ -179,6 +206,34 @@ export default function TemporadasPage() {
           ))}
         </div>
       )}
+
+      <Modal
+        open={!!confirmDelete}
+        onClose={() => { if (!deleting) setConfirmDelete(null) }}
+        title="Excluir Temporada"
+      >
+        <p className="text-gray-600 text-sm mb-6">
+          Tem certeza que deseja excluir a temporada{' '}
+          <strong className="text-gray-800">{confirmDelete?.nome}</strong>?
+          {' '}Todas as partidas, regras e dados vinculados serão removidos permanentemente.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </button>
+          <button
+            onClick={() => setConfirmDelete(null)}
+            disabled={deleting}
+            className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </Modal>
 
       {editing && (
         <Modal
