@@ -66,11 +66,8 @@ export async function DELETE(req: Request) {
   // Não pode revogar o próprio acesso
   if (user_id === user.id) return Response.json({ error: 'Não podes revogar o teu próprio acesso.' }, { status: 400 })
 
-  // Remove app_metadata role
-  await supabaseAdmin.auth.admin.updateUserById(user_id, { app_metadata: { role: null, jogador_id: null } })
-
-  // Remove perfil
-  await supabaseAdmin.from('user_profiles').delete().eq('user_id', user_id)
+  // Remove utilizador do Auth (CASCADE apaga user_profiles automaticamente)
+  await supabaseAdmin.auth.admin.deleteUser(user_id)
 
   return Response.json({ ok: true })
 }
