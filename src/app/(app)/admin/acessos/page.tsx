@@ -11,6 +11,7 @@ export default function AcessosPage() {
   const [acessos, setAcessos] = useState<AcessoEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [revoking, setRevoking] = useState<string | null>(null)
+  const [resending, setResending] = useState<string | null>(null)
   const [confirmRevoke, setConfirmRevoke] = useState<AcessoEntry | null>(null)
 
   const load = useCallback(async () => {
@@ -21,6 +22,19 @@ export default function AcessosPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  async function handleResend(entry: AcessoEntry) {
+    if (!entry.jogador_id) return
+    setResending(entry.user_id)
+    const res = await fetch('/api/admin/convidar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jogador_id: entry.jogador_id, reenviar: true }),
+    })
+    const data = await res.json()
+    toast(res.ok ? (data.message ?? 'Convite reenviado!') : (data.error ?? 'Erro ao reenviar.'))
+    setResending(null)
+  }
 
   async function handleRevoke(entry: AcessoEntry) {
     setRevoking(entry.user_id)
@@ -76,13 +90,23 @@ export default function AcessosPage() {
                 </p>
               </div>
               {entry.role !== 'admin' && (
-                <button
-                  onClick={() => setConfirmRevoke(entry)}
-                  disabled={revoking === entry.user_id}
-                  className="shrink-0 text-xs font-medium px-3 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  Revogar
-                </button>
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    onClick={() => handleResend(entry)}
+                    disabled={resending === entry.user_id}
+                    className="text-xs font-medium px-3 py-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Reenviar convite por email"
+                  >
+                    {resending === entry.user_id ? 'A enviar...' : 'Reenviar'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmRevoke(entry)}
+                    disabled={!!revoking}
+                    className="text-xs font-medium px-3 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Revogar
+                  </button>
+                </div>
               )}
             </div>
           ))}

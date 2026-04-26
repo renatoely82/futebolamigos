@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const role = (user.app_metadata as Record<string, string>)?.role
   if (role !== 'admin') return Response.json({ error: 'Sem permissão' }, { status: 403 })
 
-  const { jogador_id } = await req.json()
+  const { jogador_id, reenviar } = await req.json()
   if (!jogador_id) return Response.json({ error: 'jogador_id obrigatório' }, { status: 400 })
 
   // Lê o jogador
@@ -32,14 +32,16 @@ export async function POST(req: Request) {
   if (!jogador.email) return Response.json({ error: 'Jogador não tem email cadastrado' }, { status: 400 })
 
   // Verifica se já tem convite/acesso
-  const { data: existingProfile } = await supabaseAdmin
-    .from('user_profiles')
-    .select('id, role')
-    .eq('jogador_id', jogador_id)
-    .single()
+  if (!reenviar) {
+    const { data: existingProfile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, role')
+      .eq('jogador_id', jogador_id)
+      .single()
 
-  if (existingProfile) {
-    return Response.json({ error: `${jogador.nome} já tem acesso (${existingProfile.role}).` }, { status: 409 })
+    if (existingProfile) {
+      return Response.json({ error: `${jogador.nome} já tem acesso (${existingProfile.role}).` }, { status: 409 })
+    }
   }
 
   // Envia convite via Supabase (magic link de definição de senha)
