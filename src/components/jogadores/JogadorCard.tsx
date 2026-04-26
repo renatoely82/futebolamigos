@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import type { Jogador } from '@/lib/supabase'
 import { PositionBadge } from '@/components/ui/Badge'
 
@@ -10,6 +11,15 @@ interface JogadorCardProps {
 }
 
 export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardProps) {
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopyPortalLink() {
+    const url = `${window.location.origin}/jogador/${jogador.id}?token=${jogador.portal_token}`
+    await navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 hover:border-[#c8c8c8] transition-colors">
       <div className="flex items-start justify-between gap-2">
@@ -40,6 +50,21 @@ export default function JogadorCard({ jogador, onEdit, onDelete }: JogadorCardPr
           )}
         </div>
         <div className="flex gap-1 shrink-0">
+          <button
+            onClick={handleCopyPortalLink}
+            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+            title="Copiar link do portal"
+          >
+            {copied ? (
+              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1" />
+              </svg>
+            )}
+          </button>
           <button
             onClick={onEdit}
             className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"

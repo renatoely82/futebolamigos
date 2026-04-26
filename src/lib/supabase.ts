@@ -33,6 +33,7 @@ export interface Jogador {
   aniversario: string | null
   observacoes: string | null
   ativo: boolean
+  portal_token: string
   criado_em: string
   atualizado_em: string
 }
