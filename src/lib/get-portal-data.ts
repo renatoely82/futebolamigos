@@ -84,24 +84,13 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
       .eq('temporada_id', temporada.id)
       .order('data', { ascending: false })
 
-    // Resolve escalação para cada partida usando os jogadores já carregados
-    partidas = (partidasData ?? []).map(p => {
-      const tc = p.times_escolhidos as TeamSplit | null
-      let escalacao: PortalPartida['escalacao'] = null
-      if (tc) {
-        const resolve = (ids: string[]): PortalJogadorResumo[] =>
-          ids.flatMap(id => {
-            const j = jogadorMap.get(id)
-            return j ? [{ id, nome: j.nome, posicao: j.posicao_principal }] : []
-          })
-        escalacao = { time_a: resolve(tc.time_a ?? []), time_b: resolve(tc.time_b ?? []) }
-      }
-      return { ...p, escalacao }
-    }) as PortalPartida[]
-
-    const realizadas = partidas.filter(
+    const todasPartidasRaw = partidasData ?? []
+    const realizadas = todasPartidasRaw.filter(
       p => p.status === 'realizada' && p.placar_time_a != null && p.placar_time_b != null
     )
+
+    // Mapa de gols por partida+jogador (usado em escalação e classificação)
+    const golsPorJogadorPartida = new Map<string, { normal: number; contra: number }>()
 
     if (realizadas.length > 0) {
       const realizadasIds = realizadas.map(p => p.id)
@@ -116,6 +105,15 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
       const gols = golsRes.data ?? []
       const subs = subsRes.data ?? []
 
+      // Preenche mapa de gols
+      for (const g of gols) {
+        const key = `${g.partida_id}:${g.jogador_id}`
+        const entry = golsPorJogadorPartida.get(key) ?? { normal: 0, contra: 0 }
+        if (g.gol_contra) entry.contra += g.quantidade
+        else entry.normal += g.quantidade
+        golsPorJogadorPartida.set(key, entry)
+      }
+
       const subsMap = new Map<string, { ausentes: Map<string, string>; substitutos: Set<string> }>()
       for (const s of subs) {
         if (!subsMap.has(s.partida_id)) subsMap.set(s.partida_id, { ausentes: new Map(), substitutos: new Set() })
@@ -127,12 +125,14 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
       const realizadasAsc = [...realizadas].reverse()
       const partidaMap = new Map(realizadasAsc.map((p, i) => [p.id, { ...p, idx: i }]))
 
+      // Alias para classificação (chave invertida: jogador:partida)
       const golsMap = new Map<string, number>()
       const golsContraMap = new Map<string, number>()
-      for (const g of gols) {
-        const key = `${g.jogador_id}:${g.partida_id}`
-        if (g.gol_contra) golsContraMap.set(key, (golsContraMap.get(key) ?? 0) + g.quantidade)
-        else golsMap.set(key, (golsMap.get(key) ?? 0) + g.quantidade)
+      for (const [key, val] of golsPorJogadorPartida) {
+        const [pId, jId] = key.split(':')
+        const altKey = `${jId}:${pId}`
+        if (val.normal > 0) golsMap.set(altKey, val.normal)
+        if (val.contra > 0) golsContraMap.set(altKey, val.contra)
       }
 
       const stats = new Map<string, ClassificacaoEntry>()
@@ -224,6 +224,23 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
       }
       confrontos = Array.from(confrontoMap.values()).sort((a, b) => b.jogos - a.jogos || a.time_a.localeCompare(b.time_a, 'pt-BR'))
     }
+
+    // Resolve escalação com gols para todas as partidas
+    partidas = todasPartidasRaw.map(p => {
+      const tc = p.times_escolhidos as TeamSplit | null
+      let escalacao: PortalPartida['escalacao'] = null
+      if (tc) {
+        const resolve = (ids: string[]): PortalJogadorResumo[] =>
+          ids.flatMap(id => {
+            const j = jogadorMap.get(id)
+            if (!j) return []
+            const g = golsPorJogadorPartida.get(`${p.id}:${id}`)
+            return [{ id, nome: j.nome, posicao: j.posicao_principal, gols: g?.normal, gols_contra: g?.contra }]
+          })
+        escalacao = { time_a: resolve(tc.time_a ?? []), time_b: resolve(tc.time_b ?? []) }
+      }
+      return { ...p, escalacao }
+    }) as PortalPartida[]
   }
 
   const pagamentos: PortalPagamento[] = []

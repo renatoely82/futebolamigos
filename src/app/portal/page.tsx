@@ -10,6 +10,7 @@ import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
 import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
 import ConfrontosTab from '@/components/temporadas/ConfrontosTab'
 import PortalPartidasTab from '@/components/portal/PortalPartidasTab'
+import PortalJogadorModal from '@/components/portal/PortalJogadorModal'
 
 type Aba = 'classificacao' | 'artilheiros' | 'confrontos' | 'partidas' | 'pagamentos'
 
@@ -27,6 +28,7 @@ export default function PortalPage() {
   const [data, setData] = useState<PortalData | null>(null)
   const [loading, setLoading] = useState(true)
   const [aba, setAba] = useState<Aba>('classificacao')
+  const [selectedJogadorId, setSelectedJogadorId] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/me/portal')
@@ -161,7 +163,7 @@ export default function PortalPage() {
 
         <div className="px-4 mt-4">
           {aba === 'classificacao' && (
-            <ClassificacaoTable entries={data.classificacao} temporadaId="" onSelectJogador={() => {}} />
+            <ClassificacaoTable entries={data.classificacao} temporadaId="" onSelectJogador={setSelectedJogadorId} />
           )}
           {aba === 'artilheiros' && (
             <div className="bg-white rounded-2xl border border-[#e0e0e0] overflow-hidden">
@@ -229,6 +231,13 @@ export default function PortalPage() {
       </div>
 
       <p className="text-center text-gray-400 text-xs mt-8">Barcelombra Fútbol · Portal do Jogador</p>
+
+      {selectedJogadorId && (() => {
+        const entry = data.classificacao.find(e => e.jogador_id === selectedJogadorId)
+        return entry ? (
+          <PortalJogadorModal entry={entry} onClose={() => setSelectedJogadorId(null)} />
+        ) : null
+      })()}
     </div>
   )
 }

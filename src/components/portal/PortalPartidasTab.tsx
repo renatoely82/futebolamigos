@@ -101,7 +101,9 @@ export default function PortalPartidasTab({ partidas }: Props) {
                           .map(j => (
                             <div key={j.id} className="flex items-center gap-1.5">
                               <span className="text-gray-400 text-xs w-12 shrink-0 truncate">{j.posicao}</span>
-                              <span className="text-gray-800 text-sm truncate">{j.nome}</span>
+                              <span className="text-gray-800 text-sm flex-1 truncate">{j.nome}</span>
+                              {(j.gols ?? 0) > 0 && <span className="text-xs text-gray-500 shrink-0">⚽ {j.gols}</span>}
+                              {(j.gols_contra ?? 0) > 0 && <span className="text-xs text-red-400 shrink-0">⚽↩ {j.gols_contra}</span>}
                             </div>
                           ))}
                       </div>
@@ -115,7 +117,9 @@ export default function PortalPartidasTab({ partidas }: Props) {
                           .map(j => (
                             <div key={j.id} className="flex items-center gap-1.5">
                               <span className="text-gray-400 text-xs w-12 shrink-0 truncate">{j.posicao}</span>
-                              <span className="text-gray-800 text-sm truncate">{j.nome}</span>
+                              <span className="text-gray-800 text-sm flex-1 truncate">{j.nome}</span>
+                              {(j.gols ?? 0) > 0 && <span className="text-xs text-gray-500 shrink-0">⚽ {j.gols}</span>}
+                              {(j.gols_contra ?? 0) > 0 && <span className="text-xs text-red-400 shrink-0">⚽↩ {j.gols_contra}</span>}
                             </div>
                           ))}
                       </div>
