@@ -10,6 +10,7 @@ import { getTeamColor } from '@/lib/team-colors'
 
 interface Props {
   partidas: Partida[]
+  hideDetailLink?: boolean
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -32,9 +33,10 @@ function formatDate(data: string) {
 
 interface ExpandedProps {
   partida: Partida
+  hideDetailLink?: boolean
 }
 
-function PartidaExpandida({ partida }: ExpandedProps) {
+function PartidaExpandida({ partida, hideDetailLink }: ExpandedProps) {
   const [players, setPlayers] = useState<PartidaJogadorComDetalhes[]>([])
   const [gols, setGols] = useState<GolComDetalhes[]>([])
   const [substituicoes, setSubstituicoes] = useState<SubstituicaoComDetalhes[]>([])
@@ -152,12 +154,14 @@ function PartidaExpandida({ partida }: ExpandedProps) {
           )}
 
           {/* Link para detalhe */}
-          <Link
-            href={`/partidas/${partida.id}`}
-            className="block text-center text-sm text-green-600 hover:text-green-700 font-medium mt-1"
-          >
-            Ver detalhes →
-          </Link>
+          {!hideDetailLink && (
+            <Link
+              href={`/partidas/${partida.id}`}
+              className="block text-center text-sm text-green-600 hover:text-green-700 font-medium mt-1"
+            >
+              Ver detalhes →
+            </Link>
+          )}
         </>
       )}
     </div>
@@ -166,7 +170,7 @@ function PartidaExpandida({ partida }: ExpandedProps) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function PartidasList({ partidas }: Props) {
+export default function PartidasList({ partidas, hideDetailLink }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (partidas.length === 0) {
@@ -232,7 +236,7 @@ export default function PartidasList({ partidas }: Props) {
             </div>
 
             {/* Expanded detail */}
-            {isExpanded && <PartidaExpandida partida={p} />}
+            {isExpanded && <PartidaExpandida partida={p} hideDetailLink={hideDetailLink} />}
           </div>
         )
       })}

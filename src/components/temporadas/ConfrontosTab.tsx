@@ -5,16 +5,19 @@ import type { ConfrontoEntry } from '@/app/api/temporadas/[id]/confrontos/route'
 import { getTeamColor, getTeamBg, getTeamBar } from '@/lib/team-colors'
 
 interface Props {
-  temporadaId: string
+  temporadaId?: string
   dataInicio?: string
   dataFim?: string
+  data?: ConfrontoEntry[]   // pre-loaded data (bypasses fetch when provided)
 }
 
-export default function ConfrontosTab({ temporadaId, dataInicio, dataFim }: Props) {
-  const [confrontos, setConfrontos] = useState<ConfrontoEntry[]>([])
-  const [loading, setLoading] = useState(true)
+export default function ConfrontosTab({ temporadaId, dataInicio, dataFim, data: preloaded }: Props) {
+  const [confrontos, setConfrontos] = useState<ConfrontoEntry[]>(preloaded ?? [])
+  const [loading, setLoading] = useState(preloaded === undefined)
 
   useEffect(() => {
+    if (preloaded !== undefined) { setConfrontos(preloaded); return }
+    if (!temporadaId) return
     setLoading(true)
     const params = new URLSearchParams()
     if (dataInicio) params.set('data_inicio', dataInicio)
@@ -23,7 +26,7 @@ export default function ConfrontosTab({ temporadaId, dataInicio, dataFim }: Prop
       .then(r => r.json())
       .then(data => { setConfrontos(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [temporadaId, dataInicio, dataFim])
+  }, [temporadaId, dataInicio, dataFim, preloaded])
 
   if (loading) {
     return (
