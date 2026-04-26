@@ -11,6 +11,8 @@ const supabase = createAdminClient(
 
 type Params = { params: Promise<{ id: string }> }
 
+export type PortalJogadorResumo = { id: string; nome: string; posicao: string }
+
 export type PortalPartida = {
   id: string
   data: string
@@ -21,6 +23,7 @@ export type PortalPartida = {
   placar_time_a: number | null
   placar_time_b: number | null
   times_escolhidos: TeamSplit | null
+  escalacao: { time_a: PortalJogadorResumo[]; time_b: PortalJogadorResumo[] } | null
 }
 
 export type PortalPagamento = {

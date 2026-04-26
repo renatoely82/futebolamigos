@@ -1,7 +1,7 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import type { TeamSplit, ClassificacaoEntry, Posicao } from '@/lib/supabase'
 import type { ConfrontoEntry } from '@/app/api/temporadas/[id]/confrontos/route'
-import type { PortalData, PortalPartida, PortalPagamento, PortalVotacao } from '@/app/api/public/portal/[id]/route'
+import type { PortalData, PortalPartida, PortalPagamento, PortalVotacao, PortalJogadorResumo } from '@/app/api/public/portal/[id]/route'
 
 const supabase = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,6 +65,14 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
     }
   }
 
+  // Busca todos os jogadores activos para usar em classificação e escalação
+  const { data: todosJogadores } = await supabase
+    .from('jogadores')
+    .select('id, nome, posicao_principal')
+    .eq('ativo', true)
+
+  const jogadorMap = new Map((todosJogadores ?? []).map(j => [j.id, j]))
+
   let classificacao: ClassificacaoEntry[] = []
   let confrontos: ConfrontoEntry[] = []
   let partidas: PortalPartida[] = []
@@ -76,7 +84,20 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
       .eq('temporada_id', temporada.id)
       .order('data', { ascending: false })
 
-    partidas = (partidasData ?? []) as PortalPartida[]
+    // Resolve escalação para cada partida usando os jogadores já carregados
+    partidas = (partidasData ?? []).map(p => {
+      const tc = p.times_escolhidos as TeamSplit | null
+      let escalacao: PortalPartida['escalacao'] = null
+      if (tc) {
+        const resolve = (ids: string[]): PortalJogadorResumo[] =>
+          ids.flatMap(id => {
+            const j = jogadorMap.get(id)
+            return j ? [{ id, nome: j.nome, posicao: j.posicao_principal }] : []
+          })
+        escalacao = { time_a: resolve(tc.time_a ?? []), time_b: resolve(tc.time_b ?? []) }
+      }
+      return { ...p, escalacao }
+    }) as PortalPartida[]
 
     const realizadas = partidas.filter(
       p => p.status === 'realizada' && p.placar_time_a != null && p.placar_time_b != null
@@ -85,16 +106,14 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
     if (realizadas.length > 0) {
       const realizadasIds = realizadas.map(p => p.id)
 
-      const [pjsRes, golsRes, jogadoresRes, subsRes] = await Promise.all([
+      const [pjsRes, golsRes, subsRes] = await Promise.all([
         supabase.from('partida_jogadores').select('partida_id, jogador_id').in('partida_id', realizadasIds),
         supabase.from('gols').select('partida_id, jogador_id, quantidade, gol_contra').in('partida_id', realizadasIds),
-        supabase.from('jogadores').select('id, nome, posicao_principal').eq('ativo', true),
         supabase.from('substituicoes').select('partida_id, jogador_ausente_id, jogador_substituto_id').in('partida_id', realizadasIds),
       ])
 
       const pjs = pjsRes.data ?? []
       const gols = golsRes.data ?? []
-      const jogadores = jogadoresRes.data ?? []
       const subs = subsRes.data ?? []
 
       const subsMap = new Map<string, { ausentes: Map<string, string>; substitutos: Set<string> }>()
@@ -105,7 +124,6 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
         e.substitutos.add(s.jogador_substituto_id)
       }
 
-      const jogadorMap = new Map(jogadores.map(j => [j.id, j]))
       const realizadasAsc = [...realizadas].reverse()
       const partidaMap = new Map(realizadasAsc.map((p, i) => [p.id, { ...p, idx: i }]))
 

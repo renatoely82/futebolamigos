@@ -6,11 +6,10 @@ import { createClient } from '@/lib/supabase-browser'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { PortalData, PortalPartida } from '@/app/api/public/portal/[id]/route'
-import type { Partida } from '@/lib/supabase'
 import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
 import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
 import ConfrontosTab from '@/components/temporadas/ConfrontosTab'
-import PartidasList from '@/components/temporadas/PartidasList'
+import PortalPartidasTab from '@/components/portal/PortalPartidasTab'
 
 type Aba = 'classificacao' | 'artilheiros' | 'confrontos' | 'partidas' | 'pagamentos'
 
@@ -22,18 +21,6 @@ const ABAS: { id: Aba; label: string }[] = [
   { id: 'pagamentos', label: 'Pagamentos' },
 ]
 
-function toPartida(p: PortalPartida): Partida {
-  return {
-    ...p,
-    status: p.status as Partida['status'],
-    observacoes: null,
-    numero_jogadores: null,
-    votacao_enquete_id: null,
-    temporada_id: null,
-    criado_em: '',
-    atualizado_em: '',
-  }
-}
 
 export default function PortalPage() {
   const router = useRouter()
@@ -78,14 +65,13 @@ export default function PortalPage() {
   }
 
   const pendentes = data.pagamentos.filter(p => !p.pago)
-  const partidas = data.partidas.map(toPartida)
 
   return (
     <div className="min-h-screen bg-[#f4f6f9] pb-10">
 
       {/* Header verde */}
       <div className="bg-green-600 text-white px-4 pt-10 pb-5">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-200 text-xs font-medium mb-1">Barcelombra Fútbol</p>
@@ -115,7 +101,7 @@ export default function PortalPage() {
 
       {/* Banner próxima partida / votação */}
       {data.proxima_partida && (
-        <div className="max-w-2xl mx-auto px-4 mt-3">
+        <div className="max-w-5xl mx-auto px-4 mt-3">
           <div className="bg-white rounded-2xl border border-[#e0e0e0] p-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Próxima partida</p>
@@ -146,7 +132,7 @@ export default function PortalPage() {
       )}
 
       {/* Abas */}
-      <div className="max-w-2xl mx-auto mt-4">
+      <div className="max-w-5xl mx-auto mt-4">
         <div className="overflow-x-auto">
           <div className="flex gap-0 px-4 border-b border-gray-200 min-w-max">
             {ABAS.map(a => {
@@ -188,7 +174,7 @@ export default function PortalPage() {
             </div>
           )}
           {aba === 'partidas' && (
-            <PartidasList partidas={partidas} hideDetailLink />
+            <PortalPartidasTab partidas={data.partidas} />
           )}
           {aba === 'pagamentos' && (
             <div className="bg-white rounded-2xl border border-[#e0e0e0] p-4">
