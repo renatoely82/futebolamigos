@@ -7,21 +7,18 @@ const supabaseAdmin = createAdminClient(
 )
 
 // POST /api/admin/convidar
-// Body: { jogador_id: string }
-// Envia convite por email ao jogador. O email é lido do registo do jogador.
+// Body: { jogador_id: string, reenviar?: boolean }
 export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 })
 
-  // Verifica que o utilizador é admin
   const role = (user.app_metadata as Record<string, string>)?.role
   if (role !== 'admin') return Response.json({ error: 'Sem permissão' }, { status: 403 })
 
   const { jogador_id, reenviar } = await req.json()
   if (!jogador_id) return Response.json({ error: 'jogador_id obrigatório' }, { status: 400 })
 
-  // Lê o jogador
   const { data: jogador } = await supabaseAdmin
     .from('jogadores')
     .select('id, nome, email')
@@ -31,7 +28,7 @@ export async function POST(req: Request) {
   if (!jogador) return Response.json({ error: 'Jogador não encontrado' }, { status: 404 })
   if (!jogador.email) return Response.json({ error: 'Jogador não tem email cadastrado' }, { status: 400 })
 
-  // Verifica se já tem convite/acesso
+  // Verifica se já tem acesso (só bloqueia se não for reenvio)
   if (!reenviar) {
     const { data: existingProfile } = await supabaseAdmin
       .from('user_profiles')
@@ -44,44 +41,40 @@ export async function POST(req: Request) {
     }
   }
 
-  // Envia convite via Supabase (magic link de definição de senha)
+  // Para reenvio: se utilizador já existe no auth, apaga (se não confirmado) para poder re-convidar
+  if (reenviar) {
+    const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+    const existingAuthUser = usersData?.users?.find(u => u.email === jogador.email)
+
+    if (existingAuthUser) {
+      // Se já confirmou, não precisa reenviar — já tem acesso
+      if (existingAuthUser.email_confirmed_at) {
+        return Response.json({ ok: true, message: `${jogador.nome} já confirmou o acesso e pode entrar normalmente.` })
+      }
+      // Não confirmou ainda — apaga para poder re-convidar (ON DELETE CASCADE remove o user_profile)
+      await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id)
+    }
+  }
+
+  // Envia convite
   const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
     jogador.email,
     { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/portal` }
   )
 
-  if (inviteErr) {
-    // Utilizador pode já existir — tenta buscar pelo email
-    if (inviteErr.message?.includes('already been registered')) {
-      const { data: users } = await supabaseAdmin.auth.admin.listUsers()
-      const existingUser = users?.users?.find(u => u.email === jogador.email)
-      if (existingUser) {
-        // Define role e cria perfil para utilizador existente
-        await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-          app_metadata: { role: 'jogador', jogador_id },
-        })
-        await supabaseAdmin.from('user_profiles').upsert({
-          user_id: existingUser.id,
-          role: 'jogador',
-          jogador_id,
-        }, { onConflict: 'user_id' })
-        return Response.json({ ok: true, message: 'Acesso atribuído ao utilizador existente.' })
-      }
-    }
-    return Response.json({ error: inviteErr.message }, { status: 500 })
-  }
+  if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 500 })
 
-  // Define app_metadata com role e jogador_id
+  // Define role no app_metadata e cria perfil
   await supabaseAdmin.auth.admin.updateUserById(invited.user.id, {
     app_metadata: { role: 'jogador', jogador_id },
   })
 
-  // Cria o perfil
-  await supabaseAdmin.from('user_profiles').insert({
+  await supabaseAdmin.from('user_profiles').upsert({
     user_id: invited.user.id,
     role: 'jogador',
     jogador_id,
-  })
+  }, { onConflict: 'user_id' })
 
-  return Response.json({ ok: true, message: `Convite enviado para ${jogador.email}` })
+  const msg = reenviar ? `Convite reenviado para ${jogador.email}` : `Convite enviado para ${jogador.email}`
+  return Response.json({ ok: true, message: msg })
 }
