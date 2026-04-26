@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
-import { POSICAO_CORES } from '@/lib/supabase'
+import { POSICAO_CORES, POSICAO_ABREV } from '@/lib/supabase'
 import type { Jogador, PropostaTimeComJogadores } from '@/lib/supabase'
 import { getTeamColor } from '@/lib/team-colors'
 
@@ -202,7 +202,7 @@ export default function VotarTimesPage() {
                               {jogadores.map((j: Jogador) => (
                                 <li key={j.id} className="flex items-center gap-1">
                                   <span className={`text-[9px] font-semibold px-1 py-0.5 rounded shrink-0 ${POSICAO_CORES[j.posicao_principal]}`}>
-                                    {j.posicao_principal.substring(0, 3).toUpperCase()}
+                                    {POSICAO_ABREV[j.posicao_principal] ?? j.posicao_principal}
                                   </span>
                                   <span className="text-xs text-gray-700 truncate">{j.nome}</span>
                                 </li>

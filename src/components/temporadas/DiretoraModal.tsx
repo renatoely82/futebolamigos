@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Modal from '@/components/ui/Modal'
 import type { Jogador, TemporadaDiretoriaComJogador } from '@/lib/supabase'
+import { POSICAO_ABREV } from '@/lib/supabase'
 
 interface DiretoraModalProps {
   open: boolean
@@ -124,7 +125,7 @@ export default function DiretoraModal({ open, onClose, temporadaId, todosJogador
                     className="w-4 h-4 accent-green-500 shrink-0"
                   />
                   <span className={`text-sm ${selected.has(j.id) ? 'text-green-800 font-medium' : 'text-gray-800'}`}>{j.nome}</span>
-                  <span className="ml-auto text-xs text-gray-400 shrink-0">{j.posicao_principal}</span>
+                  <span className="ml-auto text-xs text-gray-400 shrink-0">{POSICAO_ABREV[j.posicao_principal] ?? j.posicao_principal}</span>
                 </label>
               ))}
             </div>

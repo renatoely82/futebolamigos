@@ -13,6 +13,7 @@ interface Props {
   onNomeLoaded?: (nome: string) => void
   filtroInicio?: string
   filtroFim?: string
+  portalApiUrl?: string // quando definido, usa este URL combinado em vez das APIs de admin
 }
 
 const RESULTADO_STYLE: Record<string, string> = {
@@ -21,7 +22,7 @@ const RESULTADO_STYLE: Record<string, string> = {
   D: 'bg-red-100 text-red-600 border-red-200',
 }
 
-export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoaded, filtroInicio, filtroFim }: Props) {
+export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoaded, filtroInicio, filtroFim, portalApiUrl }: Props) {
   const [jogador, setJogador] = useState<Jogador | null>(null)
   const [partidas, setPartidas] = useState<JogadorPartidaEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,22 +32,31 @@ export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoad
     setJogador(null)
     setPartidas([])
     async function load() {
-      const params = new URLSearchParams()
-      if (filtroInicio) params.set('data_inicio', filtroInicio)
-      if (filtroFim) params.set('data_fim', filtroFim)
-      const query = params.toString() ? `?${params.toString()}` : ''
-      const [jRes, pRes] = await Promise.all([
-        fetch(`/api/jogadores/${jogadorId}`),
-        fetch(`/api/temporadas/${temporadaId}/jogadores/${jogadorId}${query}`),
-      ])
-      if (jRes.ok) {
-        const j: Jogador = await jRes.json()
-        setJogador(j)
-        onNomeLoaded?.(j.nome)
-      }
-      if (pRes.ok) {
-        const data: JogadorTemporadaData = await pRes.json()
-        setPartidas(data.partidas)
+      if (portalApiUrl) {
+        const res = await fetch(portalApiUrl)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.jogador) { setJogador(data.jogador); onNomeLoaded?.(data.jogador.nome) }
+          if (Array.isArray(data.partidas)) setPartidas(data.partidas)
+        }
+      } else {
+        const params = new URLSearchParams()
+        if (filtroInicio) params.set('data_inicio', filtroInicio)
+        if (filtroFim) params.set('data_fim', filtroFim)
+        const query = params.toString() ? `?${params.toString()}` : ''
+        const [jRes, pRes] = await Promise.all([
+          fetch(`/api/jogadores/${jogadorId}`),
+          fetch(`/api/temporadas/${temporadaId}/jogadores/${jogadorId}${query}`),
+        ])
+        if (jRes.ok) {
+          const j: Jogador = await jRes.json()
+          setJogador(j)
+          onNomeLoaded?.(j.nome)
+        }
+        if (pRes.ok) {
+          const data: JogadorTemporadaData = await pRes.json()
+          setPartidas(data.partidas)
+        }
       }
       setLoading(false)
     }
@@ -135,12 +145,18 @@ export default function JogadorDetalheModal({ temporadaId, jogadorId, onNomeLoad
                 {partidas.map(p => (
                   <tr key={p.partida_id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-2.5 px-4">
-                      <Link
-                        href={`/partidas/${p.partida_id}`}
-                        className="text-gray-800 font-medium hover:text-green-700 hover:underline transition-colors"
-                      >
-                        {format(parseISO(p.data), 'dd/MM/yyyy', { locale: ptBR })}
-                      </Link>
+                      {portalApiUrl ? (
+                        <span className="text-gray-800 font-medium">
+                          {format(parseISO(p.data), 'dd/MM/yyyy', { locale: ptBR })}
+                        </span>
+                      ) : (
+                        <Link
+                          href={`/partidas/${p.partida_id}`}
+                          className="text-gray-800 font-medium hover:text-green-700 hover:underline transition-colors"
+                        >
+                          {format(parseISO(p.data), 'dd/MM/yyyy', { locale: ptBR })}
+                        </Link>
+                      )}
                       {p.local && <p className="text-gray-500 text-xs mt-0.5">{p.local}</p>}
                     </td>
                     <td className="py-2.5 px-3 text-center">

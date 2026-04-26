@@ -6,6 +6,7 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { PortalData, PortalPartida } from '@/app/api/public/portal/[id]/route'
 import type { Partida } from '@/lib/supabase'
+import { POSICAO_ABREV } from '@/lib/supabase'
 import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
 import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
 import ConfrontosTab from '@/components/temporadas/ConfrontosTab'
@@ -93,7 +94,7 @@ export default function PortalJogador() {
               {data.jogador.nome.charAt(0).toUpperCase()}
             </div>
             <span className="text-green-100 text-sm font-medium">{data.jogador.nome}</span>
-            <span className="text-green-300 text-xs">· {data.jogador.posicao_principal}</span>
+            <span className="text-green-300 text-xs">· {POSICAO_ABREV[data.jogador.posicao_principal as keyof typeof POSICAO_ABREV] ?? data.jogador.posicao_principal}</span>
           </div>
         </div>
       </div>

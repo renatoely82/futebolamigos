@@ -1,10 +1,10 @@
 import type { Posicao } from '@/lib/supabase'
-import { POSICAO_CORES } from '@/lib/supabase'
+import { POSICAO_CORES, POSICAO_ABREV } from '@/lib/supabase'
 
 export function PositionBadge({ posicao }: { posicao: Posicao }) {
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${POSICAO_CORES[posicao]}`}>
-      {posicao}
+      {POSICAO_ABREV[posicao] ?? posicao}
     </span>
   )
 }

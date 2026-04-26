@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getTeamColor } from '@/lib/team-colors'
 import type { PortalPartida } from '@/app/api/public/portal/[id]/route'
-import { POSICOES } from '@/lib/supabase'
+import { POSICOES, POSICAO_ABREV } from '@/lib/supabase'
 
 const STATUS_LABEL: Record<string, string> = {
   agendada: 'Agendada',
@@ -100,7 +100,7 @@ export default function PortalPartidasTab({ partidas }: Props) {
                           .sort((a, b) => POSICOES.indexOf(a.posicao as never) - POSICOES.indexOf(b.posicao as never) || a.nome.localeCompare(b.nome, 'pt-BR'))
                           .map(j => (
                             <div key={j.id} className="flex items-center gap-1.5">
-                              <span className="text-gray-400 text-xs w-12 shrink-0 truncate">{j.posicao}</span>
+                              <span className="text-gray-400 text-xs w-7 shrink-0">{POSICAO_ABREV[j.posicao] ?? j.posicao.slice(0, 2).toUpperCase()}</span>
                               <span className="text-gray-800 text-sm flex-1 truncate">{j.nome}</span>
                               {(j.gols ?? 0) > 0 && <span className="text-xs text-gray-500 shrink-0">⚽ {j.gols}</span>}
                               {(j.gols_contra ?? 0) > 0 && <span className="text-xs text-red-400 shrink-0">⚽↩ {j.gols_contra}</span>}
@@ -116,7 +116,7 @@ export default function PortalPartidasTab({ partidas }: Props) {
                           .sort((a, b) => POSICOES.indexOf(a.posicao as never) - POSICOES.indexOf(b.posicao as never) || a.nome.localeCompare(b.nome, 'pt-BR'))
                           .map(j => (
                             <div key={j.id} className="flex items-center gap-1.5">
-                              <span className="text-gray-400 text-xs w-12 shrink-0 truncate">{j.posicao}</span>
+                              <span className="text-gray-400 text-xs w-7 shrink-0">{POSICAO_ABREV[j.posicao] ?? j.posicao.slice(0, 2).toUpperCase()}</span>
                               <span className="text-gray-800 text-sm flex-1 truncate">{j.nome}</span>
                               {(j.gols ?? 0) > 0 && <span className="text-xs text-gray-500 shrink-0">⚽ {j.gols}</span>}
                               {(j.gols_contra ?? 0) > 0 && <span className="text-xs text-red-400 shrink-0">⚽↩ {j.gols_contra}</span>}

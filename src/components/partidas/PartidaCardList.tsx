@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { StatusBadge } from '@/components/ui/Badge'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { POSICAO_CORES } from '@/lib/supabase'
+import { POSICAO_CORES, POSICAO_ABREV } from '@/lib/supabase'
 import type { Jogador, GolComDetalhes, PartidaJogadorComDetalhes } from '@/lib/supabase'
 import type { PartidaComCount } from './types'
 import Modal from '@/components/ui/Modal'
@@ -99,7 +99,7 @@ function EscalacaoInline({
                       return (
                         <li key={j.id} className="flex items-center gap-1.5">
                           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${POSICAO_CORES[j.posicao_principal]}`}>
-                            {j.posicao_principal.substring(0, 3).toUpperCase()}
+                            {POSICAO_ABREV[j.posicao_principal] ?? j.posicao_principal}
                           </span>
                           <span className="text-sm text-gray-700 truncate flex-1">{j.nome}</span>
                           {g && (

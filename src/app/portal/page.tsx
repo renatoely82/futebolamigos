@@ -6,11 +6,13 @@ import { createClient } from '@/lib/supabase-browser'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { PortalData, PortalPartida } from '@/app/api/public/portal/[id]/route'
+import { POSICAO_ABREV } from '@/lib/supabase'
 import ClassificacaoTable from '@/components/temporadas/ClassificacaoTable'
 import ArtilheirosTable from '@/components/temporadas/ArtilheirosTable'
 import ConfrontosTab from '@/components/temporadas/ConfrontosTab'
 import PortalPartidasTab from '@/components/portal/PortalPartidasTab'
-import PortalJogadorModal from '@/components/portal/PortalJogadorModal'
+import Modal from '@/components/ui/Modal'
+import JogadorDetalheModal from '@/components/temporadas/JogadorDetalheModal'
 
 type Aba = 'classificacao' | 'artilheiros' | 'confrontos' | 'partidas' | 'pagamentos'
 
@@ -85,7 +87,7 @@ export default function PortalPage() {
                   {data.jogador.nome.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-green-100 text-sm font-medium">{data.jogador.nome}</span>
-                <span className="text-green-300 text-xs">· {data.jogador.posicao_principal}</span>
+                <span className="text-green-300 text-xs">· {POSICAO_ABREV[data.jogador.posicao_principal as keyof typeof POSICAO_ABREV] ?? data.jogador.posicao_principal}</span>
               </div>
             </div>
             <button
@@ -232,12 +234,20 @@ export default function PortalPage() {
 
       <p className="text-center text-gray-400 text-xs mt-8">Barcelombra Fútbol · Portal do Jogador</p>
 
-      {selectedJogadorId && (() => {
-        const entry = data.classificacao.find(e => e.jogador_id === selectedJogadorId)
-        return entry ? (
-          <PortalJogadorModal entry={entry} onClose={() => setSelectedJogadorId(null)} />
-        ) : null
-      })()}
+      {selectedJogadorId && (
+        <Modal
+          open={true}
+          onClose={() => setSelectedJogadorId(null)}
+          title={data.classificacao.find(e => e.jogador_id === selectedJogadorId)?.nome ?? ''}
+          size="xl"
+        >
+          <JogadorDetalheModal
+            temporadaId={data.temporada?.id ?? ''}
+            jogadorId={selectedJogadorId}
+            portalApiUrl={`/api/me/jogador/${selectedJogadorId}`}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Jogador, Posicao, PartidaJogadorComDetalhes, Partida, PropostaTimeComJogadores, VotacaoStatus } from '@/lib/supabase'
-import { POSICAO_CORES, POSICOES } from '@/lib/supabase'
+import { POSICAO_CORES, POSICAO_ABREV, POSICOES } from '@/lib/supabase'
 import Breadcrumbs from '@/components/ui/Breadcrumbs'
 import { useToast } from '@/components/ui/Toast'
 import TeamProposalCard from '@/components/partidas/TeamProposalCard'
@@ -410,7 +410,7 @@ export default function TimesPage() {
                     {time.jogadores.map((j) => (
                       <li key={j.id} className="flex items-center gap-1.5">
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${POSICAO_CORES[j.posicao_principal]} shrink-0`}>
-                          {j.posicao_principal.substring(0, 3).toUpperCase()}
+                          {POSICAO_ABREV[j.posicao_principal] ?? j.posicao_principal}
                         </span>
                         <span className="text-sm text-gray-700 truncate">{j.nome}</span>
                       </li>

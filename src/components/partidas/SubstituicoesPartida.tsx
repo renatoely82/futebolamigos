@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { Partida, Jogador, PartidaJogadorComDetalhes, SubstituicaoComDetalhes, TeamSplit } from '@/lib/supabase'
+import { POSICAO_ABREV } from '@/lib/supabase'
 
 interface Props {
   partida: Partida
@@ -159,7 +160,7 @@ export default function SubstituicoesPartida({ partida, players, allPlayers, onU
             >
               <option value="">Selecionar...</option>
               {opcoesSubstituto.map(j => (
-                <option key={j.id} value={j.id}>{j.nome} — {j.posicao_principal}</option>
+                <option key={j.id} value={j.id}>{j.nome} — {POSICAO_ABREV[j.posicao_principal] ?? j.posicao_principal}</option>
               ))}
             </select>
           </div>

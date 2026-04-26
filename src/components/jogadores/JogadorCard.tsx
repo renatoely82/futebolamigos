@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Jogador } from '@/lib/supabase'
+import { POSICAO_ABREV } from '@/lib/supabase'
 import { PositionBadge } from '@/components/ui/Badge'
 
 interface JogadorCardProps {
@@ -31,10 +32,10 @@ export default function JogadorCard({ jogador, onEdit, onDelete, onConvidar }: J
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <PositionBadge posicao={jogador.posicao_principal} />
             {jogador.posicao_secundaria_1 && (
-              <span className="text-gray-500 text-xs">{jogador.posicao_secundaria_1}</span>
+              <span className="text-gray-500 text-xs">{POSICAO_ABREV[jogador.posicao_secundaria_1] ?? jogador.posicao_secundaria_1}</span>
             )}
             {jogador.posicao_secundaria_2 && (
-              <span className="text-gray-500 text-xs">/ {jogador.posicao_secundaria_2}</span>
+              <span className="text-gray-500 text-xs">/ {POSICAO_ABREV[jogador.posicao_secundaria_2] ?? jogador.posicao_secundaria_2}</span>
             )}
           </div>
           <div className="flex items-center gap-1 mt-2">

@@ -13,6 +13,15 @@ export const POSICAO_CORES: Record<Posicao, string> = {
   Atacante: 'bg-red-500 text-white',
 }
 
+export const POSICAO_ABREV: Record<Posicao, string> = {
+  Goleiro: 'GL',
+  Zagueiro: 'ZA',
+  Lateral: 'LA',
+  Volante: 'VO',
+  Meia: 'ME',
+  Atacante: 'AT',
+}
+
 export const POSICAO_GRUPO: Record<Posicao, 'goleiro' | 'defesa' | 'meio' | 'ataque'> = {
   Goleiro: 'goleiro',
   Zagueiro: 'defesa',
