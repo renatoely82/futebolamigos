@@ -11,8 +11,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    // Clear any stale/invalid tokens so Supabase doesn't try to refresh them
-    createClient().auth.signOut({ scope: 'local' })
+    // Redireciona se já há sessão válida com role
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      const role = (user?.app_metadata as Record<string, string> | undefined)?.role
+      if (role === 'admin') window.location.href = '/partidas'
+      else if (role === 'jogador') window.location.href = '/portal'
+    })
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
