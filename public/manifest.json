@@ -2,7 +2,7 @@
   "name": "Barcelombra Fútbol",
   "short_name": "Barcelombra",
   "description": "Gestão de partidas e jogadores",
-  "start_url": "/partidas",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f4f6f9",
   "theme_color": "#22c55e",
