@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server'
 // Rotas públicas — sem autenticação necessária
 const PUBLIC_PATHS = [
   '/login',
+  '/reset-password',
   '/enquete',   // /enquete/[id]?token=xxx (votação por link)
   '/jogador',   // /jogador/[id]?token=xxx (portal por token)
   '/inscricao',
