@@ -110,6 +110,9 @@ export async function POST(req: Request) {
             Se não esperavas este email, podes ignorá-lo.<br/>
             O link expira em 24 horas.
           </p>
+          <p style="color: #bbb; font-size: 10px; margin-top: 16px; word-break: break-all;">
+            [DEBUG] URL: ${inviteUrl}
+          </p>
         </div>
       `,
     })
