@@ -69,9 +69,19 @@ export default function CalendarioPartidas({ partidas }: { partidas: PartidaComC
             <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h2 className="text-gray-800 font-semibold text-base capitalize">
-          {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-gray-800 font-semibold text-base capitalize">
+            {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+          </h2>
+          {!isSameMonth(currentMonth, today) && (
+            <button
+              onClick={() => setCurrentMonth(startOfMonth(today))}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors"
+            >
+              Hoje
+            </button>
+          )}
+        </div>
         <button
           onClick={() => setCurrentMonth(m => addMonths(m, 1))}
           className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
