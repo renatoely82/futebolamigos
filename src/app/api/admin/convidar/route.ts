@@ -68,11 +68,9 @@ export async function POST(req: Request) {
   }
 
   // Cria o utilizador no Auth (sem enviar email pelo Supabase)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://barcelombra.vercel.app'
   const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.generateLink({
     type: 'invite',
     email: jogador.email,
-    options: { redirectTo: `${appUrl}/aceitar-convite` },
   })
 
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 500 })
@@ -88,8 +86,10 @@ export async function POST(req: Request) {
     jogador_id,
   }, { onConflict: 'user_id' })
 
-  // Envia email via Gmail
-  const inviteUrl = invited.properties.action_link
+  // Substitui redirect_to no action_link para apontar para /aceitar-convite
+  const actionUrl = new URL(invited.properties.action_link)
+  actionUrl.searchParams.set('redirect_to', 'https://barcelombra.vercel.app/aceitar-convite')
+  const inviteUrl = actionUrl.toString()
   try {
     await transporter.sendMail({
       from: `Barcelombra <${process.env.GMAIL_USER}>`,
