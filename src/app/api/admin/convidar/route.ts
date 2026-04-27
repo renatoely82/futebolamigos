@@ -67,29 +67,43 @@ export async function POST(req: Request) {
     }
   }
 
-  // Cria o utilizador no Auth (sem enviar email pelo Supabase)
-  const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'invite',
-    email: jogador.email,
-  })
+  // Gera o link de convite via REST API (o SDK ignora o redirectTo para invite)
+  const generateRes = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/generate_link`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'invite',
+        email: jogador.email,
+        redirect_to: 'https://barcelombra.vercel.app/aceitar-convite',
+      }),
+    }
+  )
 
-  if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 500 })
+  if (!generateRes.ok) {
+    const err = await generateRes.json()
+    return Response.json({ error: err.msg ?? 'Erro ao gerar convite' }, { status: 500 })
+  }
+
+  const invited = await generateRes.json()
+  const invitedUserId: string = invited.user.id
+  const inviteUrl: string = invited.action_link
 
   // Define role no app_metadata e cria perfil
-  await supabaseAdmin.auth.admin.updateUserById(invited.user.id, {
+  await supabaseAdmin.auth.admin.updateUserById(invitedUserId, {
     app_metadata: { role: 'jogador', jogador_id },
   })
 
   await supabaseAdmin.from('user_profiles').upsert({
-    user_id: invited.user.id,
+    user_id: invitedUserId,
     role: 'jogador',
     jogador_id,
   }, { onConflict: 'user_id' })
-
-  // Substitui redirect_to no action_link para apontar para /aceitar-convite
-  const actionUrl = new URL(invited.properties.action_link)
-  actionUrl.searchParams.set('redirect_to', 'https://barcelombra.vercel.app/aceitar-convite')
-  const inviteUrl = actionUrl.toString()
   try {
     await transporter.sendMail({
       from: `Barcelombra <${process.env.GMAIL_USER}>`,
