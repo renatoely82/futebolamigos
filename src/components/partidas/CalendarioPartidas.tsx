@@ -11,14 +11,14 @@ import { ptBR } from 'date-fns/locale'
 import type { PartidaComCount } from './types'
 
 const STATUS_DOT: Record<string, string> = {
-  agendada: 'bg-green-500',
-  realizada: 'bg-gray-400',
+  agendada: 'bg-blue-500',
+  realizada: 'bg-green-500',
   cancelada: 'bg-red-400',
 }
 
 const STATUS_PILL: Record<string, string> = {
-  agendada: 'bg-green-100 text-green-700 border border-green-200',
-  realizada: 'bg-gray-100 text-gray-600 border border-gray-200',
+  agendada: 'bg-blue-100 text-blue-700 border border-blue-200',
+  realizada: 'bg-green-100 text-green-700 border border-green-200',
   cancelada: 'bg-red-50 text-red-500 border border-red-200',
 }
 
@@ -146,10 +146,10 @@ export default function CalendarioPartidas({ partidas }: { partidas: PartidaComC
       {/* Legend */}
       <div className="flex items-center gap-4 mt-3">
         <span className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" /> Agendada
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" /> Agendada
         </span>
         <span className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="w-2.5 h-2.5 rounded-full bg-gray-400 shrink-0" /> Realizada
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" /> Realizada
         </span>
         <span className="flex items-center gap-1.5 text-xs text-gray-500">
           <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" /> Cancelada
