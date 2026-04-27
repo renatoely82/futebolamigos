@@ -68,7 +68,23 @@ export default function LoginPage() {
     if (!inviteMatch) { setInviteError('As senhas não coincidem.'); return }
     setInviteLoading(true)
     try {
-      const { error } = await createClient().auth.updateUser({ password: invitePassword })
+      const supabase = createClient()
+
+      // Garante que a sessão está estabelecida a partir dos tokens do hash
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const params = new URLSearchParams(_initialHash.replace(/^#/, ''))
+        const access_token = params.get('access_token') ?? ''
+        const refresh_token = params.get('refresh_token') ?? ''
+        if (!access_token || !refresh_token) {
+          setInviteError('Sessão expirada. Pede um novo convite ao administrador.')
+          return
+        }
+        const { error: sessionError } = await supabase.auth.setSession({ access_token, refresh_token })
+        if (sessionError) { setInviteError(sessionError.message); return }
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: invitePassword })
       if (error) { setInviteError(error.message); return }
       setInviteSuccess(true)
       setTimeout(() => { window.location.href = '/portal' }, 2000)
