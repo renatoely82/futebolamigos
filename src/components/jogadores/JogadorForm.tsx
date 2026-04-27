@@ -41,10 +41,21 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
     setForm(f => ({ ...f, [key]: value }))
   }
 
+  function validateTelefone(tel: string): string {
+    if (!tel.trim()) return ''
+    const digits = tel.replace(/[\s\-().]/g, '')
+    if (!digits.startsWith('+')) return 'Inclui o indicativo do país (ex: +34 612 345 678)'
+    if (!/^\+\d{7,15}$/.test(digits)) return 'Formato inválido. Ex: +34 612 345 678 ou +351 912 345 678'
+    return ''
+  }
+
+  const telefoneError = validateTelefone(form.telefone)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     if (!form.nome.trim()) { setError('Nome é obrigatório.'); return }
+    if (telefoneError) { setError(telefoneError); return }
     setSaving(true)
     try {
       await onSave(form)
@@ -150,9 +161,18 @@ export default function JogadorForm({ initial, onSave, onCancel }: JogadorFormPr
             type="tel"
             value={form.telefone}
             onChange={e => set('telefone', e.target.value)}
-            className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500"
-            placeholder="+55 11 99999-0000"
+            className={`w-full bg-white border rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none transition-colors ${
+              form.telefone && telefoneError
+                ? 'border-red-300 focus:border-red-400'
+                : form.telefone && !telefoneError
+                  ? 'border-green-400 focus:border-green-500'
+                  : 'border-[#e0e0e0] focus:border-green-500'
+            }`}
+            placeholder="+34 612 345 678"
           />
+          {form.telefone && telefoneError && (
+            <p className="text-xs text-red-500 mt-1">{telefoneError}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1">Aniversário</label>
