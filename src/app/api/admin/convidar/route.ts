@@ -68,10 +68,11 @@ export async function POST(req: Request) {
   }
 
   // Cria o utilizador no Auth (sem enviar email pelo Supabase)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://barcelombra.vercel.app'
   const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.generateLink({
     type: 'invite',
     email: jogador.email,
-    options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/aceitar-convite` },
+    options: { redirectTo: `${appUrl}/aceitar-convite` },
   })
 
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 500 })
@@ -109,9 +110,6 @@ export async function POST(req: Request) {
           <p style="color: #999; font-size: 12px; margin-top: 24px;">
             Se não esperavas este email, podes ignorá-lo.<br/>
             O link expira em 24 horas.
-          </p>
-          <p style="color: #bbb; font-size: 10px; margin-top: 16px; word-break: break-all;">
-            [DEBUG] URL: ${inviteUrl}
           </p>
         </div>
       `,
