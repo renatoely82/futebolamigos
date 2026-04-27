@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     `,
   })
 
-  if (emailErr) return Response.json({ error: 'Utilizador criado mas falhou o envio do email.' }, { status: 500 })
+  if (emailErr) return Response.json({ error: `Utilizador criado mas falhou o envio do email: ${emailErr.message}` }, { status: 500 })
 
   const msg = reenviar ? `Convite reenviado para ${jogador.email}` : `Convite enviado para ${jogador.email}`
   return Response.json({ ok: true, message: msg })
