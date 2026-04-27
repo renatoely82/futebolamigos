@@ -52,19 +52,15 @@ export async function POST(req: Request) {
     }
   }
 
-  // Para reenvio: se utilizador já existe no auth, apaga (se não confirmado) para poder re-convidar
-  if (reenviar) {
-    const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
-    const existingAuthUser = usersData?.users?.find(u => u.email === jogador.email)
+  // Limpa utilizador existente no Auth se não confirmado (reenvio ou órfão de tentativa anterior)
+  const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+  const existingAuthUser = usersData?.users?.find(u => u.email === jogador.email)
 
-    if (existingAuthUser) {
-      // Se já confirmou, não precisa reenviar — já tem acesso
-      if (existingAuthUser.email_confirmed_at) {
-        return Response.json({ ok: true, message: `${jogador.nome} já confirmou o acesso e pode entrar normalmente.` })
-      }
-      // Não confirmou ainda — apaga para poder re-convidar (ON DELETE CASCADE remove o user_profile)
-      await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id)
+  if (existingAuthUser) {
+    if (existingAuthUser.email_confirmed_at) {
+      return Response.json({ ok: true, message: `${jogador.nome} já confirmou o acesso e pode entrar normalmente.` })
     }
+    await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id)
   }
 
   // Gera o link de convite via REST API (o SDK ignora o redirectTo para invite)
