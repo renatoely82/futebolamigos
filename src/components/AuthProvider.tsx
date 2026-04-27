@@ -12,7 +12,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
-        router.push('/login')
+        const path = window.location.pathname
+        if (!path.includes('aceitar-convite') && !path.includes('reset-password')) {
+          router.push('/login')
+        }
       }
     })
 
