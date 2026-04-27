@@ -131,6 +131,28 @@ export interface PagamentoDiaristaComJogador extends PagamentoDiarista {
   jogador: Jogador
 }
 
+export type CategoriaDespesa = 'aluguel' | 'material' | 'arbitragem' | 'outros'
+
+export const CATEGORIAS_DESPESA: { value: CategoriaDespesa; label: string }[] = [
+  { value: 'aluguel', label: 'Aluguel do campo' },
+  { value: 'material', label: 'Material (bolas, coletes...)' },
+  { value: 'arbitragem', label: 'Arbitragem' },
+  { value: 'outros', label: 'Outros' },
+]
+
+export interface Despesa {
+  id: string
+  temporada_id: string
+  data: string
+  descricao: string
+  categoria: CategoriaDespesa
+  valor: number
+  forma_pagamento: FormaPagamento | null
+  observacoes: string | null
+  criado_em: string
+  atualizado_em: string
+}
+
 export interface TemporadaValoresMes {
   id: string
   temporada_id: string

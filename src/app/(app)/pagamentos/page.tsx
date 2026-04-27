@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { format, parseISO, eachMonthOfInterval } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import type { Temporada, FormaPagamento, TemporadaValoresMes } from '@/lib/supabase'
+import type { Temporada, FormaPagamento, TemporadaValoresMes, Despesa, CategoriaDespesa } from '@/lib/supabase'
+import { CATEGORIAS_DESPESA } from '@/lib/supabase'
 import { useToast } from '@/components/ui/Toast'
 
-type Tab = 'mensalistas' | 'diaristas'
+type Tab = 'mensalistas' | 'diaristas' | 'despesas'
 
 interface JogadorInfo {
   id: string
@@ -119,6 +120,21 @@ export default function PagamentosPage() {
   const [savingDiaristaKey, setSavingDiaristaKey] = useState<Set<string>>(new Set())
   const [partidaFiltroId, setPartidaFiltroId] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+
+  // Despesas state
+  const [despesas, setDespesas] = useState<Despesa[]>([])
+  const [loadingDespesas, setLoadingDespesas] = useState(false)
+  const [showNovaDespesa, setShowNovaDespesa] = useState(false)
+  const [savingDespesa, setSavingDespesa] = useState(false)
+  const [deletingDespesaId, setDeletingDespesaId] = useState<string | null>(null)
+  const [novaDespesa, setNovaDespesa] = useState({
+    data: new Date().toISOString().split('T')[0],
+    descricao: '',
+    categoria: 'aluguel' as CategoriaDespesa,
+    valor: '',
+    forma_pagamento: null as FormaPagamento | null,
+    observacoes: '',
+  })
 
   useEffect(() => {
     fetch('/api/temporadas')
@@ -244,6 +260,48 @@ export default function PagamentosPage() {
   useEffect(() => { setPartidaFiltroId('') }, [temporadaId, mesSelecionado])
   useEffect(() => { if (tab === 'mensalistas') setPartidaFiltroId('') }, [tab])
 
+  // Load despesas when temporada changes
+  const loadDespesas = useCallback(async () => {
+    if (!temporadaId) { setDespesas([]); return }
+    setLoadingDespesas(true)
+    const res = await fetch(`/api/despesas?temporada_id=${temporadaId}`)
+    if (res.ok) setDespesas(await res.json())
+    setLoadingDespesas(false)
+  }, [temporadaId])
+
+  useEffect(() => { loadDespesas() }, [loadDespesas])
+
+  async function salvarDespesa() {
+    if (!novaDespesa.descricao.trim() || !novaDespesa.valor || !temporadaId) return
+    setSavingDespesa(true)
+    const res = await fetch('/api/despesas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...novaDespesa, temporada_id: temporadaId, valor: Number(novaDespesa.valor) }),
+    })
+    if (res.ok) {
+      toast('Despesa registrada.')
+      setShowNovaDespesa(false)
+      setNovaDespesa({ data: new Date().toISOString().split('T')[0], descricao: '', categoria: 'aluguel', valor: '', forma_pagamento: null, observacoes: '' })
+      loadDespesas()
+    } else {
+      toast('Erro ao registrar despesa.', 'error')
+    }
+    setSavingDespesa(false)
+  }
+
+  async function deletarDespesa(id: string) {
+    setDeletingDespesaId(id)
+    const res = await fetch(`/api/despesas/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      toast('Despesa removida.')
+      loadDespesas()
+    } else {
+      toast('Erro ao remover despesa.', 'error')
+    }
+    setDeletingDespesaId(null)
+  }
+
   async function salvarMensalidade() {
     if (!temporadaId || !mesSelecionado) return
     setSalvandoMensalidade(true)
@@ -354,6 +412,10 @@ export default function PagamentosPage() {
     ? (totalEsperado ?? 0) + (totalDiaristaEsperado ?? 0)
     : null
 
+  // Despesas calculations
+  const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0)
+  const saldoCaixa = totalCombinadoRecebido - totalDespesas
+
   const formatVal = (v: number) => v % 1 === 0 ? String(v) : v.toFixed(2)
 
   return (
@@ -366,7 +428,7 @@ export default function PagamentosPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit">
-        {(['mensalistas', 'diaristas'] as Tab[]).map(t => (
+        {(['mensalistas', 'diaristas', 'despesas'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -480,6 +542,18 @@ export default function PagamentosPage() {
                 )}
               </div>
             </div>
+            {/* Saldo do caixa */}
+            {totalDespesas > 0 && (
+              <div className={`flex items-center justify-between rounded-lg px-3 py-2.5 ${saldoCaixa >= 0 ? 'bg-blue-50' : 'bg-red-50'}`}>
+                <div>
+                  <span className={`text-xs font-medium ${saldoCaixa >= 0 ? 'text-blue-700' : 'text-red-600'}`}>Saldo do caixa</span>
+                  <span className="text-xs text-gray-400 ml-1.5">({formatVal(totalDespesas)} € despesas)</span>
+                </div>
+                <span className={`text-sm font-bold ${saldoCaixa >= 0 ? 'text-blue-700' : 'text-red-600'}`}>
+                  {saldoCaixa >= 0 ? '+' : ''}{formatVal(saldoCaixa)} €
+                </span>
+              </div>
+            )}
             {/* Method breakdown combined */}
             {(totalCash + totalDiaristaCash > 0 || totalBizum + totalDiaristaBizum > 0 || totalPix + totalDiaristaPix > 0) && (
               <div className="flex flex-wrap gap-1.5">
@@ -1085,6 +1159,200 @@ export default function PagamentosPage() {
                 </div>
               )
             })}
+          </div>
+        )
+      )}
+      {/* Results — Despesas */}
+      {tab === 'despesas' && (
+        !temporadaId ? (
+          <div className="bg-white border border-[#e0e0e0] rounded-xl py-16 text-center text-gray-500 text-sm">
+            Selecione uma temporada para ver as despesas.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {/* Saldo do caixa card */}
+            <div className="bg-white border border-[#e0e0e0] rounded-xl p-4">
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Saldo do caixa — {temporadaSelecionada?.nome}</p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">Entradas</p>
+                  <p className="text-lg font-bold text-green-600">{formatVal(totalCombinadoRecebido)} €</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">Saídas</p>
+                  <p className="text-lg font-bold text-red-500">{formatVal(totalDespesas)} €</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">Saldo</p>
+                  <p className={`text-lg font-bold ${saldoCaixa >= 0 ? 'text-blue-600' : 'text-red-500'}`}>
+                    {saldoCaixa >= 0 ? '+' : ''}{formatVal(saldoCaixa)} €
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Nova despesa button / form */}
+            {!showNovaDespesa ? (
+              <button
+                onClick={() => setShowNovaDespesa(true)}
+                className="w-full flex items-center justify-center gap-2 bg-white border border-dashed border-gray-300 hover:border-green-400 hover:bg-green-50 rounded-xl py-3 text-sm text-gray-500 hover:text-green-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeWidth={2.5} strokeLinecap="round" d="M12 5v14M5 12h14" />
+                </svg>
+                Registrar despesa
+              </button>
+            ) : (
+              <div className="bg-white border border-[#e0e0e0] rounded-xl p-4 space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Nova despesa</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Data</label>
+                    <input
+                      type="date"
+                      value={novaDespesa.data}
+                      onChange={e => setNovaDespesa(p => ({ ...p, data: e.target.value }))}
+                      className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Valor (€)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={novaDespesa.valor}
+                      onChange={e => setNovaDespesa(p => ({ ...p, valor: e.target.value }))}
+                      placeholder="0"
+                      className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Descrição</label>
+                  <input
+                    type="text"
+                    value={novaDespesa.descricao}
+                    onChange={e => setNovaDespesa(p => ({ ...p, descricao: e.target.value }))}
+                    placeholder="ex: Aluguel campo 27/04"
+                    className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Categoria</label>
+                  <select
+                    value={novaDespesa.categoria}
+                    onChange={e => setNovaDespesa(p => ({ ...p, categoria: e.target.value as CategoriaDespesa }))}
+                    className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                  >
+                    {CATEGORIAS_DESPESA.map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1.5">Forma de pagamento</label>
+                  <div className="flex gap-1.5">
+                    {FORMAS.map(f => (
+                      <button
+                        key={f.value}
+                        type="button"
+                        onClick={() => setNovaDespesa(p => ({ ...p, forma_pagamento: p.forma_pagamento === f.value ? null : f.value }))}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                          novaDespesa.forma_pagamento === f.value
+                            ? f.color + ' ring-2 ring-offset-1 ring-current'
+                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Observação</label>
+                  <input
+                    type="text"
+                    value={novaDespesa.observacoes}
+                    onChange={e => setNovaDespesa(p => ({ ...p, observacoes: e.target.value }))}
+                    placeholder="opcional..."
+                    className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-green-500"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={salvarDespesa}
+                    disabled={savingDespesa || !novaDespesa.descricao.trim() || !novaDespesa.valor}
+                    className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                  >
+                    {savingDespesa ? 'Guardando...' : 'Guardar'}
+                  </button>
+                  <button
+                    onClick={() => setShowNovaDespesa(false)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Despesas list */}
+            {loadingDespesas ? (
+              <div className="bg-white border border-[#e0e0e0] rounded-xl py-10 text-center text-gray-400 text-sm">Carregando...</div>
+            ) : despesas.length === 0 ? (
+              <div className="bg-white border border-[#e0e0e0] rounded-xl py-10 text-center text-gray-400 text-sm">
+                Nenhuma despesa registrada nesta temporada.
+              </div>
+            ) : (
+              <div className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
+                <div className="divide-y divide-gray-100">
+                  {despesas.map(d => {
+                    const catLabel = CATEGORIAS_DESPESA.find(c => c.value === d.categoria)?.label ?? d.categoria
+                    return (
+                      <div key={d.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-gray-800 text-sm font-medium truncate">{d.descricao}</p>
+                            {d.forma_pagamento && (
+                              <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${getFormaStyle(d.forma_pagamento)}`}>
+                                {d.forma_pagamento}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="text-xs text-gray-400">
+                              {format(parseISO(d.data), "d 'de' MMMM yyyy", { locale: ptBR })}
+                            </span>
+                            <span className="text-xs text-gray-400">·</span>
+                            <span className="text-xs text-gray-400">{catLabel}</span>
+                            {d.observacoes && (
+                              <>
+                                <span className="text-xs text-gray-400">·</span>
+                                <span className="text-xs text-gray-400 italic truncate max-w-[140px]">{d.observacoes}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-sm font-bold text-red-500">−{formatVal(d.valor)} €</span>
+                          <button
+                            onClick={() => deletarDespesa(d.id)}
+                            disabled={deletingDespesaId === d.id}
+                            className="text-gray-300 hover:text-red-400 transition-colors p-1 rounded disabled:opacity-40"
+                            title="Remover despesa"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )
       )}
