@@ -87,7 +87,8 @@ export async function POST(req: Request) {
   }
 
   const invited = await generateRes.json()
-  const invitedUserId: string = invited.user.id
+  // A REST API retorna o user no nível raiz (não em invited.user)
+  const invitedUserId: string = invited.id
   const inviteUrl: string = invited.action_link
 
   // Define role no app_metadata e cria perfil
