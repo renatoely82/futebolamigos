@@ -1,10 +1,13 @@
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 // POST /api/admin/convidar
 // Body: { jogador_id: string, reenviar?: boolean }
@@ -56,11 +59,12 @@ export async function POST(req: Request) {
     }
   }
 
-  // Envia convite
-  const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-    jogador.email,
-    { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/aceitar-convite` }
-  )
+  // Cria o utilizador no Auth (sem enviar email pelo Supabase)
+  const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.generateLink({
+    type: 'invite',
+    email: jogador.email,
+    options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/aceitar-convite` },
+  })
 
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 500 })
 
@@ -74,6 +78,34 @@ export async function POST(req: Request) {
     role: 'jogador',
     jogador_id,
   }, { onConflict: 'user_id' })
+
+  // Envia email via Resend
+  const inviteUrl = invited.properties.action_link
+  const { error: emailErr } = await resend.emails.send({
+    from: 'Barcelombra <onboarding@resend.dev>',
+    to: jogador.email,
+    subject: 'Convite para o portal Barcelombra',
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
+        <img src="https://barcelombra.vercel.app/Barcelombra_transparente.png" alt="Barcelombra" style="width: 80px; margin-bottom: 16px;" />
+        <h2 style="color: #1a1a1a; margin: 0 0 8px;">Bem-vindo ao Barcelombra!</h2>
+        <p style="color: #555; margin: 0 0 24px;">
+          Foste convidado para aceder ao portal do grupo. Clica no botão abaixo para criar a tua senha e entrar.
+        </p>
+        <a href="${inviteUrl}"
+           style="display: inline-block; background: #22c55e; color: white; font-weight: 600;
+                  padding: 12px 24px; border-radius: 8px; text-decoration: none;">
+          Aceitar convite
+        </a>
+        <p style="color: #999; font-size: 12px; margin-top: 24px;">
+          Se não esperavas este email, podes ignorá-lo.<br/>
+          O link expira em 24 horas.
+        </p>
+      </div>
+    `,
+  })
+
+  if (emailErr) return Response.json({ error: 'Utilizador criado mas falhou o envio do email.' }, { status: 500 })
 
   const msg = reenviar ? `Convite reenviado para ${jogador.email}` : `Convite enviado para ${jogador.email}`
   return Response.json({ ok: true, message: msg })
