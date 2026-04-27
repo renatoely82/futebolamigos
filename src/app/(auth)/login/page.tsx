@@ -15,6 +15,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
+    // Supabase redireciona convites para /login — reencaminhar para /aceitar-convite
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=invite')) {
+      window.location.href = '/aceitar-convite' + window.location.hash
+      return
+    }
+
     createClient().auth.getUser().then(({ data: { user } }) => {
       const role = (user?.app_metadata as Record<string, string> | undefined)?.role
       if (role === 'admin') window.location.href = '/partidas'
