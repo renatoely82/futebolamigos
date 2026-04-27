@@ -44,14 +44,8 @@ export default function LoginPage() {
     // Fluxo de convite — Supabase redireciona para /login com type=invite no hash
     if (_initialHash.includes('type=invite')) {
       setIsInvite(true)
-      const supabase = createClient()
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) setInviteReady(true)
-      })
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'SIGNED_IN') setInviteReady(true)
-      })
-      return () => subscription.unsubscribe()
+      setInviteReady(true) // mostra o formulário imediatamente — a sessão já foi estabelecida pelo Supabase ao processar o hash
+      return
     }
 
     // Fluxo normal — redirecionar se já autenticado
@@ -93,14 +87,7 @@ export default function LoginPage() {
             <p className="text-gray-500 text-sm mt-1">Bem-vindo! Cria a tua senha para entrar.</p>
           </div>
 
-          {!inviteReady ? (
-            <div className="text-center">
-              <p className="text-gray-500 text-sm">A validar o convite...</p>
-              <p className="text-gray-400 text-xs mt-2">
-                Se nada acontecer, pede um novo convite ao administrador.
-              </p>
-            </div>
-          ) : inviteSuccess ? (
+          {inviteSuccess ? (
             <div className="text-center space-y-4">
               <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-4">
                 <p className="text-green-700 font-medium">Senha criada com sucesso!</p>
