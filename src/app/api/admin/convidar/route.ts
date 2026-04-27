@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   // Envia convite
   const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
     jogador.email,
-    { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/portal` }
+    { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/aceitar-convite` }
   )
 
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 500 })

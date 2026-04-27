@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server'
 const PUBLIC_PATHS = [
   '/login',
   '/reset-password',
+  '/aceitar-convite',
   '/enquete',   // /enquete/[id]?token=xxx (votação por link)
   '/jogador',   // /jogador/[id]?token=xxx (portal por token)
   '/inscricao',
