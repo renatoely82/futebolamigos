@@ -4,6 +4,7 @@ import type { Temporada } from '@/lib/supabase'
 import TemporadaFilter from '@/components/partidas/TemporadaFilter'
 import DateRangeFilter from '@/components/partidas/DateRangeFilter'
 import PartidaCardList from '@/components/partidas/PartidaCardList'
+import CalendarioPartidas from '@/components/partidas/CalendarioPartidas'
 import type { PartidaComCount } from '@/components/partidas/types'
 
 export const dynamic = 'force-dynamic'
@@ -13,10 +14,17 @@ export default async function PartidasPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { temporada: temporadaParam, data_inicio: dataInicioParam, data_fim: dataFimParam } = await searchParams
+  const {
+    temporada: temporadaParam,
+    data_inicio: dataInicioParam,
+    data_fim: dataFimParam,
+    view: viewParam,
+  } = await searchParams
+
+  const view = viewParam === 'calendario' ? 'calendario' : 'lista'
+
   const supabase = await createClient()
 
-  // Fetch all temporadas
   const { data: temporadas } = await supabase
     .from('temporadas')
     .select('*')
@@ -24,7 +32,6 @@ export default async function PartidasPage({
 
   const listaTemporadas: Temporada[] = temporadas ?? []
 
-  // Determine selected temporada: use param, or fall back to active
   let temporadaSelecionadaId: string | null = null
   if (typeof temporadaParam === 'string' && temporadaParam) {
     temporadaSelecionadaId = temporadaParam
@@ -33,11 +40,9 @@ export default async function PartidasPage({
     temporadaSelecionadaId = ativa?.id ?? null
   }
 
-  // Explicit date params from URL
   const dataInicioExplicita = typeof dataInicioParam === 'string' ? dataInicioParam : undefined
   const dataFimExplicita = typeof dataFimParam === 'string' ? dataFimParam : undefined
 
-  // Default to temporada dates when no explicit param
   const temporadaSelecionada = listaTemporadas.find(t => t.id === temporadaSelecionadaId) ?? null
   const dataInicio = dataInicioExplicita ?? temporadaSelecionada?.data_inicio
   const dataFim = dataFimExplicita ?? temporadaSelecionada?.data_fim
@@ -47,9 +52,7 @@ export default async function PartidasPage({
     .select('*, partida_jogadores(count)')
     .order('data', { ascending: false })
 
-  if (temporadaSelecionadaId) {
-    query = query.eq('temporada_id', temporadaSelecionadaId)
-  }
+  if (temporadaSelecionadaId) query = query.eq('temporada_id', temporadaSelecionadaId)
   if (dataInicio) query = query.gte('data', dataInicio)
   if (dataFim) query = query.lte('data', dataFim)
 
@@ -58,6 +61,15 @@ export default async function PartidasPage({
     ...p,
     player_count: (p.partida_jogadores as { count: number }[])?.[0]?.count ?? 0,
   }))
+
+  // Build base URL params (without view) for the toggle links
+  const baseParams = new URLSearchParams()
+  if (temporadaSelecionadaId) baseParams.set('temporada', temporadaSelecionadaId)
+  if (dataInicioExplicita) baseParams.set('data_inicio', dataInicioExplicita)
+  if (dataFimExplicita) baseParams.set('data_fim', dataFimExplicita)
+
+  const listaHref = `/partidas?${baseParams.toString()}`
+  const calendarioHref = `/partidas?${baseParams.toString()}${baseParams.toString() ? '&' : ''}view=calendario`
 
   return (
     <div className="p-4 sm:p-6">
@@ -89,6 +101,7 @@ export default async function PartidasPage({
           </Link>
         </div>
       </div>
+
       {listaTemporadas.length > 0 && (
         <div className="mb-3 sm:hidden">
           <TemporadaFilter
@@ -97,11 +110,43 @@ export default async function PartidasPage({
           />
         </div>
       )}
-      <div className="mb-6">
+
+      <div className="mb-4">
         <DateRangeFilter
           defaultInicio={temporadaSelecionada?.data_inicio}
           defaultFim={temporadaSelecionada?.data_fim}
         />
+      </div>
+
+      {/* View toggle */}
+      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit mb-4">
+        <Link
+          href={listaHref}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            view === 'lista'
+              ? 'bg-white text-gray-800 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeWidth={2} strokeLinecap="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          Lista
+        </Link>
+        <Link
+          href={calendarioHref}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            view === 'calendario'
+              ? 'bg-white text-gray-800 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth={2} />
+            <path strokeWidth={2} strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+          Calendário
+        </Link>
       </div>
 
       {partidas.length === 0 ? (
@@ -115,6 +160,8 @@ export default async function PartidasPage({
             Registrar primeira partida
           </Link>
         </div>
+      ) : view === 'calendario' ? (
+        <CalendarioPartidas partidas={partidas} />
       ) : (
         <PartidaCardList partidas={partidas} />
       )}
