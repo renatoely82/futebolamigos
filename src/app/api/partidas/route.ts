@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       data: body.data,
       local: body.local || null,
       observacoes: body.observacoes || null,
-      status: 'agendada',
+      status: body.status === 'realizada' ? 'realizada' : 'agendada',
       numero_jogadores: body.numero_jogadores ?? null,
       nome_time_a: body.nome_time_a || 'Amarelo',
       nome_time_b: body.nome_time_b || 'Azul',

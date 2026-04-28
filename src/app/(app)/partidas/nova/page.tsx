@@ -103,6 +103,10 @@ export default function NovaPartidaPage() {
   const numJogadores = parseInt(form.numero_jogadores)
   const showOddWarning = !isNaN(numJogadores) && numJogadores > 0 && numJogadores % 2 !== 0
 
+  const today = new Date().toISOString().split('T')[0]
+  const isDataPassada = form.data < today
+  const [jaRealizada, setJaRealizada] = useState(false)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -118,6 +122,7 @@ export default function NovaPartidaPage() {
           nome_time_b: form.nome_time_b || 'Azul',
           temporada_id: form.temporada_id || null,
           incluir_mensalistas: form.incluir_mensalistas,
+          status: jaRealizada ? 'realizada' : 'agendada',
         }),
       })
       const data = await res.json()
@@ -161,8 +166,24 @@ export default function NovaPartidaPage() {
               <div className="mt-2">
                 <CalendarioInline
                   value={form.data}
-                  onChange={v => { setForm(f => ({ ...f, data: v })); setShowCalendar(false) }}
+                  onChange={v => { setForm(f => ({ ...f, data: v })); setShowCalendar(false); setJaRealizada(false) }}
                 />
+              </div>
+            )}
+            {isDataPassada && (
+              <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 space-y-2">
+                <p className="text-yellow-700 text-sm">
+                  Esta data já passou. A partida será criada como <strong>agendada</strong> — lembra-te de registar o resultado depois.
+                </p>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={jaRealizada}
+                    onChange={e => setJaRealizada(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 accent-green-600"
+                  />
+                  <span className="text-sm text-yellow-800 font-medium">Esta partida já foi realizada</span>
+                </label>
               </div>
             )}
           </div>
