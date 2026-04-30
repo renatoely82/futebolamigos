@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/apiAuth'
 import { singleJoin } from '@/lib/supabase'
 import type { NextRequest } from 'next/server'
 
@@ -10,9 +10,8 @@ const supabaseAdmin = createAdminClient(
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 })
+  const { forbidden } = await requireAdmin()
+  if (forbidden) return forbidden
 
   const { data: opcoes } = await supabaseAdmin
     .from('enquete_opcoes')

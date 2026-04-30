@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/apiAuth'
 import type { NextRequest } from 'next/server'
 
 const supabaseAdmin = createAdminClient(
@@ -11,9 +11,8 @@ type Params = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 })
+  const { forbidden } = await requireAdmin()
+  if (forbidden) return forbidden
 
   const { jogador_id } = await request.json()
   if (!jogador_id) return Response.json({ error: 'jogador_id obrigatório' }, { status: 400 })

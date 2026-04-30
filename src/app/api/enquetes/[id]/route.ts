@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/apiAuth'
 import type { NextRequest } from 'next/server'
 
 const supabaseAdmin = createAdminClient(
@@ -13,11 +13,10 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params
   const token = request.nextUrl.searchParams.get('token')
 
-  // Admin access: authenticated user, no token required
+  // Admin access: requires role=admin, no token
   if (!token) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return Response.json({ error: 'Token obrigatório' }, { status: 400 })
+    const { forbidden } = await requireAdmin()
+    if (forbidden) return forbidden
 
     const { data: enquete, error } = await supabaseAdmin
       .from('enquetes')
@@ -53,9 +52,8 @@ export async function GET(request: NextRequest, { params }: Params) {
 // Admin GET without token — returns full data with tokens
 export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 })
+  const { forbidden } = await requireAdmin()
+  if (forbidden) return forbidden
 
   const body = await request.json()
   const { error } = await supabaseAdmin
@@ -69,9 +67,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_: NextRequest, { params }: Params) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 })
+  const { forbidden } = await requireAdmin()
+  if (forbidden) return forbidden
 
   await supabaseAdmin.from('enquetes').delete().eq('id', id)
   return Response.json({ success: true })

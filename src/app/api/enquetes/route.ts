@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/apiAuth'
 import type { NextRequest } from 'next/server'
 
 const supabaseAdmin = createAdminClient(
@@ -8,9 +8,8 @@ const supabaseAdmin = createAdminClient(
 )
 
 export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 })
+  const { forbidden } = await requireAdmin()
+  if (forbidden) return forbidden
 
   const { data, error } = await supabaseAdmin
     .from('enquetes')
@@ -22,9 +21,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 })
+  const { forbidden } = await requireAdmin()
+  if (forbidden) return forbidden
 
   const { titulo, descricao, opcoes, mostrar_resultados, temporada_id, partida_id } = await request.json()
 
