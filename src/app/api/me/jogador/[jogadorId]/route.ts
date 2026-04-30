@@ -20,8 +20,22 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return Response.json({ error: 'Não autenticado' }, { status: 401 })
 
+  const meta = user.app_metadata as Record<string, string>
+  const role = meta?.role
+  const myJogadorId = meta?.jogador_id
+
+  // Jogadores só podem consultar o próprio perfil
+  if (role !== 'admin' && myJogadorId !== jogadorId) {
+    return Response.json({ error: 'Sem permissão' }, { status: 403 })
+  }
+
+  // Campos seguros para jogadores — exclui telefone, email, observacoes, portal_token
+  const jogadorSelect = role === 'admin'
+    ? '*'
+    : 'id, nome, posicao_principal, posicao_secundaria_1, posicao_secundaria_2, nivel, aniversario, ativo, criado_em'
+
   const [jogadorRes, temporadaRes] = await Promise.all([
-    supabaseAdmin.from('jogadores').select('*').eq('id', jogadorId).single(),
+    supabaseAdmin.from('jogadores').select(jogadorSelect).eq('id', jogadorId).single(),
     supabaseAdmin.from('temporadas').select('id').eq('ativa', true).single(),
   ])
 
