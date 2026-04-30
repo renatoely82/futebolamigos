@@ -1,9 +1,73 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import type { ClassificacaoEntry, Partida } from '@/lib/supabase'
 import type { TeamSplit } from '@/lib/supabase'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
+function horaFim(hora: string, duracaoMinutos: number): string {
+  const [h, m] = hora.split(':').map(Number)
+  const totalMin = h * 60 + m + duracaoMinutos
+  return `${String(Math.floor(totalMin / 60) % 24).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}`
+}
+
+function useCountdown(targetDate: Date) {
+  const [diff, setDiff] = useState(targetDate.getTime() - Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => setDiff(targetDate.getTime() - Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [targetDate])
+
+  return diff
+}
+
+function ProximaPartidaCard({ partida }: { partida: Partida }) {
+  const [h, m] = partida.hora.split(':').map(Number)
+  const target = parseISO(partida.data)
+  target.setHours(h, m, 0, 0)
+
+  const diff = useCountdown(target)
+  const passada = diff <= 0
+
+  const dias = Math.floor(diff / 86400000)
+  const horas = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  const segs = Math.floor((diff % 60000) / 1000)
+
+  const countdown = passada
+    ? 'A decorrer ou já realizada'
+    : dias > 0
+      ? `Faltam ${dias}d ${String(horas).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(segs).padStart(2, '0')}`
+      : `Faltam ${String(horas).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(segs).padStart(2, '0')}`
+
+  const diaSemana = format(parseISO(partida.data), 'EEEE', { locale: ptBR })
+  const diaSemanaCapit = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+  const dataFormatada = format(parseISO(partida.data), 'dd/MM', { locale: ptBR })
+  const fim = horaFim(partida.hora, partida.duracao_minutos)
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a2a4a, #0f1e38)' }}>
+      <div className="px-4 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">⚽</span>
+          <div>
+            <p className="text-white font-semibold text-sm leading-snug">
+              {diaSemanaCapit}, {dataFormatada} · {partida.hora}h às {fim}h
+            </p>
+            <p className={`text-xs mt-0.5 font-mono ${passada ? 'text-gray-400' : 'text-green-300'}`}>
+              {countdown}
+            </p>
+            {partida.local && (
+              <p className="text-white/50 text-xs mt-0.5">{partida.local}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface Props {
   classificacao: ClassificacaoEntry[]
@@ -152,15 +216,6 @@ export default function DestaqueTab({ classificacao, partidas }: Props) {
     .filter(p => p.status === 'agendada')
     .sort((a, b) => a.data.localeCompare(b.data))[0]
 
-  if (proxima) {
-    const dataProxima = format(parseISO(proxima.data), "EEEE, d 'de' MMM", { locale: ptBR })
-    destaques.push({
-      emoji: '📅',
-      texto: <>Próxima partida: <strong>{dataProxima}</strong>{proxima.local ? ` — ${proxima.local}` : ''}</>,
-      cor: 'bg-gray-50 border-gray-200',
-    })
-  }
-
   // ── Resumo geral da temporada ─────────────────────────────────
   const totalJogadores = classificacao.filter(e => e.jogos > 0).length
   const totalGols = classificacao.reduce((s, e) => s + e.gols, 0)
@@ -169,6 +224,9 @@ export default function DestaqueTab({ classificacao, partidas }: Props) {
 
   return (
     <div className="p-4 space-y-4">
+
+      {/* Próxima partida */}
+      {proxima && <ProximaPartidaCard partida={proxima} />}
 
       {/* Stats rápidos */}
       <div className="grid grid-cols-3 gap-3">
