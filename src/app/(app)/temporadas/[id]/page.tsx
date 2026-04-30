@@ -16,6 +16,7 @@ import PartidasList from '@/components/temporadas/PartidasList'
 import DiretoraModal from '@/components/temporadas/DiretoraModal'
 import ConfrontosTab from '@/components/temporadas/ConfrontosTab'
 import EvolucaoChart from '@/components/temporadas/EvolucaoChart'
+import DestaqueTab from '@/components/temporadas/DestaqueTab'
 import { SkeletonLine, SkeletonBox, SkeletonCircle } from '@/components/ui/Skeleton'
 
 interface MensalistaEntry {
@@ -25,7 +26,7 @@ interface MensalistaEntry {
   meses: number[] | null
 }
 
-type Aba = 'classificacao' | 'artilheiros' | 'partidas' | 'mensalistas' | 'confrontos'
+type Aba = 'inicio' | 'classificacao' | 'artilheiros' | 'partidas' | 'mensalistas' | 'confrontos'
 
 const MESES_NOMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -76,7 +77,7 @@ export default function TemporadaDetailPage() {
   const [filtroMes, setFiltroMes] = useState<number | null>(null)
   const [filtroAberto, setFiltroAberto] = useState(false)
   const [classificacaoVista, setClassificacaoVista] = useState<'tabela' | 'grafico'>('tabela')
-  const [abaAtiva, setAbaAtiva] = useState<Aba>('classificacao')
+  const [abaAtiva, setAbaAtiva] = useState<Aba>('inicio')
   const [buscaJogador, setBuscaJogador] = useState('')
   const filtroInicializado = useRef(false)
 
@@ -279,6 +280,7 @@ export default function TemporadaDetailPage() {
       })
 
   const abas: { id: Aba; label: string }[] = [
+    { id: 'inicio', label: 'Início' },
     { id: 'classificacao', label: 'Classificação' },
     { id: 'artilheiros', label: 'Artilheiros' },
     { id: 'confrontos', label: 'Confrontos' },
@@ -439,6 +441,11 @@ export default function TemporadaDetailPage() {
 
         {/* Tab content */}
         <div>
+          {/* Início */}
+          {abaAtiva === 'inicio' && (
+            <DestaqueTab classificacao={classificacao} partidas={partidas} />
+          )}
+
           {/* Classificação */}
           {abaAtiva === 'classificacao' && (
             <div>
