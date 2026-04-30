@@ -120,6 +120,9 @@ export default function PartidaDetailPage() {
   const [temporadaSaving, setTemporadaSaving] = useState(false)
   const [editingData, setEditingData] = useState(false)
   const [dataSaving, setDataSaving] = useState(false)
+  const [editingHora, setEditingHora] = useState(false)
+  const [horaSaving, setHoraSaving] = useState(false)
+  const [horaEdit, setHoraEdit] = useState('')
   // Diaristas payment state
   const [diaristas, setDiaristas] = useState<DiaristaEntry[]>([])
   const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null)
@@ -198,6 +201,20 @@ export default function PartidaDetailPage() {
     setDataSaving(false)
     setEditingData(false)
     toast('Data atualizada.')
+  }
+
+  async function handleHoraChange() {
+    if (!horaEdit) return
+    setHoraSaving(true)
+    await fetch(`/api/partidas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hora: horaEdit }),
+    })
+    setPartida(p => p ? { ...p, hora: horaEdit } : p)
+    setHoraSaving(false)
+    setEditingHora(false)
+    toast('Hora atualizada.')
   }
 
   async function handleDelete() {
@@ -418,8 +435,49 @@ export default function PartidaDetailPage() {
             )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <StatusBadge status={partida.status} />
-              {partida.local && <p className="text-gray-500 text-sm">{partida.local}</p>}
+              <div className="flex items-center gap-1">
+                <p className="text-gray-500 text-sm">{partida.hora}</p>
+                <button
+                  onClick={() => { setHoraEdit(partida.hora); setEditingHora(e => !e) }}
+                  className="text-gray-400 hover:text-green-600 transition-colors"
+                  title="Alterar hora"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                      d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z" />
+                  </svg>
+                </button>
+              </div>
+              {partida.local && <p className="text-gray-500 text-sm">· {partida.local}</p>}
             </div>
+            {editingHora && (
+              <div className="mt-2 flex items-center gap-2">
+                {horaSaving ? (
+                  <p className="text-sm text-gray-400">Salvando...</p>
+                ) : (
+                  <>
+                    <input
+                      type="time"
+                      value={horaEdit}
+                      onChange={e => setHoraEdit(e.target.value)}
+                      className="bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
+                    />
+                    <button
+                      onClick={handleHoraChange}
+                      className="text-sm text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Salvar
+                    </button>
+                    <button
+                      onClick={() => setEditingHora(false)}
+                      className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

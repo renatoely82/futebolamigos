@@ -83,6 +83,7 @@ export default function NovaPartidaPage() {
   const [showCalendar, setShowCalendar] = useState(false)
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
+    hora: '10:50',
     local: '',
     numero_jogadores: '',
     nome_time_a: 'Amarelo',
@@ -186,6 +187,16 @@ export default function NovaPartidaPage() {
                 </label>
               </div>
             )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Hora *</label>
+            <input
+              type="time"
+              required
+              value={form.hora}
+              onChange={e => setForm(f => ({ ...f, hora: e.target.value }))}
+              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Local</label>

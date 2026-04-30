@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     .from('partidas')
     .insert({
       data: body.data,
+      hora: body.hora,
       local: body.local || null,
       observacoes: body.observacoes || null,
       status: body.status === 'realizada' ? 'realizada' : 'agendada',

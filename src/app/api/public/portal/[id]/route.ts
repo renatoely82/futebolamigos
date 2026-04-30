@@ -16,6 +16,7 @@ export type PortalJogadorResumo = { id: string; nome: string; posicao: string; g
 export type PortalPartida = {
   id: string
   data: string
+  hora: string
   local: string | null
   status: string
   nome_time_a: string

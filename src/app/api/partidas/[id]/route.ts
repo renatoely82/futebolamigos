@@ -29,6 +29,7 @@ export async function PUT(
     .from('partidas')
     .update({
       ...(body.data !== undefined && { data: body.data }),
+      ...(body.hora !== undefined && { hora: body.hora }),
       ...(body.local !== undefined && { local: body.local || null }),
       ...(body.status !== undefined && { status: body.status }),
       ...(body.observacoes !== undefined && { observacoes: body.observacoes || null }),

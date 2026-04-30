@@ -27,6 +27,7 @@ function toPartida(p: PortalPartida): Partida {
   return {
     ...p,
     status: p.status as Partida['status'],
+    hora: p.hora ?? '10:50',
     observacoes: null,
     numero_jogadores: null,
     votacao_enquete_id: null,

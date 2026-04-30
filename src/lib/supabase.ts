@@ -182,6 +182,7 @@ export interface ClassificacaoEntry {
 export interface Partida {
   id: string
   data: string
+  hora: string
   local: string | null
   status: StatusPartida
   times_escolhidos: TeamSplit | null

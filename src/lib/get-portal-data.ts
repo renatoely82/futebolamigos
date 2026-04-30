@@ -80,7 +80,7 @@ export async function getPortalData(jogadorId: string): Promise<PortalData | nul
   if (temporada) {
     const { data: partidasData } = await supabase
       .from('partidas')
-      .select('id, data, local, status, nome_time_a, nome_time_b, placar_time_a, placar_time_b, times_escolhidos')
+      .select('id, data, hora, local, status, nome_time_a, nome_time_b, placar_time_a, placar_time_b, times_escolhidos')
       .eq('temporada_id', temporada.id)
       .order('data', { ascending: false })
 
