@@ -223,48 +223,48 @@ export default function DestaqueTab({ classificacao, partidas }: Props) {
   const jogadoresComForma = classificacao.filter(e => e.jogos > 0 && e.ultimos5.length > 0)
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-3 space-y-3">
 
       {/* Próxima partida */}
       {proxima && <ProximaPartidaCard partida={proxima} />}
 
       {/* Stats rápidos */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-green-700">{rodadaAtual}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Rodada{rodadaAtual !== 1 ? 's' : ''}</div>
+      <div className="grid grid-cols-3 divide-x divide-[#e0e0e0] border border-[#e0e0e0] rounded-xl overflow-hidden">
+        <div className="py-2 text-center">
+          <div className="text-lg font-bold text-green-700">{rodadaAtual}</div>
+          <div className="text-xs text-gray-400">Rodadas</div>
         </div>
-        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-green-700">{totalGols}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Gol{totalGols !== 1 ? 's' : ''}</div>
+        <div className="py-2 text-center">
+          <div className="text-lg font-bold text-green-700">{totalGols}</div>
+          <div className="text-xs text-gray-400">Gols</div>
         </div>
-        <div className="bg-gray-50 border border-[#e0e0e0] rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-green-700">{totalJogadores}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Jogador{totalJogadores !== 1 ? 'es' : ''}</div>
+        <div className="py-2 text-center">
+          <div className="text-lg font-bold text-green-700">{totalJogadores}</div>
+          <div className="text-xs text-gray-400">Jogadores</div>
         </div>
       </div>
 
       {/* Duas colunas em desktop, empilhado em mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
 
         {/* Coluna esquerda — Destaques */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 px-0.5">
             Destaques Recentes
-          </h2>
+          </p>
           {destaques.length === 0 ? (
-            <div className="py-10 text-center text-gray-400 text-sm">
-              Ainda sem dados suficientes para gerar destaques.
+            <div className="py-8 text-center text-gray-400 text-sm">
+              Ainda sem dados suficientes.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {destaques.map((d, i) => (
                 <div
                   key={i}
-                  className={`flex items-start gap-3 border rounded-xl px-4 py-3 ${d.cor}`}
+                  className={`flex items-center gap-2.5 border rounded-lg px-3 py-2 ${d.cor}`}
                 >
-                  <span className="text-xl leading-none mt-0.5">{d.emoji}</span>
-                  <p className="text-sm text-gray-700 leading-snug">{d.texto}</p>
+                  <span className="text-base leading-none shrink-0">{d.emoji}</span>
+                  <p className="text-xs text-gray-700 leading-snug">{d.texto}</p>
                 </div>
               ))}
             </div>
@@ -274,18 +274,18 @@ export default function DestaqueTab({ classificacao, partidas }: Props) {
         {/* Coluna direita — Forma Recente */}
         {jogadoresComForma.length > 0 && (
           <div>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 px-0.5">
               Forma Recente
-            </h2>
+            </p>
             <div className="bg-white border border-[#e0e0e0] rounded-xl divide-y divide-gray-100 overflow-hidden">
               {jogadoresComForma.slice(0, 10).map(e => (
-                <div key={e.jogador_id} className="flex items-center gap-3 px-4 py-2.5">
-                  <span className="text-sm text-gray-700 font-medium truncate flex-1">{e.nome}</span>
-                  <div className="flex gap-1 shrink-0">
+                <div key={e.jogador_id} className="flex items-center gap-2 px-3 py-1.5">
+                  <span className="text-xs text-gray-700 font-medium truncate flex-1">{e.nome}</span>
+                  <div className="flex gap-0.5 shrink-0">
                     {e.ultimos5.map((r, i) => (
                       <span
                         key={i}
-                        className={`w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center ${
+                        className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
                           r === 'V' ? 'bg-green-500 text-white' :
                           r === 'D' ? 'bg-red-400 text-white' :
                           'bg-gray-300 text-gray-600'
