@@ -165,6 +165,8 @@ export default function DestaqueTab({ classificacao, partidas }: Props) {
   const totalJogadores = classificacao.filter(e => e.jogos > 0).length
   const totalGols = classificacao.reduce((s, e) => s + e.gols, 0)
 
+  const jogadoresComForma = classificacao.filter(e => e.jogos > 0 && e.ultimos5.length > 0)
+
   return (
     <div className="p-4 space-y-4">
 
@@ -184,45 +186,44 @@ export default function DestaqueTab({ classificacao, partidas }: Props) {
         </div>
       </div>
 
-      {/* Destaques */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
-          Destaques Recentes
-        </h2>
+      {/* Duas colunas em desktop, empilhado em mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
 
-        {destaques.length === 0 ? (
-          <div className="py-10 text-center text-gray-400 text-sm">
-            Ainda sem dados suficientes para gerar destaques.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {destaques.map((d, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-3 border rounded-xl px-4 py-3 ${d.cor}`}
-              >
-                <span className="text-xl leading-none mt-0.5">{d.emoji}</span>
-                <p className="text-sm text-gray-700 leading-snug">{d.texto}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Forma dos jogadores (top 5 por pontos) */}
-      {classificacao.filter(e => e.jogos > 0).length > 0 && (
+        {/* Coluna esquerda — Destaques */}
         <div>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
-            Forma Recente
+            Destaques Recentes
           </h2>
-          <div className="bg-white border border-[#e0e0e0] rounded-xl divide-y divide-gray-100 overflow-hidden">
-            {classificacao
-              .filter(e => e.jogos > 0 && e.ultimos5.length > 0)
-              .slice(0, 8)
-              .map(e => (
+          {destaques.length === 0 ? (
+            <div className="py-10 text-center text-gray-400 text-sm">
+              Ainda sem dados suficientes para gerar destaques.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {destaques.map((d, i) => (
+                <div
+                  key={i}
+                  className={`flex items-start gap-3 border rounded-xl px-4 py-3 ${d.cor}`}
+                >
+                  <span className="text-xl leading-none mt-0.5">{d.emoji}</span>
+                  <p className="text-sm text-gray-700 leading-snug">{d.texto}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Coluna direita — Forma Recente */}
+        {jogadoresComForma.length > 0 && (
+          <div>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
+              Forma Recente
+            </h2>
+            <div className="bg-white border border-[#e0e0e0] rounded-xl divide-y divide-gray-100 overflow-hidden">
+              {jogadoresComForma.slice(0, 10).map(e => (
                 <div key={e.jogador_id} className="flex items-center gap-3 px-4 py-2.5">
-                  <span className="text-sm text-gray-700 font-medium w-28 truncate">{e.nome}</span>
-                  <div className="flex gap-1 ml-auto">
+                  <span className="text-sm text-gray-700 font-medium truncate flex-1">{e.nome}</span>
+                  <div className="flex gap-1 shrink-0">
                     {e.ultimos5.map((r, i) => (
                       <span
                         key={i}
@@ -238,9 +239,10 @@ export default function DestaqueTab({ classificacao, partidas }: Props) {
                   </div>
                 </div>
               ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
