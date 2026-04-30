@@ -83,7 +83,7 @@ export default function NovaPartidaPage() {
   const [showCalendar, setShowCalendar] = useState(false)
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
-    hora: '10:50',
+    hora: '11:00',
     local: '',
     numero_jogadores: '',
     nome_time_a: 'Amarelo',
