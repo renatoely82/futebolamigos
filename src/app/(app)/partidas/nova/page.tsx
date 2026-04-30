@@ -84,6 +84,7 @@ export default function NovaPartidaPage() {
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
     hora: '11:00',
+    duracao_minutos: '60',
     local: '',
     numero_jogadores: '',
     nome_time_a: 'Amarelo',
@@ -118,6 +119,7 @@ export default function NovaPartidaPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          duracao_minutos: form.duracao_minutos ? parseInt(form.duracao_minutos) : 60,
           numero_jogadores: form.numero_jogadores ? parseInt(form.numero_jogadores) : null,
           nome_time_a: form.nome_time_a || 'Amarelo',
           nome_time_b: form.nome_time_b || 'Azul',
@@ -188,15 +190,34 @@ export default function NovaPartidaPage() {
               </div>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Hora *</label>
-            <input
-              type="time"
-              required
-              value={form.hora}
-              onChange={e => setForm(f => ({ ...f, hora: e.target.value }))}
-              className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Hora *</label>
+              <input
+                type="time"
+                required
+                value={form.hora}
+                onChange={e => setForm(f => ({ ...f, hora: e.target.value }))}
+                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Duração *</label>
+              <select
+                required
+                value={form.duracao_minutos}
+                onChange={e => setForm(f => ({ ...f, duracao_minutos: e.target.value }))}
+                className="w-full bg-white border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:border-green-500"
+              >
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">1h</option>
+                <option value="75">1h 15min</option>
+                <option value="90">1h 30min</option>
+                <option value="105">1h 45min</option>
+                <option value="120">2h</option>
+              </select>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Local</label>

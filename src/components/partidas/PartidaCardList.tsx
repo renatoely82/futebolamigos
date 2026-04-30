@@ -132,6 +132,14 @@ function EscalacaoInline({
   )
 }
 
+function horaFim(hora: string, duracaoMinutos: number): string {
+  const [h, m] = hora.split(':').map(Number)
+  const totalMin = h * 60 + m + duracaoMinutos
+  const hFim = Math.floor(totalMin / 60) % 24
+  const mFim = totalMin % 60
+  return `${String(hFim).padStart(2, '0')}:${String(mFim).padStart(2, '0')}`
+}
+
 export default function PartidaCardList({ partidas }: { partidas: PartidaComCount[] }) {
   const router = useRouter()
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -202,7 +210,7 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
                 <span className="text-gray-800 font-semibold text-sm mt-1 block">
                   {format(parseISO(p.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </span>
-                <span className="text-gray-500 text-xs">{p.hora}</span>
+                <span className="text-gray-500 text-xs">{p.hora} – {horaFim(p.hora, p.duracao_minutos)}</span>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setConfirmId(p.id) }}

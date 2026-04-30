@@ -1,0 +1,1 @@
+ALTER TABLE partidas ADD COLUMN duracao_minutos INTEGER NOT NULL DEFAULT 60;

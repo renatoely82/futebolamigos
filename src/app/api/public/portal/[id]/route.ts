@@ -17,6 +17,7 @@ export type PortalPartida = {
   id: string
   data: string
   hora: string
+  duracao_minutos: number
   local: string | null
   status: string
   nome_time_a: string

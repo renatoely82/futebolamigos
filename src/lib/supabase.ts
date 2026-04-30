@@ -183,6 +183,7 @@ export interface Partida {
   id: string
   data: string
   hora: string
+  duracao_minutos: number
   local: string | null
   status: StatusPartida
   times_escolhidos: TeamSplit | null

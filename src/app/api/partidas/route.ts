@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     .insert({
       data: body.data,
       hora: body.hora,
+      duracao_minutos: body.duracao_minutos ?? 60,
       local: body.local || null,
       observacoes: body.observacoes || null,
       status: body.status === 'realizada' ? 'realizada' : 'agendada',

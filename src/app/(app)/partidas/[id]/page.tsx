@@ -123,6 +123,8 @@ export default function PartidaDetailPage() {
   const [editingHora, setEditingHora] = useState(false)
   const [horaSaving, setHoraSaving] = useState(false)
   const [horaEdit, setHoraEdit] = useState('')
+  const [editingDuracao, setEditingDuracao] = useState(false)
+  const [duracaoEdit, setDuracaoEdit] = useState(60)
   // Diaristas payment state
   const [diaristas, setDiaristas] = useState<DiaristaEntry[]>([])
   const [editandoDiaristaId, setEditandoDiaristaId] = useState<string | null>(null)
@@ -215,6 +217,25 @@ export default function PartidaDetailPage() {
     setHoraSaving(false)
     setEditingHora(false)
     toast('Hora atualizada.')
+  }
+
+  async function handleDuracaoChange() {
+    await fetch(`/api/partidas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ duracao_minutos: duracaoEdit }),
+    })
+    setPartida(p => p ? { ...p, duracao_minutos: duracaoEdit } : p)
+    setEditingDuracao(false)
+    toast('Duração atualizada.')
+  }
+
+  function horaFim(hora: string, duracaoMinutos: number): string {
+    const [h, m] = hora.split(':').map(Number)
+    const totalMin = h * 60 + m + duracaoMinutos
+    const hFim = Math.floor(totalMin / 60) % 24
+    const mFim = totalMin % 60
+    return `${String(hFim).padStart(2, '0')}:${String(mFim).padStart(2, '0')}`
   }
 
   async function handleDelete() {
@@ -436,15 +457,24 @@ export default function PartidaDetailPage() {
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <StatusBadge status={partida.status} />
               <div className="flex items-center gap-1">
-                <p className="text-gray-500 text-sm">{partida.hora}</p>
+                <p className="text-gray-500 text-sm">{partida.hora} – {horaFim(partida.hora, partida.duracao_minutos)}</p>
                 <button
-                  onClick={() => { setHoraEdit(partida.hora); setEditingHora(e => !e) }}
+                  onClick={() => { setHoraEdit(partida.hora); setEditingHora(e => !e); setEditingDuracao(false) }}
                   className="text-gray-400 hover:text-green-600 transition-colors"
                   title="Alterar hora"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
                       d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => { setDuracaoEdit(partida.duracao_minutos); setEditingDuracao(e => !e); setEditingHora(false) }}
+                  className="text-gray-400 hover:text-green-600 transition-colors"
+                  title="Alterar duração"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
               </div>
@@ -476,6 +506,35 @@ export default function PartidaDetailPage() {
                     </button>
                   </>
                 )}
+              </div>
+            )}
+            {editingDuracao && (
+              <div className="mt-2 flex items-center gap-2">
+                <select
+                  value={duracaoEdit}
+                  onChange={e => setDuracaoEdit(Number(e.target.value))}
+                  className="bg-white border border-[#e0e0e0] rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-green-500"
+                >
+                  <option value={30}>30 min</option>
+                  <option value={45}>45 min</option>
+                  <option value={60}>1h</option>
+                  <option value={75}>1h 15min</option>
+                  <option value={90}>1h 30min</option>
+                  <option value={105}>1h 45min</option>
+                  <option value={120}>2h</option>
+                </select>
+                <button
+                  onClick={handleDuracaoChange}
+                  className="text-sm text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Salvar
+                </button>
+                <button
+                  onClick={() => setEditingDuracao(false)}
+                  className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  Cancelar
+                </button>
               </div>
             )}
           </div>

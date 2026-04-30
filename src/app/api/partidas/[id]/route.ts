@@ -30,6 +30,7 @@ export async function PUT(
     .update({
       ...(body.data !== undefined && { data: body.data }),
       ...(body.hora !== undefined && { hora: body.hora }),
+      ...(body.duracao_minutos !== undefined && { duracao_minutos: body.duracao_minutos }),
       ...(body.local !== undefined && { local: body.local || null }),
       ...(body.status !== undefined && { status: body.status }),
       ...(body.observacoes !== undefined && { observacoes: body.observacoes || null }),
