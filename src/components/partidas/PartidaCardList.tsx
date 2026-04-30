@@ -202,6 +202,7 @@ export default function PartidaCardList({ partidas }: { partidas: PartidaComCoun
                 <span className="text-gray-800 font-semibold text-sm mt-1 block">
                   {format(parseISO(p.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </span>
+                <span className="text-gray-500 text-xs">{p.hora}</span>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setConfirmId(p.id) }}
